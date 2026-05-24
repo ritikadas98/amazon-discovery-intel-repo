@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /tmp/gemini-test1.json -w \"HTTP %{http_code}\\\\n\" \"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent\" -H \"Content-Type: application/json\" -H \"x-goog-api-key: AIzaSyDGOuH6hU1coZq3ow5hSQbVQgggOtQ2wEM\" -X POST -d '{\"contents\":[{\"parts\":[{\"text\":\"reply with the single word ok\"}]}],\"generationConfig\":{\"maxOutputTokens\":20,\"thinking_config\":{\"thinking_level\":\"minimal\"}}}')",
+      "Read(//tmp/**)",
+      "Bash(node *)"
+    ]
+  }
+}

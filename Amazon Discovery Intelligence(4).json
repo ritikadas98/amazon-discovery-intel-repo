@@ -1,0 +1,1341 @@
+{
+  "name": "Amazon Discovery Intelligence",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const useMock = true;\nreturn [{json: {useMock}}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        48
+      ],
+      "id": "f7d45be0-3264-4cbd-abce-0eb10c2a9832",
+      "name": "Check Mock Mode"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7bbfea74-1118-4ec4-b99c-b8c20f8ef053",
+              "leftValue": "={{ $json.useMock }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        592,
+        48
+      ],
+      "id": "1360a2f2-98f7-4abc-b8ac-5bd930bcfda6",
+      "name": "Mock or Live"
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date().toISOString().split('T')[0];\n\n// ─────────────────────────────────────────────────────────────────────────────\n// Drop-in replacement for the \"Mock Signals\" Code node in your n8n workflow.\n// Paste the entire contents below into the node body, replacing the existing code.\n//\n// 20 signals designed to exercise every stage of the pipeline:\n//   • Theme 1 (signals 1–4):   Checkout crash regression cluster on v5.2\n//                              → tests regression detection AND dedup (#4 ≈ #1)\n//   • Theme 2 (signals 5–7):   Search filter reset\n//   • Theme 3 (signals 8–10):  Returns / refund opacity\n//   • Theme 4 (signals 11–13): Delivery tracking stale\n//   • Theme 5 (signals 14–16): Prime double-charge\n//   • Signal 17–18:            NOISE — vague/positive, should be marked\n//                              irrelevant by Agent 2 (Signal Cleaner)\n//   • Signal 19:               Product detail (misleading images) — singleton\n//   • Signal 20:               Account login broken on v5.2 — extends the\n//                              regression cluster into account_performance,\n//                              so the regression spans 2 feature groups\n//\n// Sources mix:  app_store ×10  •  play_store ×4  •  amazon_review ×6\n// Severity range when scored: ~1.0 (noise) to ~4.8 (checkout crash)\n// All 7 feature groups represented in expected tagging output.\n// ─────────────────────────────────────────────────────────────────────────────\n\nconst mockSignals = [\n  // ─── Theme 1: Checkout crash after v5.2 update (regression cluster) ───\n  {\n    text: \"After the 5.2 update the app keeps crashing the second I hit place order. Lost my cart 3 times this week. Had to use the browser instead. fix this please.\",\n    source: \"app_store\",\n    date: \"2026-05-15\",\n    rating: 1,\n    severity_raw: null,\n    app_version: \"5.2\"\n  },\n  {\n    text: \"5.2 broke checkout for me too. Tap Buy Now, black screen, kicked out. Reinstalled twice. Same problem.\",\n    source: \"app_store\",\n    date: \"2026-05-14\",\n    rating: 1,\n    severity_raw: null,\n    app_version: \"5.2\"\n  },\n  {\n    text: \"app crashes at checkout every single time since the latest update. on a Pixel 8. this is unacceptable for a company this size\",\n    source: \"play_store\",\n    date: \"2026-05-13\",\n    rating: 1,\n    severity_raw: null,\n    app_version: \"5.2\"\n  },\n  {\n    // Near-duplicate of signal #1 — tests dedup\n    text: \"Same problem as everyone else here, app crashes when I hit place order after the 5.2 update. lost my prime day cart smh\",\n    source: \"app_store\",\n    date: \"2026-05-16\",\n    rating: 1,\n    severity_raw: null,\n    app_version: \"5.2\"\n  },\n\n  // ─── Theme 2: Search filters reset on scroll ───\n  {\n    text: \"Why do the price filters reset every time i scroll back up?? I had it set to under $50 and verified prime and the second i go back its gone.\",\n    source: \"play_store\",\n    date: \"2026-05-12\",\n    rating: 2,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"Search filters are broken. I'll set brand and price range, scroll down to look at results, scroll back up to adjust, filters are GONE. Have to redo every time.\",\n    source: \"app_store\",\n    date: \"2026-05-14\",\n    rating: 2,\n    severity_raw: null,\n    app_version: \"5.1\"\n  },\n  {\n    text: \"the filter thing where it forgets what you selected when you go back to the search is really annoying. been like this for months\",\n    source: \"amazon_review\",\n    date: \"2026-05-11\",\n    rating: 2,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Theme 3: Returns / refund opacity ───\n  {\n    text: \"Initiated a return on May 1. Its been 16 days. Status still says awaiting carrier pickup even though USPS picked it up two weeks ago. No refund. No update. Multiple chat reps say wait 5 more days.\",\n    source: \"amazon_review\",\n    date: \"2026-05-16\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"Returns are a nightmare now. Used to be one tap. Now I have to print labels, drop off at specific locations, and wait two weeks for refund even after Amazon receives it back. What happened?\",\n    source: \"amazon_review\",\n    date: \"2026-05-13\",\n    rating: 2,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"Returned an item that arrived broken. The status is just pending for 12 days. Customer service keeps saying its being processed. I just want my money back.\",\n    source: \"app_store\",\n    date: \"2026-05-15\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Theme 4: Delivery tracking stale ───\n  {\n    text: \"Tracking says out for delivery on Tuesday. Its Friday. Package never came. No update. Cant even tell if its lost or just sitting in a van somewhere.\",\n    source: \"play_store\",\n    date: \"2026-05-15\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"Why does the in-app tracking lie?? It said arriving today and then suddenly jumped to next week with no explanation.\",\n    source: \"app_store\",\n    date: \"2026-05-12\",\n    rating: 2,\n    severity_raw: null,\n    app_version: \"5.1\"\n  },\n  {\n    text: \"Tracking page hasnt updated in 5 days. Package shows on the way since Monday. Where is it\",\n    source: \"app_store\",\n    date: \"2026-05-17\",\n    rating: 2,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Theme 5: Prime double-charge ───\n  {\n    text: \"Got charged for Prime twice this month. Once on the 3rd and again on the 17th. Took customer service 4 days to even acknowledge it was a problem.\",\n    source: \"amazon_review\",\n    date: \"2026-05-17\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"My Prime membership renewed AND I got charged for the trial again somehow? $14.99 twice in March. Disputing through my bank since support is useless.\",\n    source: \"play_store\",\n    date: \"2026-05-14\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"Anyone else getting double charged for Prime? Showed up twice on my statement this month.\",\n    source: \"app_store\",\n    date: \"2026-05-13\",\n    rating: 2,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Noise signals (should be marked irrelevant by Agent 2) ───\n  {\n    text: \"this app is okay i guess. nothing too special. does what i need it to do most of the time\",\n    source: \"app_store\",\n    date: \"2026-05-12\",\n    rating: 3,\n    severity_raw: null,\n    app_version: null\n  },\n  {\n    text: \"really nice app overall, no major complaints lately!\",\n    source: \"play_store\",\n    date: \"2026-05-11\",\n    rating: 4,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Singleton: misleading product images ───\n  {\n    text: \"Why are the product images on so many listings clearly fake? Got a wood cutting board thats plastic. Pictures on the listing are misleading.\",\n    source: \"amazon_review\",\n    date: \"2026-05-14\",\n    rating: 1,\n    severity_raw: null,\n    app_version: null\n  },\n\n  // ─── Extends regression cluster into account_performance ───\n  {\n    text: \"Cant log in after the 5.2 update. Password reset emails never arrive. Locked out for 3 days now.\",\n    source: \"app_store\",\n    date: \"2026-05-16\",\n    rating: 1,\n    severity_raw: null,\n    app_version: \"5.2\"\n  },\n];\n\nreturn mockSignals.map(s => ({ json: s }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        48
+      ],
+      "id": "b3389dce-18ad-4af9-a201-541e336b4c45",
+      "name": "Mock Signals"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1040,
+        48
+      ],
+      "id": "9b11f413-68e6-4254-b81c-d72acc19eab1",
+      "name": "Merge all Souces"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items — handle both direct and wrapped formats\nconst items = $input.all();\n\n// Calculate week ID\nconst now = new Date();\nconst startOfYear = new Date(now.getFullYear(), 0, 1);\nconst weekNum = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);\nconst weekId = `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;\n\nconst validSources = ['app_store', 'play_store', 'amazon_review'];\n\nconst normalized = [];\nfor (const item of items) {\n  const d = item.json;\n  const text = (d.text || '').trim();\n  if (text.length < 10) continue;\n\n  const source = validSources.includes(d.source) ? d.source : 'unknown';\n\n  let date = d.date || new Date().toISOString().split('T')[0];\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) {\n    date = new Date().toISOString().split('T')[0];\n  }\n\n  const rating = (d.rating !== null && d.rating !== undefined && !isNaN(d.rating))\n    ? Math.min(5, Math.max(1, Number(d.rating)))\n    : null;\n\n  normalized.push({\n    text,\n    source,\n    date,\n    rating,\n    severity_raw: null,\n    app_version: d.app_version || null\n  });\n}\n\n// Build source breakdown\nconst breakdown = { app_store: 0, play_store: 0, amazon_review: 0, unknown: 0, total: 0 };\nfor (const s of normalized) {\n  breakdown[s.source] = (breakdown[s.source] || 0) + 1;\n  breakdown.total++;\n}\n\n// Data quality warning\nlet dataQualityWarning = null;\nif (breakdown.total < 40) {\n  dataQualityWarning = `Low signal volume: only ${breakdown.total} signals collected (minimum 40 expected).`;\n}\nif (breakdown.amazon_review === 0) {\n  dataQualityWarning = (dataQualityWarning ? dataQualityWarning + ' ' : '') + 'Amazon reviews unavailable.';\n}\nif (breakdown.app_store === 0) {\n  dataQualityWarning = (dataQualityWarning ? dataQualityWarning + ' ' : '') + 'App Store reviews unavailable.';\n}\n\nconst _meta = {\n  sourceBreakdown: breakdown,\n  dataQualityWarning,\n  weekId\n};\n\n// _meta on ALL items (not just first) so it's never lost downstream\nreturn normalized.map(s => ({\n  json: { ...s, _meta }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        48
+      ],
+      "id": "80c8af37-7694-47f9-860d-1caf46756b2a",
+      "name": "Normalize Schema"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet _meta = null;\nconst signals = items.map((item, i) => {\n  if (item.json._meta) _meta = item.json._meta;\n  return {\n    id: i,\n    text: item.json.text,\n    source: item.json.source,\n    date: item.json.date,\n    rating: item.json.rating,\n    app_version: item.json.app_version\n  };\n});\n\nconst prompt = `You are a product discovery analyst. Analyse the following customer signals and return a JSON array.For EACH signal, return:\n- id: (same id as input)\n- duplicate: true if this signal is nearly identical in meaning to another signal, false otherwise\n- irrelevant: true if the signal is vague, spam, non-English, or provides no actionable product insight, false otherwise\n- severity_score: a float from 1.0 to 5.0 where 5.0 = critical product-breaking issue, 3.0 = moderate friction, 1.0 = minor or positive feedback\n- version_flagged: true if the signal mentions a specific version number (e.g. \"5.2\", \"v5\") or phrases like \"after the update\" / \"since the update\", false otherwise\n\nRULES:\n- severity_score must always be a float between 1.0 and 5.0. Never null, never outside this range.\n- Only mark duplicate: true on the LATER of two similar signals (keep the first)\n- irrelevant signals still need a severity_score\n- Return ONLY a valid JSON array. No markdown, no backticks, no explanation.\n- Please make sure the JSON is valid so there are no invalid JSON errors in n8n\n\nFEW-SHOT EXAMPLES:\nInput: \"App crashes on checkout after update to 5.0, lost my order\" -> severity_score: 4.5, version_flagged: true, duplicate: false, irrelevant: false\nInput: \"ok\" -> severity_score: 1.0, irrelevant: true, duplicate: false, version_flagged: false\nInput: \"Delivery was late by 3 days, no updates from courier\" -> severity_score: 3.0, version_flagged: false, duplicate: false, irrelevant: false\nInput: \"App crashes on checkout, same issue as before\" -> severity_score: 4.5, duplicate: true, irrelevant: false, version_flagged: false\n\nSIGNALS TO ANALYSE:\n${JSON.stringify(signals, null, 2)}`;\n\nreturn [{ json: { prompt, signals, _meta } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        48
+      ],
+      "id": "53f37e88-21f9-4bba-a2cf-f97b66d8c9c4",
+      "name": "Prepare Gemini Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify({\n  \"contents\": [\n    {\n      \"parts\": [\n        { \"text\": $('Prepare Gemini Prompt').first().json.prompt }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"maxOutputTokens\": 8192,\n    \"response_mime_type\": \"application/json\",\n    \"thinking_config\": {\n      \"thinking_level\": \"minimal\"\n    }\n  }\n})}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1712,
+        48
+      ],
+      "id": "4663aaa2-b75d-48ef-ac8b-9dd2132263a1",
+      "name": "Gemini Flash - Clean Signal",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o4TH3skD6fMJrahl",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.first().json;\nconst prevNode = $('Prepare Gemini Prompt').first().json;\nconst originalSignals = prevNode.signals;\nconst _meta = prevNode._meta;\n\nconst rawText = geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst cleaned = rawText.replace(/```json|```/g, '').trim();\n\nlet geminiResults;\ntry {\n  geminiResults = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Gemini returned invalid JSON: ${cleaned.substring(0, 200)}`);\n}\n\nconst validatedSignals = [];\nfor (const result of geminiResults) {\n  if (result.duplicate === true) continue;\n  if (result.irrelevant === true) continue;\n\n  const original = originalSignals[result.id];\n  if (!original) continue;\n\n  const score = parseFloat(result.severity_score);\n  if (isNaN(score) || score < 1.0 || score > 5.0) {\n    throw new Error(`Invalid severity_score for signal ${result.id}: ${result.severity_score}`);\n  }\n\n  validatedSignals.push({\n    text: original.text,\n    source: original.source,\n    date: original.date,\n    rating: original.rating,\n    app_version: original.app_version,\n    severity_score: Math.round(score * 10) / 10,\n    version_flagged: result.version_flagged === true,\n    _meta\n  });\n}\n\nif (validatedSignals.length === 0) {\n  throw new Error('Zero signals survived cleaning. Check Gemini response.');\n}\n\nreturn validatedSignals.map(s => ({ json: s }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        48
+      ],
+      "id": "80408542-c85d-4cf4-8666-be97bb1e282b",
+      "name": "Parse + Validate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst REGRESSION_THRESHOLD = 5; // SET TO 1 FOR TESTING\n\nlet _meta = null;\nconst signals = items.map(item => {\n  if (item.json._meta) _meta = item.json._meta;\n  return item.json;\n});\n\nconst versionGroups = {};\nfor (const signal of signals) {\n  if (!signal.version_flagged) continue;\n  const match = signal.text.match(/\\b(\\d+\\.\\d+[\\.\\d]*)\\b/);\n  const version = match ? match[1] : 'unknown';\n  if (!versionGroups[version]) versionGroups[version] = [];\n  versionGroups[version].push(signal);\n}\n\nconst regressions = [];\nfor (const [version, vSignals] of Object.entries(versionGroups)) {\n  if (vSignals.length >= REGRESSION_THRESHOLD) {\n    regressions.push({\n      version,\n      signal_count: vSignals.length,\n      top_signals: vSignals.slice(0, 3).map(s => s.text),\n      feature_groups_affected: []\n    });\n  }\n}\n\nconst updatedMeta = { ..._meta, regressions };\n\nreturn signals.map(s => ({\n  json: { ...s, _meta: updatedMeta }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        48
+      ],
+      "id": "5b410688-6fed-449f-b892-671d4508bd7f",
+      "name": "Regression Detection"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ritikadas98@gmail.com",
+        "toEmail": "={{ $('Config Runtime').first().json.body.recipient_email }}",
+        "subject": "=⚠️ Version Regression Alert — {{ new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) }} ",
+        "emailFormat": "text",
+        "text": "=URGENT: Version Regression Detected\n\nDate: {{ new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) }}\nWeek: {{ $json._meta.weekId }}\n\nThe following app versions have triggered a regression alert this run:\n\n{{ $json._meta.regressions.map((r, i) => `${i+1}. Version ${r.version}: ${r.signal_count} signal(s)\\n   Top signals:\\n   ${r.top_signals.map(s => `- ${s}`).join('\\n   ')}`).join('\\n\\n') }}\n\nPlease review immediately.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        1024
+      ],
+      "id": "9f81ee96-150c-4bde-a532-bc66fb4e99ac",
+      "name": "Regression Alert Email",
+      "webhookId": "2a67e84e-d331-4081-9378-cc97320a44c5",
+      "executeOnce": true,
+      "credentials": {
+        "smtp": {
+          "id": "HLDIjFmPldmzmoni",
+          "name": "RSMTP account"
+        }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9fbee614-d8be-4e86-ac6d-3702d2fc7220",
+              "name": "={{ $('Pipeline Webhook Trigger').first().json.body.recipient_email }}",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        48
+      ],
+      "id": "d00c647e-890e-4229-9ffd-9ac55c2763f5",
+      "name": "Config Runtime"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c030f187-b97f-4565-90da-440984ec2b84",
+              "leftValue": "={{ $json._meta.regressions.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2384,
+        48
+      ],
+      "id": "afe48355-1d05-4d0b-a324-7f425b68ac78",
+      "name": "Regresssion IF"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Carry signals and _meta forward\nlet _meta = null;\nconst signals = items.map(item => {\n  if (item.json._meta) _meta = item.json._meta;\n  return item.json;\n});\n\nconst config = {\n  feature_groups: [\n    { id: \"search_discovery\", name: \"Search & Discovery\", keywords: [\"search\", \"filter\", \"results\", \"autocomplete\", \"browse\", \"sort\", \"query\", \"find\"] },\n    { id: \"checkout_payment\", name: \"Checkout & Payment\", keywords: [\"checkout\", \"payment\", \"cart\", \"buy\", \"purchase\", \"order\", \"credit card\", \"billing\", \"crash\"] },\n    { id: \"delivery_tracking\", name: \"Delivery & Tracking\", keywords: [\"delivery\", \"shipping\", \"tracking\", \"late\", \"package\", \"courier\", \"dispatch\", \"arrived\"] },\n    { id: \"returns_refunds\", name: \"Returns & Refunds\", keywords: [\"return\", \"refund\", \"money back\", \"replace\", \"exchange\", \"sent back\", \"pending\"] },\n    { id: \"product_detail\", name: \"Product Detail Pages\", keywords: [\"image\", \"photo\", \"description\", \"listing\", \"wrong item\", \"misleading\", \"specs\", \"review\"] },\n    { id: \"prime_subscriptions\", name: \"Prime & Subscriptions\", keywords: [\"prime\", \"subscription\", \"charged\", \"membership\", \"renew\", \"cancel\", \"benefit\", \"double charge\"] },\n    { id: \"account_performance\", name: \"Account & Performance\", keywords: [\"login\", \"password\", \"account\", \"slow\", \"crash\", \"freeze\", \"loading\", \"performance\", \"update\", \"bug\"] }\n  ],\n  valid_ids: [\"search_discovery\", \"checkout_payment\", \"delivery_tracking\", \"returns_refunds\", \"product_detail\", \"prime_subscriptions\", \"account_performance\"]\n};\n\nreturn signals.map(s => ({\n  json: { ...s, _config: config, _meta }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2608,
+        144
+      ],
+      "id": "da9d24fd-7dc2-47f3-978a-245cb416aae5",
+      "name": "Load Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet _meta = null;\nlet _config = null;\nconst signals = items.map((item, i) => {\n  if (item.json._meta) _meta = item.json._meta;\n  if (item.json._config) _config = item.json._config;\n  return {\n  id: i,\n  text: item.json.text,\n  source: item.json.source,\n  date: item.json.date,\n  rating: item.json.rating,\n  severity_score: item.json.severity_score,\n  version_flagged: item.json.version_flagged,\n  app_version: item.json.app_version || null\n};\n});\n\nconst validIds = _config.valid_ids.join(', ');\n\nconst prompt = `You are a product discovery analyst for the Amazon Shopping App.\n\nYou will perform TWO tasks on the signals below.\n\n---\nTASK 1 — THEME CLUSTERING:\nGroup the signals into 3–6 specific pain themes.\nTheme labels must be specific and actionable:\n✓ GOOD: \"Search price filter resets after scrolling\"\n✗ BAD: \"Search issues\"\n\nFor each theme return:\n- theme_id: t1, t2, t3... (sequential)\n- theme_label: specific descriptive label\n- trend_direction: \"worsening\" | \"stable\" | \"improving\"\n- signal_ids: array of signal ids belonging to this theme\n\n---\nTASK 2 — FEATURE GROUP TAGGING:\nFor every signal, assign exactly one feature_group_id from this list:\n${validIds}\n\nRULES:\n- ONLY use IDs from the exact list above. Never invent new ones.\n- If a signal doesn't fit any group, use \"account_performance\" as fallback\n- One signal = one feature_group_id, no exceptions\n\nFEW-SHOT EXAMPLES:\n\"App crashes at checkout\" → checkout_payment\n\"Search filters reset when scrolling\" → search_discovery\n\"Prime membership charged twice\" → prime_subscriptions\n\"Package hasn't arrived, tracking not updating\" → delivery_tracking\n\"Product images don't match item received\" → product_detail\n\"Can't log in after update\" → account_performance\n\n---\nReturn ONLY a valid JSON object with this exact structure. No markdown, no backticks:\n{\n  \"themes\": [\n    {\n      \"theme_id\": \"t1\",\n      \"theme_label\": \"string\",\n      \"trend_direction\": \"worsening|stable|improving\",\n      \"signal_ids\": [0, 1, 2]\n    }\n  ],\n  \"signal_tags\": [\n    {\n      \"id\": 0,\n      \"feature_group_id\": \"string\",\n      \"theme_id\": \"string\"\n    }\n  ]\n}\n\nSIGNALS:\n${JSON.stringify(signals, null, 2)}`;\n\nreturn [{ json: { prompt, signals, _meta, _config } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2832,
+        144
+      ],
+      "id": "e5271859-ab56-48d9-bb90-9432a2b1b353",
+      "name": "Prepare Synthesis Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.first().json;\nconst prevNode = $('Prepare Synthesis Prompt').first().json;\nconst originalSignals = prevNode.signals;\nconst _meta = prevNode._meta;\nconst _config = prevNode._config;\n\nconst rawText = geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst cleaned = rawText.replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Gemini synthesis returned invalid JSON: ${cleaned.substring(0, 200)}`);\n}\n\nconst { themes, signal_tags } = parsed;\n\nconst validIds = _config.valid_ids;\nfor (const tag of signal_tags) {\n  if (!validIds.includes(tag.feature_group_id)) {\n    throw new Error(`Invalid feature_group_id \"${tag.feature_group_id}\" for signal ${tag.id}. Valid IDs: ${validIds.join(', ')}`);\n  }\n}\n\nconst tagLookup = {};\nfor (const tag of signal_tags) {\n  tagLookup[tag.id] = tag;\n}\n\nconst themeLookup = {};\nfor (const theme of themes) {\n  themeLookup[theme.theme_id] = theme;\n}\n\nconst taggedSignals = originalSignals.map((signal, i) => {\n  const tag = tagLookup[i] || {};\n  const theme = themeLookup[tag.theme_id] || {};\n  return {\n    ...signal,\n    feature_group_id: tag.feature_group_id || 'account_performance',\n    theme_id: tag.theme_id || 'unclassified',\n    theme_label: theme.theme_label || 'Unclassified',\n    trend_direction: theme.trend_direction || 'stable',\n    _meta,\n    _config\n  };\n});\n\nreturn taggedSignals.map(s => ({ json: s }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        144
+      ],
+      "id": "fcdfe680-9943-4565-a5a6-019889f3faac",
+      "name": "Parse + Validate - Synthesis"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify({\n  \"contents\": [\n    {\n      \"parts\": [\n        { \"text\": $('Prepare Synthesis Prompt').first().json.prompt }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"maxOutputTokens\": 8192,\n    \"response_mime_type\": \"application/json\",\n    \"thinking_config\": {\n      \"thinking_level\": \"minimal\"\n    }\n  }\n})}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3056,
+        144
+      ],
+      "id": "1927d88b-8b07-405c-909d-66ccaf7fec93",
+      "name": "Gemini Flash - Synthesize",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o4TH3skD6fMJrahl",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst now = new Date().toISOString();\n\nreturn items.map((item, i) => {\n  const s = item.json;\n  return {\n    json: {\n      ID: `${s._meta.weekId}-${i}`,\n      Text: s.text,\n      Source: s.source,\n      Date: s.date,\n      Rating: s.rating,\n      'Severity Score': s.severity_score,\n      'Feature Group ID': s.feature_group_id,\n      'Theme ID': s.theme_id,\n      'Theme Label': s.theme_label,\n      'Week ID': s._meta.weekId,\n      'App Version': s.app_version || '',\n      'Version Flagged': s.version_flagged ? 'TRUE' : 'FALSE',\n      'Created At': now\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3504,
+        144
+      ],
+      "id": "5d87d8b6-ae8b-4fad-9037-1c24ba3df520",
+      "name": "Format for Sheets"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g",
+          "mode": "list",
+          "cachedResultName": "Amazon Discovery Intelligence",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1787024314,
+          "mode": "list",
+          "cachedResultName": "Weekly Digests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit#gid=1787024314"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3952,
+        144
+      ],
+      "id": "751f3ffc-1766-46a3-9a10-715492fb633e",
+      "name": "Fetch Last Week Data",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "BnpI3MPP8NOEOcMb",
+          "name": "Ritika Das Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g",
+          "mode": "list",
+          "cachedResultName": "Amazon Discovery Intelligence",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Signals",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Text",
+              "displayName": "Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity Score",
+              "displayName": "Severity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feature Group ID",
+              "displayName": "Feature Group ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Theme ID",
+              "displayName": "Theme ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Theme Label",
+              "displayName": "Theme Label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Week ID",
+              "displayName": "Week ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "App Version",
+              "displayName": "App Version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Version Flagged",
+              "displayName": "Version Flagged",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3728,
+        144
+      ],
+      "id": "fcc49136-2419-417d-a6b7-0c93b5883d30",
+      "name": "Write Signals to Sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "BnpI3MPP8NOEOcMb",
+          "name": "Ritika Das Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst lastWeekData = allItems[0]?.json?.empty \n  ? [] \n  : allItems.map(item => item.json);\n\nconst signalItems = $('Parse + Validate - Synthesis').all();\nconst signals = signalItems.map(item => item.json);\nconst _meta = signals[0]?._meta;\nconst _config = signals[0]?._config;\n\nconst byGroup = {};\nfor (const signal of signals) {\n  const gid = signal.feature_group_id || 'account_performance';\n  if (!byGroup[gid]) byGroup[gid] = [];\n  byGroup[gid].push(signal);\n}\n\nconst themesByGroup = {};\nfor (const signal of signals) {\n  const gid = signal.feature_group_id || 'account_performance';\n  if (!themesByGroup[gid]) themesByGroup[gid] = {};\n  const tid = signal.theme_id || 'unclassified';\n  if (!themesByGroup[gid][tid]) {\n    themesByGroup[gid][tid] = {\n      theme_id: tid,\n      theme_label: signal.theme_label || 'Unclassified',\n      trend_direction: signal.trend_direction || 'stable',\n      signals: []\n    };\n  }\n  themesByGroup[gid][tid].signals.push(signal);\n}\n\nconst themesPerGroup = {};\nfor (const [gid, themes] of Object.entries(themesByGroup)) {\n  themesPerGroup[gid] = Object.values(themes);\n}\n\nreturn [{\n  json: {\n    byGroup,\n    themesPerGroup,\n    allSignals: signals,\n    lastWeekData,\n    weekId: _meta?.weekId,\n    _meta,\n    _config\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        144
+      ],
+      "id": "8d5e9584-e88a-414e-8d0a-d8d688b5f807",
+      "name": "Aggregate by Group"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── INPUT ────────────────────────────────────────────────────────────────────\nconst input = $input.first().json;\nconst { byGroup, themesPerGroup, allSignals, lastWeekData, weekId, _meta, _config } = input;\n\nconst regressions = _meta.regressions || [];\n\n// ─── HELPERS ──────────────────────────────────────────────────────────────────\n\nconst SOURCE_CONFIDENCE = { 1: 0.6, 2: 0.8, 3: 1.0 };\nconst TREND_MULTIPLIER  = { worsening: 1.2, stable: 1.0, improving: 0.8 };\n\nfunction getVersionRatioMultiplier(signals) {\n  const flagged = signals.filter(s => s.version_flagged).length;\n  const ratio = signals.length > 0 ? flagged / signals.length : 0;\n  return 1 + (ratio * 0.2); // up to +20% boost\n}\n\nfunction getEffort(groupId) {\n  const isRegression = regressions.some(r =>\n    Array.isArray(r.feature_groups_affected) &&\n    r.feature_groups_affected.includes(groupId)\n  );\n  return isRegression ? 0.8 : 1;\n}\n\nfunction scoreTheme(theme, groupId) {\n  const signals = theme.signals || [];\n  if (signals.length === 0) return 0;\n  const reach             = signals.length;\n  const avgSeverity       = signals.reduce((sum, s) => sum + (s.severity_score || 3.0), 0) / signals.length;\n  const sources           = new Set(signals.map(s => s.source)).size;\n  const confidence        = SOURCE_CONFIDENCE[Math.min(sources, 3)] || 0.6;\n  const versionMultiplier = getVersionRatioMultiplier(signals);\n  const trendMultiplier   = TREND_MULTIPLIER[theme.trend_direction] || 1.0;\n  const effort            = getEffort(groupId);\n  return ((reach * avgSeverity * confidence * versionMultiplier) / effort) * trendMultiplier;\n}\n\n// ─── DEDUPLICATE LAST WEEK DATA ───────────────────────────────────────────────\nconst seenRows = new Set();\nconst dedupedLastWeek = (lastWeekData || []).filter(r => {\n  const key = `${r['Week ID']}_${r['Feature Group ID']}_${r.row_number}`;\n  if (seenRows.has(key)) return false;\n  seenRows.add(key);\n  return true;\n});\n\n// Build a lookup: groupId → last week's best row (highest RICE score row)\nconst lastWeekLookup = {};\nfor (const row of dedupedLastWeek) {\n  const gid = row['Feature Group ID'];\n  if (!gid) continue;\n  const existing = lastWeekLookup[gid];\n  const rowRice  = parseFloat(row['Top RICE Score']) || 0;\n  if (!existing || rowRice > (parseFloat(existing['Top RICE Score']) || 0)) {\n    lastWeekLookup[gid] = row;\n  }\n}\n\n// ─── SCORE EACH GROUP ─────────────────────────────────────────────────────────\n\nconst scoredGroups = [];\n\nfor (const [groupId, signals] of Object.entries(byGroup)) {\n  if (!signals || signals.length === 0) continue;\n\n  const themes = themesPerGroup[groupId] || [];\n\n  // Score each theme individually\n  const scoredThemes = themes.map(t => ({\n    theme_id:        t.theme_id,\n    theme_label:     t.theme_label,\n    trend_direction: t.trend_direction,\n    signal_count:    (t.signals || []).length,\n    theme_score:     Math.round(scoreTheme(t, groupId) * 10) / 10\n  }));\n\n  // Group RICE = top theme score\n  const topTheme = scoredThemes.reduce(\n    (best, t) => t.theme_score > best.theme_score ? t : best,\n    scoredThemes[0] || { theme_score: 0 }\n  );\n  const topRiceScore = topTheme.theme_score || 0;\n\n  // Group-level metrics (for display + WoW)\n  const reach       = signals.length;\n  const avgSeverity = Math.round(\n    (signals.reduce((sum, s) => sum + (s.severity_score || 3.0), 0) / signals.length) * 10\n  ) / 10;\n  const sources           = new Set(signals.map(s => s.source)).size;\n  const confidence        = SOURCE_CONFIDENCE[Math.min(sources, 3)] || 0.6;\n  const versionMultiplier = getVersionRatioMultiplier(signals);\n\n  const hasWorsening  = themes.some(t => t.trend_direction === 'worsening');\n  const allImproving  = themes.length > 0 && themes.every(t => t.trend_direction === 'improving');\n  const trendKey      = hasWorsening ? 'worsening' : allImproving ? 'improving' : 'stable';\n  const trendMultiplier = TREND_MULTIPLIER[trendKey];\n  const effort          = getEffort(groupId);\n\n  scoredGroups.push({\n    feature_group_id:  groupId,\n    top_rice_score:    topRiceScore,\n    avg_severity:      avgSeverity,\n    signal_count:      reach,\n    confidence,\n    version_multiplier: Math.round(versionMultiplier * 100) / 100,\n    effort,\n    trend_direction:   trendKey,\n    trend_multiplier:  trendMultiplier,\n    top_theme:         topTheme.theme_label || '',\n    scored_themes:     scoredThemes\n  });\n}\n\n// ─── SORT BY RICE SCORE ───────────────────────────────────────────────────────\nscoredGroups.sort((a, b) => b.top_rice_score - a.top_rice_score);\n\n// ─── DYNAMIC MoSCoW (PERCENTILE-BASED) ───────────────────────────────────────\nconst sortedScores = scoredGroups.map(g => g.top_rice_score).sort((a, b) => a - b);\n\nfunction percentile(arr, p) {\n  if (arr.length === 0) return 0;\n  const idx = Math.ceil((p / 100) * arr.length) - 1;\n  return arr[Math.max(0, idx)];\n}\n\nconst p75 = percentile(sortedScores, 75);\nconst p50 = percentile(sortedScores, 50);\nconst p25 = percentile(sortedScores, 25);\n\nfunction getMoSCoW(score) {\n  if (score >= p75) return 'Must Have';\n  if (score >= p50) return 'Should Have';\n  if (score >= p25) return 'Could Have';\n  return \"Won't Have\";\n}\n\n// Attach MoSCoW to each group\nscoredGroups.forEach(g => {\n  g.top_moscow = getMoSCoW(g.top_rice_score);\n});\n\n// Overall top group (for digest header)\nconst overallTop = scoredGroups[0] || null;\nconsole.log(`Agent 4 Node 1: Top group = ${overallTop?.feature_group_id} (RICE ${overallTop?.top_rice_score}, ${overallTop?.top_moscow})`);\n\n// MoSCoW distribution log\nconst dist = { 'Must Have': 0, 'Should Have': 0, 'Could Have': 0, \"Won't Have\": 0 };\nscoredGroups.forEach(g => dist[g.top_moscow]++);\nconsole.log('MoSCoW distribution:', JSON.stringify(dist));\n\n// ─── OUTPUT ───────────────────────────────────────────────────────────────────\n// Pass scoredGroups + lastWeekLookup forward to Node 2 (WoW Delta)\n// All original fields are preserved for Agent 5\nreturn [{\n  json: {\n    scoredGroups,\n    lastWeekLookup,\n    byGroup,\n    themesPerGroup,\n    allSignals,\n    lastWeekData,\n    weekId,\n    _meta,\n    _config\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        144
+      ],
+      "id": "ae14a6ab-8ced-452a-aa25-4205ee049629",
+      "name": "Calculate RICE Scores"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── INPUT ────────────────────────────────────────────────────────────────────\n// Receives scoredGroups + lastWeekLookup from Node 1\nconst input = $input.first().json;\nconst { scoredGroups, lastWeekLookup } = input;\n\n// ─── MoSCoW PRIORITY ORDER ────────────────────────────────────────────────────\nconst moscowOrder = ['Must Have', 'Should Have', 'Could Have', \"Won't Have\"];\n\nfunction moscowRank(label) {\n  const idx = moscowOrder.indexOf(label);\n  return idx === -1 ? 99 : idx;\n}\n\n// ─── CALCULATE DELTA PER GROUP ────────────────────────────────────────────────\nconst groupsWithDelta = scoredGroups.map(group => {\n  const last = lastWeekLookup?.[group.feature_group_id] || null;\n\n  if (!last) {\n    // First run — no last week data, delta is null (correct and expected)\n    return { ...group, delta: null };\n  }\n\n  const lastRice        = parseFloat(last['Top RICE Score']) || 0;\n  const lastSignalCount = parseInt(last['Signal Count']) || 0;\n  const lastAvgSeverity = parseFloat(last['Avg Severity']) || 0;\n  const lastMoSCoW      = last['Top MoSCoW'] || null;\n\n  const riceDelta = parseFloat((group.top_rice_score - lastRice).toFixed(1));\n\n  const riceDeltaPct = lastRice !== 0\n    ? Math.round(((group.top_rice_score - lastRice) / lastRice) * 100)\n    : null;\n\n  const signalDelta   = group.signal_count - lastSignalCount;\n  const severityDelta = parseFloat((group.avg_severity - lastAvgSeverity).toFixed(2));\n\n  const moscowChanged     = lastMoSCoW !== null && group.top_moscow !== lastMoSCoW;\n  const moscowEscalated   = moscowChanged && moscowRank(group.top_moscow) < moscowRank(lastMoSCoW);\n  const moscowDeescalated = moscowChanged && moscowRank(group.top_moscow) > moscowRank(lastMoSCoW);\n\n  return {\n    ...group,\n    delta: {\n      rice_delta:          riceDelta,\n      rice_delta_pct:      riceDeltaPct,\n      signal_delta:        signalDelta,\n      severity_delta:      severityDelta,\n      moscow_changed:      moscowChanged,\n      moscow_prev:         lastMoSCoW,\n      moscow_escalated:    moscowEscalated,\n      moscow_deescalated:  moscowDeescalated\n    }\n  };\n});\n\n// ─── LOG ESCALATIONS ──────────────────────────────────────────────────────────\nconst escalations = groupsWithDelta.filter(g => g.delta?.moscow_escalated);\nif (escalations.length > 0) {\n  console.log(`Agent 4 Node 2: ${escalations.length} MoSCoW escalation(s):`);\n  escalations.forEach(g =>\n    console.log(`  ${g.feature_group_id}: ${g.delta.moscow_prev} → ${g.top_moscow} (RICE +${g.delta.rice_delta})`)\n  );\n} else {\n  console.log('Agent 4 Node 2: No MoSCoW escalations this week.');\n}\n\n// ─── OUTPUT ───────────────────────────────────────────────────────────────────\n// Spread all input fields forward — Agent 5 receives the full payload\nreturn [{\n  json: {\n    ...input,\n    scoredGroups: groupsWithDelta\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4624,
+        144
+      ],
+      "id": "9478cce6-8ba2-4a1d-aed0-d15ea138ee0d",
+      "name": "Assign MoSCoW"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g",
+          "mode": "list",
+          "cachedResultName": "Amazon Discovery Intelligence",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1787024314,
+          "mode": "list",
+          "cachedResultName": "Weekly Digests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g/edit#gid=1787024314"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Week ID": "={{ $json.weekId }}",
+            "Feature Group ID": "={{ $json.topGroup.feature_group_id }}",
+            "Top Theme": "={{ $json.topGroupThemes[0]?.theme_label }}",
+            "Signal Count": "={{ $json.topGroup.signal_count }}",
+            "Avg Severity": "={{ $json.topGroup.avg_severity }}",
+            "Trend Direction": "={{ $json.topGroup.trend_direction }}",
+            "Top RICE Score": "={{ $json.topGroup.top_rice_score }}",
+            "Top MoSCoW": "={{ $json.topGroup.top_moscow }}",
+            "RICE Scores JSON": "={{ JSON.stringify($json.scoredGroups.map(g => ({ id: g.group_id, score: g.rice_score }))) }}",
+            "MoSCoW JSON": "={{ JSON.stringify($json.scoredGroups.map(g => ({ id: g.group_id, moscow: g.moscow }))) }}",
+            "Data Quality Warning": "={{ $json._meta.dataQualityWarning }}",
+            "WoW Delta JSON": "={{ JSON.stringify($json.scoredGroups.map(g => ({ id: g.group_id, delta: g.severity_delta }))) }}",
+            "Created At": "={{ new Date().toISOString() }}",
+            "Discovery Readiness JSON": "={{ JSON.stringify($json.readiness) }}",
+            "Overall Group Readiness": "={{ $json.readiness.overall_readiness }}",
+            "Themes Ready Count": "={{ $json.themesReady }}",
+            "Themes Blocked Count": "={{ $json.themesBlocked }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Week ID",
+              "displayName": "Week ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feature Group ID",
+              "displayName": "Feature Group ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Top Theme",
+              "displayName": "Top Theme",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Signal Count",
+              "displayName": "Signal Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Avg Severity",
+              "displayName": "Avg Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Trend Direction",
+              "displayName": "Trend Direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Top RICE Score",
+              "displayName": "Top RICE Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Top MoSCoW",
+              "displayName": "Top MoSCoW",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RICE Scores JSON",
+              "displayName": "RICE Scores JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MoSCoW JSON",
+              "displayName": "MoSCoW JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Discovery Readiness JSON",
+              "displayName": "Discovery Readiness JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Overall Group Readiness",
+              "displayName": "Overall Group Readiness",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Themes Ready Count",
+              "displayName": "Themes Ready Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Themes Blocked Count",
+              "displayName": "Themes Blocked Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data Quality Warning",
+              "displayName": "Data Quality Warning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WoW Delta JSON",
+              "displayName": "WoW Delta JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        144
+      ],
+      "name": "Write Scores to Sheet1",
+      "id": "8d83a16c-0dfc-4fcf-b3bf-d3731727908f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst { scoredGroups, byGroup, themesPerGroup, allSignals, lastWeekData, weekId, _meta, _config } = input;\n\n// Rebuild topGroup, topGroupSignals, topGroupThemes safely from scoredGroups\n// (guards against undefined if Node 23 didn't pass them through)\nconst topGroup        = input.topGroup || scoredGroups?.[0] || null;\nconst topGroupSignals = input.topGroupSignals || (topGroup ? byGroup[topGroup.feature_group_id] || [] : []);\nconst topGroupThemes  = input.topGroupThemes  || (topGroup ? themesPerGroup[topGroup.feature_group_id] || [] : []);\n\nif (!topGroup) throw new Error('Node 24: topGroup is undefined — check Node 23 output has scoredGroups with at least 1 entry');\n\nconst groupName = _config.feature_groups.find(g => g.id === topGroup.feature_group_id)?.name || topGroup.feature_group_id;\n\nconst themesForPrompt = topGroupThemes.map(t => ({\n  theme_id: t.theme_id,\n  theme_label: t.theme_label,\n  trend_direction: t.trend_direction,\n  signal_count: t.signals.length,\n  sample_signals: t.signals.slice(0, 3).map(s => ({\n    text: s.text,\n    severity_score: s.severity_score,\n    source: s.source,\n    version_flagged: s.version_flagged\n  }))\n}));\n\nconst prompt = `You are a senior product discovery analyst for the Amazon Shopping App.\n\nYou are evaluating the discovery readiness of the feature group: \"${groupName}\"\n\nFor EACH theme below, evaluate it against these 4 evidence quality criteria:\n\n1. SIGNAL_VOLUME: Are there enough signals to act on? (threshold: 3+ signals = strong, 2 = moderate, 1 = weak)\n2. SOURCE_DIVERSITY: Do signals come from multiple sources? (app_store + play_store + amazon_review = strong, 2 sources = moderate, 1 source = weak)\n3. SEVERITY_CONSISTENCY: Are severity scores consistently high? (avg 4.0+ = strong, 3.0-3.9 = moderate, below 3.0 = weak)\n4. TREND_SIGNAL: Is the trend worsening or stable with high severity? (worsening = strong, stable = moderate, improving = weak)\n\nBased on these criteria, assign each theme one of:\n- READY: 3 or 4 criteria are strong — enough evidence to move to solution discovery\n- NEEDS_MORE_EVIDENCE: 2 criteria are strong — promising but needs more data\n- BLOCKED: 0 or 1 criteria are strong — insufficient evidence to prioritise\n\nReturn ONLY a valid JSON object with this exact structure. No markdown, no backticks:\n{\n  \"group_id\": \"${topGroup.feature_group_id}\",\n  \"overall_readiness\": \"READY | NEEDS_MORE_EVIDENCE | BLOCKED\",\n  \"readiness_summary\": \"one sentence summary of overall readiness\",\n  \"themes\": [\n    {\n      \"theme_id\": \"string\",\n      \"theme_label\": \"string\",\n      \"readiness\": \"READY | NEEDS_MORE_EVIDENCE | BLOCKED\",\n      \"criteria\": {\n        \"signal_volume\": \"strong | moderate | weak\",\n        \"source_diversity\": \"strong | moderate | weak\",\n        \"severity_consistency\": \"strong | moderate | weak\",\n        \"trend_signal\": \"strong | moderate | weak\"\n      },\n      \"gap_reasons\": [\"string\"],\n      \"recommended_next_steps\": [\"string\"]\n    }\n  ]\n}\n\nTHEMES TO EVALUATE:\n${JSON.stringify(themesForPrompt, null, 2)}`;\n\nreturn [{\n  json: {\n    prompt,\n    topGroup,\n    topGroupSignals,\n    topGroupThemes,\n    scoredGroups,\n    byGroup,\n    themesPerGroup,\n    allSignals,\n    lastWeekData,\n    weekId,\n    _meta,\n    _config\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4848,
+        144
+      ],
+      "id": "55c593b1-8d9b-4f31-9375-d3b318e5be30",
+      "name": "Prepare Readiness Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  \"contents\": [\n    {\n      \"parts\": [\n        { \n          \"text\": $node[\"Prepare Readiness Prompt\"].json.prompt \n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"maxOutputTokens\": 8192,\n    \"response_mime_type\": \"application/json\",\n    \"thinking_config\": {\n      \"thinking_level\": \"medium\"\n    }\n  }\n})\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5072,
+        144
+      ],
+      "id": "290b8aeb-30c7-43cd-be0c-c8e4ac027918",
+      "name": "Gemini Flash - Readiness",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o4TH3skD6fMJrahl",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.first().json;\nconst prevNode = $('Prepare Readiness Prompt').first().json;\n\nconst rawText = geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst cleaned = rawText.replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Gemini readiness returned invalid JSON: ${cleaned.substring(0, 200)}`);\n}\n\nconst validReadiness = ['READY', 'NEEDS_MORE_EVIDENCE', 'BLOCKED'];\nconst validCriteria = ['strong', 'moderate', 'weak'];\n\nif (!validReadiness.includes(parsed.overall_readiness)) {\n  throw new Error(`Invalid overall_readiness: ${parsed.overall_readiness}`);\n}\n\nfor (const theme of parsed.themes) {\n  if (!validReadiness.includes(theme.readiness)) {\n    throw new Error(`Invalid readiness for theme ${theme.theme_id}: ${theme.readiness}`);\n  }\n  for (const [key, val] of Object.entries(theme.criteria)) {\n    if (!validCriteria.includes(val)) {\n      throw new Error(`Invalid criteria value for ${key}: ${val}`);\n    }\n  }\n}\n\nconst themesReady = parsed.themes.filter(t => t.readiness === 'READY').length;\nconst themesBlocked = parsed.themes.filter(t => t.readiness === 'BLOCKED').length;\n\nreturn [{\n  json: {\n    ...prevNode,\n    readiness: parsed,\n    themesReady,\n    themesBlocked\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5296,
+        144
+      ],
+      "id": "696b5f14-5a22-4077-8508-7433f641b407",
+      "name": "Parse Readiness"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read from Parse Readiness directly — Google Sheets node (Node 27) doesn't pass pipeline data forward\nconst input = $('Parse Readiness').first().json;\n\nconst {\n  scoredGroups,\n  topGroup,\n  topGroupSignals,\n  topGroupThemes,\n  byGroup,\n  themesPerGroup,\n  allSignals,\n  readiness,\n  themesReady,\n  themesBlocked,\n  weekId,\n  _meta,\n  _config\n} = input;\n\n// Build per-group summary for Agent 6\nconst groupSummaries = scoredGroups.map(g => {\n  const signals = byGroup[g.feature_group_id] || [];         // FIXED: was g.group_id\n  const themes  = themesPerGroup[g.feature_group_id] || [];  // FIXED: was g.group_id\n  const groupConfig = _config.feature_groups.find(fg => fg.id === g.feature_group_id); // FIXED\n\n  return {\n    group_id:       g.feature_group_id,           // FIXED: was g.group_id\n    group_name:     groupConfig?.name || g.feature_group_id,\n    rank:           g.rank,\n    rice_score:     g.top_rice_score,             // FIXED: was g.rice_score\n    moscow:         g.top_moscow,                 // FIXED: was g.moscow\n    trend_direction: g.trend_direction,\n    signal_count:   g.signal_count,\n    avg_severity:   g.avg_severity,               // FIXED: was g.impact\n    severity_delta: g.delta?.rice_delta ?? null,  // FIXED: was g.severity_delta\n    themes: themes.map(t => ({\n      theme_id:        t.theme_id,\n      theme_label:     t.theme_label,\n      trend_direction: t.trend_direction,\n      signal_count:    t.signals.length,\n      top_signal:      t.signals[0]?.text || ''\n    })),\n    top_signals: signals.slice(0, 3).map(s => s.text)\n  };\n});\n\nreturn [{\n  json: {\n    groupSummaries,\n    topGroup: {\n      ...topGroup,\n      group_id:          topGroup.feature_group_id,  // FIXED: expose as group_id for Agent 6 email template compatibility\n      readiness:         readiness?.overall_readiness,\n      readiness_summary: readiness?.readiness_summary,\n      theme_readiness:   readiness?.themes\n    },\n    allSignals,\n    weekId,\n    _meta,\n    _config,\n    readiness,\n    themesReady,\n    themesBlocked\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5744,
+        144
+      ],
+      "id": "756b72d8-3f28-4d89-aeb8-9e5be5634efc",
+      "name": "Prepare Agent 6 Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst {\n  groupSummaries,\n  topGroup,\n  allSignals,\n  weekId,\n  _meta,\n  readiness\n} = input;\n\nconst recipient_email = $('Config Runtime').first().json.recipient_email;\n\nconst dateStr = new Date().toLocaleDateString('en-GB', {\n  day: 'numeric', month: 'long', year: 'numeric'\n});\n\nconst trendEmoji = { worsening: '📈', stable: '➡️', improving: '📉' };\nconst moscowEmoji = { 'Must Have': '🔴', 'Should Have': '🟠', 'Could Have': '🟡', \"Won't Have\": '⚪' };\nconst readinessEmoji = { READY: '✅', NEEDS_MORE_EVIDENCE: '⚠️', BLOCKED: '❌' };\n\n// Regressions section\nlet regressionsHtml = '';\nif (_meta.regressions && _meta.regressions.length > 0) {\n  const regItems = _meta.regressions.map(r =>\n    `<li><strong>Version ${r.version}</strong> — ${r.signal_count} signal(s)<br>\n    <em>${r.top_signals[0]}</em></li>`\n  ).join('');\n  regressionsHtml = `\n    <div style=\"background:#fff3cd;border-left:4px solid #ffc107;padding:12px 16px;margin-bottom:24px;border-radius:4px;\">\n      <strong>⚠️ Regression Alert</strong>\n      <ul style=\"margin:8px 0 0 0;padding-left:20px;\">${regItems}</ul>\n    </div>`;\n}\n\n// Data quality warning\nlet qualityHtml = '';\nif (_meta.dataQualityWarning) {\n  qualityHtml = `\n    <div style=\"background:#f8d7da;border-left:4px solid #dc3545;padding:10px 16px;margin-bottom:24px;border-radius:4px;\">\n      <strong>⚠️ Data Quality:</strong> ${_meta.dataQualityWarning}\n    </div>`;\n}\n\n// Top group readiness\nconst readinessHtml = `\n  <div style=\"background:#f0f4ff;border-left:4px solid #4361ee;padding:12px 16px;margin-bottom:24px;border-radius:4px;\">\n    <strong>${readinessEmoji[topGroup.readiness] || '⚠️'} Discovery Readiness — ${topGroup.group_name || topGroup.group_id}</strong><br>\n    <span style=\"color:#555;\">${topGroup.readiness_summary}</span>\n    ${readiness?.themes?.map(t => `\n      <div style=\"margin-top:8px;padding:8px;background:white;border-radius:4px;\">\n        <strong>${t.theme_label}</strong> — ${readinessEmoji[t.readiness] || ''} ${t.readiness}<br>\n        ${t.gap_reasons?.length ? `<span style=\"color:#888;font-size:13px;\">Gaps: ${t.gap_reasons.join(' · ')}</span><br>` : ''}\n        ${t.recommended_next_steps?.length ? `<span style=\"color:#4361ee;font-size:13px;\">Next: ${t.recommended_next_steps[0]}</span>` : ''}\n      </div>`).join('') || ''}\n  </div>`;\n\n// Feature group rankings\nconst rankingsHtml = groupSummaries.map(g => {\n  const themesHtml = g.themes.map(t =>\n    `<li style=\"margin-bottom:4px;color:#555;font-size:13px;\">\n      ${trendEmoji[t.trend_direction] || ''} <strong>${t.theme_label}</strong> (${t.signal_count} signal${t.signal_count !== 1 ? 's' : ''})\n    </li>`\n  ).join('');\n\n  const deltaHtml = g.severity_delta !== null\n    ? `<span style=\"color:${g.severity_delta > 0 ? '#dc3545' : '#28a745'};font-size:12px;\">\n        ${g.severity_delta > 0 ? '▲' : '▼'} ${Math.abs(g.severity_delta)} vs last week\n       </span>`\n    : '<span style=\"color:#aaa;font-size:12px;\">First run</span>';\n\n  return `\n    <div style=\"border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-bottom:16px;\">\n      <div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;\">\n        <div>\n          <span style=\"font-size:18px;font-weight:bold;\">#${g.rank} ${g.group_name}</span>\n          <span style=\"margin-left:8px;\">${moscowEmoji[g.moscow] || ''} ${g.moscow}</span>\n        </div>\n        <div style=\"text-align:right;\">\n          <span style=\"font-size:20px;font-weight:bold;color:#4361ee;\">${g.rice_score}</span>\n          <span style=\"font-size:12px;color:#888;display:block;\">RICE Score</span>\n        </div>\n      </div>\n      <div style=\"font-size:13px;color:#666;margin-bottom:8px;\">\n        ${g.signal_count} signal${g.signal_count !== 1 ? 's' : ''} · Avg severity ${g.avg_severity} · ${trendEmoji[g.trend_direction] || ''} ${g.trend_direction} · ${deltaHtml}\n      </div>\n      <ul style=\"margin:0;padding-left:20px;\">${themesHtml}</ul>\n    </div>`;\n}).join('');\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#1a1a1a;\">\n\n  <div style=\"border-bottom:2px solid #4361ee;padding-bottom:16px;margin-bottom:24px;\">\n    <h1 style=\"margin:0;font-size:22px;\">🔍 Amazon Discovery Intelligence</h1>\n    <p style=\"margin:4px 0 0 0;color:#666;\">Weekly Digest · ${dateStr} · ${weekId}</p>\n  </div>\n\n  ${regressionsHtml}\n  ${qualityHtml}\n  ${readinessHtml}\n\n  <h2 style=\"font-size:16px;margin-bottom:16px;\">📊 Feature Group Rankings</h2>\n  ${rankingsHtml}\n\n  <div style=\"border-top:1px solid #e0e0e0;margin-top:32px;padding-top:16px;font-size:12px;color:#999;\">\n    Generated by Amazon Discovery Intelligence · ${new Date().toISOString()}\n  </div>\n\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    html,\n    recipient_email,\n    weekId,\n    dateStr\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5968,
+        144
+      ],
+      "id": "2b580742-fc95-40e8-a46d-c419412cc799",
+      "name": "Format Digest Email"
+    },
+    {
+      "parameters": {
+        "fromEmail": "ritikadas98@gmail.com",
+        "toEmail": "={{ $('Config Runtime').first().json.body.recipient_email }}",
+        "subject": "=🔍 Discovery Digest — {{ $json.dateStr }}",
+        "html": "={{ $json.html }}\n\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        816
+      ],
+      "id": "97e2e3aa-fa57-4ab6-9fcc-b2c9b17f123a",
+      "name": "Send an Email",
+      "webhookId": "1d81815a-0488-40ee-aacd-a564a131a68b",
+      "credentials": {
+        "smtp": {
+          "id": "HLDIjFmPldmzmoni",
+          "name": "RSMTP account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Prepare Agent 6 Payload').first().json;\n\nreturn [{\n  json: {\n    status:           'complete',\n    weekId:           input.weekId,\n    signalCount:      input.allSignals.length,\n    topGroup:         input.topGroup.group_id,        // safe — Node 28 remaps feature_group_id → group_id\n    topRiceScore:     input.topGroup.top_rice_score,  // FIXED: was input.topGroup.rice_score\n    topMoscow:        input.topGroup.top_moscow,      // FIXED: was input.topGroup.moscow\n    overallReadiness: input.topGroup.readiness,\n    regressionCount:  input._meta.regressions?.length || 0,\n    completedAt:      new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6416,
+        144
+      ],
+      "id": "1363d73f-9895-4c16-836e-bfc4076087fe",
+      "name": "Pipeline Complete"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-pipeline",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        144
+      ],
+      "id": "994051ee-9f54-43cb-8777-41efadb9e339",
+      "name": "Pipeline Webhook Trigger",
+      "webhookId": "e2568ee1-faa6-4bcb-9293-4bc25842f286"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        -48
+      ],
+      "id": "16c190d5-0414-45c0-a5c1-afa0266d16a7",
+      "name": "Schedule Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config Runtime').first().json.body.recipient_email }}",
+        "subject": "=⚠️ Version Regression Alert — {{ new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) }} ",
+        "message": "={{\n(() => {\n  const regressions = $json._meta?.regressions || [];\n  const weekId = $json._meta?.weekId || '';\n  const dateStr = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });\n\n  const cards = regressions.map(r => `\n    <tr><td style=\"padding:12px 32px;\">\n      <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#fff7f7;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:6px;overflow:hidden;\">\n        <tr><td style=\"padding:14px 16px 10px 16px;\">\n          <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n            <td><span style=\"font-size:15px;font-weight:700;color:#111827;\">Version ${r.version}</span></td>\n            <td align=\"right\"><span style=\"display:inline-block;background:#dc2626;color:#ffffff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;\">${r.signal_count} signal${r.signal_count!==1?'s':''}</span></td>\n          </tr></table>\n        </td></tr>\n        <tr><td style=\"padding:0 16px;\"><hr style=\"border:none;border-top:1px solid #fecaca;margin:0;\" /></td></tr>\n        <tr><td style=\"padding:10px 16px 14px 16px;\">\n          <p style=\"margin:0 0 8px 0;font-size:11px;font-weight:600;letter-spacing:0.8px;color:#9ca3af;text-transform:uppercase;\">Top Signals</p>\n          ${(r.top_signals||[]).slice(0,3).map(s => `\n            <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:6px;\"><tr>\n              <td width=\"16\" valign=\"top\" style=\"padding-top:2px;font-size:13px;color:#dc2626;\">•</td>\n              <td style=\"font-size:13px;color:#374151;line-height:1.5;\">${s}</td>\n            </tr></table>`).join('')}\n        </td></tr>\n      </table>\n    </td></tr>`).join('');\n\n  return `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>Version Regression Detected</title>\n</head>\n<body style=\"margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f4f5;padding:32px 0;\">\n  <tr><td align=\"center\">\n    <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);\">\n\n      <tr><td style=\"background:#dc2626;padding:24px 32px;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n          <td>\n            <p style=\"margin:0 0 4px 0;font-size:11px;font-weight:600;letter-spacing:1.2px;color:#fca5a5;text-transform:uppercase;\">Amazon Discovery Intelligence</p>\n            <h1 style=\"margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;\">⚠️ Version Regression Detected</h1>\n          </td>\n          <td align=\"right\" valign=\"top\">\n            <span style=\"display:inline-block;background:rgba(255,255,255,0.15);border-radius:4px;padding:6px 12px;font-size:12px;color:#ffffff;font-weight:600;white-space:nowrap;\">URGENT</span>\n          </td>\n        </tr></table>\n      </td></tr>\n\n      <tr><td style=\"background:#fef2f2;padding:14px 32px;border-bottom:1px solid #fee2e2;\">\n        <span style=\"font-size:13px;color:#b91c1c;\">\n          📅 <strong>${dateStr}</strong> &nbsp;&nbsp;·&nbsp;&nbsp; 🗓 Week: <strong>${weekId}</strong>\n        </span>\n      </td></tr>\n\n      <tr><td style=\"padding:28px 32px 8px 32px;\">\n        <p style=\"margin:0 0 6px 0;font-size:14px;color:#374151;line-height:1.6;\">\n          The pipeline detected <strong style=\"color:#dc2626;\">${regressions.length} version(s)</strong> with a spike in negative signals this run. Immediate review is recommended.\n        </p>\n      </td></tr>\n\n      ${cards}\n\n      <tr><td style=\"padding:20px 32px 28px 32px;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#fef2f2;border-radius:6px;\">\n          <tr><td style=\"padding:16px;\">\n            <p style=\"margin:0 0 4px 0;font-size:13px;font-weight:600;color:#991b1b;\">Action Required</p>\n            <p style=\"margin:0;font-size:13px;color:#6b7280;line-height:1.6;\">Review the flagged versions and cross-check with recent releases. If a regression is confirmed, escalate to the engineering team immediately.</p>\n          </td></tr>\n        </table>\n      </td></tr>\n\n      <tr><td style=\"background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;\">\n        <p style=\"margin:0;font-size:11px;color:#9ca3af;text-align:center;\">\n          Sent automatically by <strong style=\"color:#6b7280;\">Amazon Discovery Intelligence</strong> · Do not reply to this email\n        </p>\n      </td></tr>\n\n    </table>\n  </td></tr>\n</table>\n\n</body>\n</html>`;\n})()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        -48
+      ],
+      "id": "db233d9d-9607-4b46-92d5-94e9d31af8d2",
+      "name": "Regression Alert Email1",
+      "webhookId": "992c2c21-7592-43ff-ba14-359d629fc720",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rCgYGV1TpeLm5xE2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config Runtime').first().json.body.recipient_email }}",
+        "subject": "=🔍 Discovery Digest — {{ $json.dateStr }}",
+        "message": "={{\n(() => {\n  // ─── Data references ────────────────────────────────────────────────────\n  const groups   = $json.groupSummaries || [];\n  const topGroup = $json.topGroup || {};\n  const meta     = $json._meta || {};\n  const readiness = $json.readiness || { themes: [] };\n  const weekId    = $json.weekId || meta.weekId || '';\n  const signalCount = ($json.allSignals || []).length;\n  const dateStr = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });\n\n  // ─── Visual maps ────────────────────────────────────────────────────────\n  const trendEmoji  = { worsening:'📈', stable:'➡️', improving:'📉' };\n  const trendColor  = { worsening:'#dc2626', stable:'#64748b', improving:'#16a34a' };\n  const moscowColor = { 'Must Have':'#dc2626', 'Should Have':'#ea580c', 'Could Have':'#ca8a04', \"Won't Have\":'#64748b' };\n  const moscowBg    = { 'Must Have':'#fef2f2', 'Should Have':'#fff7ed', 'Could Have':'#fefce8', \"Won't Have\":'#f8fafc' };\n  const readinessEmoji = { READY:'✅', NEEDS_MORE_EVIDENCE:'⚠️', BLOCKED:'❌' };\n  const readinessColor = { READY:'#16a34a', NEEDS_MORE_EVIDENCE:'#ca8a04', BLOCKED:'#dc2626' };\n  const readinessBg    = { READY:'#f0fdf4', NEEDS_MORE_EVIDENCE:'#fefce8', BLOCKED:'#fef2f2' };\n\n  // ─── Section: Regression alert block (conditional) ──────────────────────\n  let regressionsBlock = '';\n  if (meta.regressions && meta.regressions.length > 0) {\n    const cards = meta.regressions.map(r => `\n      <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#fff7f7;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:6px;margin-bottom:8px;\">\n        <tr><td style=\"padding:12px 16px 8px 16px;\">\n          <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n            <td><span style=\"font-size:14px;font-weight:700;color:#111827;\">Version ${r.version}</span></td>\n            <td align=\"right\"><span style=\"display:inline-block;background:#dc2626;color:#ffffff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;\">${r.signal_count} signal${r.signal_count!==1?'s':''}</span></td>\n          </tr></table>\n        </td></tr>\n        <tr><td style=\"padding:0 16px 12px 16px;\">\n          ${(r.top_signals||[]).slice(0,2).map(s => `\n            <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:6px;\"><tr>\n              <td width=\"16\" valign=\"top\" style=\"padding-top:2px;font-size:13px;color:#dc2626;\">•</td>\n              <td style=\"font-size:13px;color:#374151;line-height:1.5;\">${s}</td>\n            </tr></table>`).join('')}\n        </td></tr>\n      </table>`).join('');\n    regressionsBlock = `\n      <tr><td style=\"padding:20px 32px 4px 32px;\">\n        <p style=\"margin:0 0 8px 0;font-size:11px;font-weight:600;letter-spacing:0.8px;color:#9ca3af;text-transform:uppercase;\">⚠️ Regression Alert</p>\n        ${cards}\n      </td></tr>`;\n  }\n\n  // ─── Section: Data quality warning (conditional) ────────────────────────\n  let qualityBlock = '';\n  if (meta.dataQualityWarning) {\n    qualityBlock = `\n      <tr><td style=\"padding:8px 32px;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #ea580c;border-radius:6px;\">\n          <tr><td style=\"padding:10px 14px;font-size:13px;color:#7c2d12;line-height:1.5;\">\n            <strong>Data Quality:</strong> ${meta.dataQualityWarning}\n          </td></tr>\n        </table>\n      </td></tr>`;\n  }\n\n  // ─── Section: Discovery Readiness ───────────────────────────────────────\n  const topGroupName = topGroup.group_name || topGroup.group_id || 'top group';\n  const overallReadiness = topGroup.readiness || 'NEEDS_MORE_EVIDENCE';\n  const themesHtml = (readiness.themes || []).map(t => `\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:8px;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;\">\n      <tr><td style=\"padding:10px 14px;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n          <td><span style=\"font-size:13px;font-weight:600;color:#111827;\">${t.theme_label}</span></td>\n          <td align=\"right\"><span style=\"font-size:12px;font-weight:600;color:${readinessColor[t.readiness] || '#6b7280'};\">${readinessEmoji[t.readiness] || ''} ${t.readiness}</span></td>\n        </tr></table>\n        ${(t.gap_reasons && t.gap_reasons.length) ? `<p style=\"margin:6px 0 0 0;font-size:12px;color:#6b7280;line-height:1.5;\"><strong>Gaps:</strong> ${t.gap_reasons.join(' · ')}</p>` : ''}\n        ${(t.recommended_next_steps && t.recommended_next_steps.length) ? `<p style=\"margin:4px 0 0 0;font-size:12px;color:#4f46e5;line-height:1.5;\"><strong>Next:</strong> ${t.recommended_next_steps[0]}</p>` : ''}\n      </td></tr>\n    </table>`).join('');\n  const readinessBlock = `\n    <tr><td style=\"padding:8px 32px;\">\n      <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:${readinessBg[overallReadiness] || '#f8fafc'};border:1px solid #e5e7eb;border-left:4px solid ${readinessColor[overallReadiness] || '#4f46e5'};border-radius:6px;\">\n        <tr><td style=\"padding:14px 16px;\">\n          <p style=\"margin:0 0 4px 0;font-size:11px;font-weight:600;letter-spacing:0.8px;color:#9ca3af;text-transform:uppercase;\">Discovery Readiness · ${topGroupName}</p>\n          <p style=\"margin:0;font-size:13px;color:${readinessColor[overallReadiness] || '#374151'};font-weight:600;\">${readinessEmoji[overallReadiness] || ''} ${overallReadiness.replace(/_/g,' ')}</p>\n          ${topGroup.readiness_summary ? `<p style=\"margin:6px 0 0 0;font-size:13px;color:#374151;line-height:1.5;\">${topGroup.readiness_summary}</p>` : ''}\n          ${themesHtml}\n        </td></tr>\n      </table>\n    </td></tr>`;\n\n  // ─── Section: Feature Group Ranking Cards ───────────────────────────────\n  const rankingCards = groups.map((g, i) => {\n    const rank = i + 1;\n    const themesList = (g.themes || []).map(t => `\n      <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:4px;\"><tr>\n        <td width=\"20\" valign=\"top\" style=\"padding-top:2px;font-size:12px;color:${trendColor[t.trend_direction] || '#64748b'};\">${trendEmoji[t.trend_direction] || '·'}</td>\n        <td style=\"font-size:13px;color:#374151;line-height:1.5;\">\n          <strong>${t.theme_label}</strong> <span style=\"color:#9ca3af;\">(${t.signal_count} signal${t.signal_count!==1?'s':''})</span>\n        </td>\n      </tr></table>`).join('');\n\n    const d = g.severity_delta;\n    let deltaHtml;\n    if (d === null || d === undefined) deltaHtml = `<span style=\"font-size:11px;color:#9ca3af;\">First run</span>`;\n    else if (d === 0) deltaHtml = `<span style=\"font-size:11px;color:#64748b;\">No change</span>`;\n    else {\n      const isWorse = d > 0;\n      const color = isWorse ? '#dc2626' : '#16a34a';\n      const arrow = isWorse ? '▲' : '▼';\n      deltaHtml = `<span style=\"font-size:11px;color:${color};font-weight:600;\">${arrow} RICE ${Math.abs(d)} vs last week</span>`;\n    }\n\n    return `\n      <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border:1px solid #e5e7eb;border-left:4px solid ${moscowColor[g.moscow] || '#64748b'};border-radius:6px;margin-bottom:10px;\">\n        <tr><td style=\"padding:14px 16px;\">\n          <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n            <td>\n              <span style=\"font-size:11px;font-weight:600;color:#9ca3af;\">#${rank}</span>\n              <span style=\"font-size:15px;font-weight:700;color:#111827;margin-left:4px;\">${g.group_name}</span>\n            </td>\n            <td align=\"right\">\n              <span style=\"font-size:18px;font-weight:700;color:#111827;\">${g.rice_score}</span>\n              <span style=\"font-size:11px;color:#9ca3af;margin-left:2px;\">RICE</span>\n            </td>\n          </tr></table>\n          <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:6px;\"><tr>\n            <td>\n              <span style=\"display:inline-block;background:${moscowBg[g.moscow] || '#f8fafc'};color:${moscowColor[g.moscow] || '#64748b'};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;\">${g.moscow}</span>\n              <span style=\"font-size:12px;color:#6b7280;margin-left:8px;\">${g.signal_count} signal${g.signal_count!==1?'s':''} · severity ${g.avg_severity} · ${trendEmoji[g.trend_direction] || ''} ${g.trend_direction}</span>\n            </td>\n            <td align=\"right\">${deltaHtml}</td>\n          </tr></table>\n          ${themesList ? `<div style=\"margin-top:8px;padding-top:8px;border-top:1px solid #f3f4f6;\">${themesList}</div>` : ''}\n        </td></tr>\n      </table>`;\n  }).join('');\n\n  // ─── Section: Source breakdown line (if available) ──────────────────────\n  const sourceBreakdown = meta.sourceBreakdown\n    ? `<br><span style=\"color:#94a3b8;\">from ${meta.sourceBreakdown.total || ''} raw · App Store: ${meta.sourceBreakdown.app_store || 0} · Play Store: ${meta.sourceBreakdown.play_store || 0} · Amazon Reviews: ${meta.sourceBreakdown.amazon_review || 0}</span>`\n    : '';\n\n  // ─── Assemble final HTML ────────────────────────────────────────────────\n  return `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>Amazon Discovery Digest</title>\n</head>\n<body style=\"margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f4f5;padding:32px 0;\">\n  <tr><td align=\"center\">\n    <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);\">\n\n      <tr><td style=\"background:#1e293b;padding:24px 32px;\">\n        <p style=\"margin:0 0 4px 0;font-size:11px;font-weight:600;letter-spacing:1.2px;color:#94a3b8;text-transform:uppercase;\">Amazon Discovery Intelligence</p>\n        <h1 style=\"margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;\">🔍 Weekly Discovery Digest</h1>\n      </td></tr>\n\n      <tr><td style=\"background:#f1f5f9;padding:14px 32px;border-bottom:1px solid #e2e8f0;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n          <td style=\"font-size:13px;color:#475569;\">\n            📅 <strong>${dateStr}</strong> &nbsp;&nbsp;·&nbsp;&nbsp; 🗓 Week: <strong>${weekId}</strong>\n          </td>\n          <td align=\"right\" style=\"font-size:12px;color:#64748b;\">\n            📊 <strong>${signalCount}</strong> signal${signalCount!==1?'s':''} synthesized${sourceBreakdown}\n          </td>\n        </tr></table>\n      </td></tr>\n\n      <tr><td style=\"padding:24px 32px 4px 32px;\">\n        <p style=\"margin:0;font-size:14px;color:#374151;line-height:1.6;\">\n          Top focus this week: <strong style=\"color:#111827;\">${topGroupName}</strong>. ${topGroup.readiness_summary || 'See readiness assessment below.'}\n        </p>\n      </td></tr>\n\n      ${regressionsBlock}\n      ${qualityBlock}\n      ${readinessBlock}\n\n      <tr><td style=\"padding:20px 32px 4px 32px;\">\n        <p style=\"margin:0 0 12px 0;font-size:11px;font-weight:600;letter-spacing:0.8px;color:#9ca3af;text-transform:uppercase;\">📊 Feature Group Rankings</p>\n        ${rankingCards}\n      </td></tr>\n\n      <tr><td style=\"background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;\">\n        <p style=\"margin:0;font-size:11px;color:#9ca3af;text-align:center;line-height:1.5;\">\n          Generated automatically by <strong style=\"color:#6b7280;\">Amazon Discovery Intelligence</strong> · ${new Date().toISOString()}<br>\n          Do not reply to this email\n        </p>\n      </td></tr>\n\n    </table>\n  </td></tr>\n</table>\n\n</body>\n</html>`;\n})()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        6192,
+        144
+      ],
+      "id": "e58d0024-32b3-4e61-b057-1e0c8e469705",
+      "name": "Digest Email",
+      "webhookId": "992c2c21-7592-43ff-ba14-359d629fc720",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rCgYGV1TpeLm5xE2",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Mock Mode": {
+      "main": [
+        [
+          {
+            "node": "Mock or Live",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock or Live": {
+      "main": [
+        [
+          {
+            "node": "Mock Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Signals": {
+      "main": [
+        [
+          {
+            "node": "Merge all Souces",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge all Souces": {
+      "main": [
+        [
+          {
+            "node": "Normalize Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Schema": {
+      "main": [
+        [
+          {
+            "node": "Prepare Gemini Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Gemini Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Flash - Clean Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Flash - Clean Signal": {
+      "main": [
+        [
+          {
+            "node": "Parse + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Validate": {
+      "main": [
+        [
+          {
+            "node": "Regression Detection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regression Detection": {
+      "main": [
+        [
+          {
+            "node": "Regresssion IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Runtime": {
+      "main": [
+        [
+          {
+            "node": "Check Mock Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regresssion IF": {
+      "main": [
+        [
+          {
+            "node": "Regression Alert Email1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Config": {
+      "main": [
+        [
+          {
+            "node": "Prepare Synthesis Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Synthesis Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Flash - Synthesize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Flash - Synthesize": {
+      "main": [
+        [
+          {
+            "node": "Parse + Validate - Synthesis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse + Validate - Synthesis": {
+      "main": [
+        [
+          {
+            "node": "Format for Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Sheets": {
+      "main": [
+        [
+          {
+            "node": "Write Signals to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Last Week Data": {
+      "main": [
+        [
+          {
+            "node": "Aggregate by Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Signals to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Fetch Last Week Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate by Group": {
+      "main": [
+        [
+          {
+            "node": "Calculate RICE Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate RICE Scores": {
+      "main": [
+        [
+          {
+            "node": "Assign MoSCoW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign MoSCoW": {
+      "main": [
+        [
+          {
+            "node": "Prepare Readiness Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Readiness Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Flash - Readiness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Flash - Readiness": {
+      "main": [
+        [
+          {
+            "node": "Parse Readiness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Readiness": {
+      "main": [
+        [
+          {
+            "node": "Write Scores to Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Scores to Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Prepare Agent 6 Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Agent 6 Payload": {
+      "main": [
+        [
+          {
+            "node": "Format Digest Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Digest Email": {
+      "main": [
+        [
+          {
+            "node": "Digest Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        []
+      ]
+    },
+    "Pipeline Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config Runtime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config Runtime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regression Alert Email1": {
+      "main": [
+        []
+      ]
+    },
+    "Digest Email": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "069e4c6e-e2b8-4891-aad9-1d04531f6a0e",
+  "meta": {
+    "instanceId": "483d7509ef0e388db27cae37e7f6861791dac5932aac9ca65724066ad5cdc4d1"
+  },
+  "id": "DrBg5kQ08PF1U7J6",
+  "tags": []
+}

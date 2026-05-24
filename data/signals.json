@@ -1,0 +1,178 @@
+[
+  {
+    "text": "Updated to 5.2 yesterday. Today I Buy Now a $340 ultrawide monitor and it ships to my old apartment in Austin. I haven't lived there since 2021. The one-tap checkout on the new build doesn't show you which address it's using — I had to scroll three screens deep in the order confirmation to even find out. Support won't reroute, won't cancel, said file an A-to-z claim once it's delivered. Two-year-old default address silently restored by the update.",
+    "source": "app_store",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "since the 5.2 update fingerprint login is a joke on my pixel 8. scans, screen flickers, throws me to password, password works, next time same dance. tried clearing fingerprints, re-enrolling, reinstalling — same loop. just disable biometric auth for the app at this point its faster to type my 18 char password 6 times a day",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "Just got this month's Subscribe & Save shipment and the 5.2 update apparently reset every frequency on my account. Vitamin D went from every 4 months back to monthly. Coffee from every 2 months to monthly. Dog food monthly when I had it on every 6 weeks. I now have 7 months of vitamins, 6 months of coffee, and a 40lb bag of food I don't need. Tier 1 says they'll refund the duplicates but the system won't let them restore the original cadences — I have to manually rebuild every single subscription.",
+    "source": "app_store",
+    "date": "2026-05-17",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "After the 5.2 update I cant upload photos for returns anymore. Camera icon does nothing, gallery picker dismisses itself instantly. Trying to return a damaged $260 espresso machine and the return flow literally cannot be completed in the app. Did it on the website which works fine. Why is the app even there. iPhone 15 Pro, iOS 19.2.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "Ordered a 1m black USB-C cable. Received a 2m WHITE one. Why? Because on 5.2 the variation picker on product pages updates the listing IMAGE as you scroll through colors/sizes but does NOT update your underlying selection. You see white in the photo, think you've picked white, the order goes through with whatever the page loaded with. Tested it on 4 different listings. Return shipping for a $9 cable is more than the cable. Drawer.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "30+ saved searches for distributor parts. Gone after 5.2. The saved-searches section in the app is just an empty state. I run a small electronics repair shop and used these multiple times a week. Support said use the desktop site. Web has all my searches still. The app apparently has its own local cache for this and the update nuked it. Why is anything user-generated stored client-side in 2026.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "On 5.2, 2FA codes don't arrive. Tried SMS — nothing for 10+ min then it shows up in a batch of 4. Tried email backup — same. Authenticator app option is greyed out entirely. Locked out of my primary buying account for 4 days now mid-month, can't approve any orders for my office. The 'recovery email' goes to a Gmail I lost access to in 2014. There needs to be a way to verify identity that doesn't depend on this app working.",
+    "source": "play_store",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "Why does the tracking map on 5.2 show my driver in the middle of the atlantic ocean. I live in Phoenix AZ. ETA jumps between 'today 6pm' and 'tomorrow 11am' every couple of refreshes. Sometimes the map just shows 'something went wrong' and a retry button that does nothing. Was perfectly stable on 5.1.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "Bought a SanDisk Extreme 128GB. Listing said 'Ships from and sold by Amazon.com.' Came in an Amazon poly mailer with an Amazon shipping label. Card failed at 38GB written, files corrupted. Ran ChipGenius — it's a Phison controller, not a SanDisk one. Counterfeit. This is the commingled inventory problem and Amazon's response is just 'return it.' Returned it, bought from B&H instead. The replacement they offered was also a 'ships from Amazon' SanDisk so presumably also counterfeit. SanDisk on Amazon is essentially dead.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Searched 'usb c hub'. First six results: sponsored. Result 7 through 10: 'Amazon's Choice' badges on brands i have never heard of with 14 reviews and 4.7 stars. To find Anker or UGREEN i have to scroll past row 12. The 'Choice' badge does not appear to be based on anything but ad spend now. Search was literally the one thing this company was supposed to be good at.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Returned a $180 floor lamp on May 1. UPS shows the package delivered to Amazon's Carteret NJ facility on May 5, signed for. Today (May 17) the return status flipped from 'awaiting' to 'we have not received your return' and my refund hold became a re-charge. I have the UPS receipt, the SCAN form, and the signature confirmation. Filed an A-to-z claim 11 days ago — no response, no contact, no human has looked at it. This is theft with an algorithm.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "My dog's food has been on Subscribe & Save since 2024. Original price $42/bag. Last 4 shipments: $48, $53, $57, $61. Zero notifications before any of these price changes. The 'save 15%' badge is comparing against a regular price that's 45% higher than what I subscribed at. They are slowly inflating my anchor price and using the discount badge to hide it. There is no setting to opt out of price changes — you can only cancel after you've already been charged.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Phone cart and desktop cart have been completely separate for at least three weeks. Add 4 items on the train using the app — open my laptop at the office, empty cart. Refresh, log out, log back in — still empty. Open the phone again, the 4 items are still there. Same login. Same prime account. Add something on desktop, phone cart doesn't update. They are running two parallel carts and pretending they're one.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Looking at a $340 espresso machine. First 60 reviews on the listing are all 5 stars and refer to a coffee GRINDER. Different product entirely, different brand, sold by a different seller. The 'variations' tab is being abused to aggregate reviews across unrelated SKUs to inflate the star count. Filter to just this product: 23 reviews, 2.4 stars, half of them describing the same broken steam wand. Amazon is letting sellers launder reviews and the default view hides it.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Account locked for 'suspicious activity' in the middle of placing a $1240 monitor order. The lock notification links to a 'verify your identity' screen in the app that is just blank — white screen, no controls. Called support, 87 minute hold. By the time someone answered, the deal had ended and the same monitor was $210 more expensive. No raincheck, no comp, the rep said 'we can't influence pricing.' What is the point of the in-app verify flow if it's not implemented.",
+    "source": "app_store",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "'Delivered to Amazon Hub Locker — Apollo.' No locker code email ever arrived. Not in inbox, spam, promotions, all mail, nowhere. The 'resend code' button in the app does nothing — no toast, no error, no email follows. Tried three times across two days. Package auto-returned to Amazon after 72 hours. Now waiting 5-10 business days for the refund on something I needed for a trip on Monday. The locker code email is broken on my account, apparently, and there is no way to fix it from the app.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Returned a humidifier that arrived with a cracked base — completely sealed, never opened. Refunded $87 on a $101 order. The missing $14 is a 'restocking fee for opened items.' THE ITEM WAS NEVER OPENED. Photographed the unbroken security tape. Listing said 'Ships from and sold by Amazon.' There is no mention of any restocking fee anywhere in the listing or in the return flow. Chat support's response: 'this is automated, please escalate via email.' That email address auto-replies with a link back to the chat I just used. There is no human on the other end.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "'Prime eligible only' filter is broken. Of 24 filtered results in a search yesterday, 9 actually shipped 2-day. The other 15 said 'arrives in 5-7 business days' once I clicked through. The filter appears to be matching items where the seller has Prime SOMEWHERE in their catalog, not on the specific SKU you're filtering. This has been broken for at least 4 months — multiple support tickets, all closed as 'working as intended.' If 'eligible' means 'sometimes maybe' that should be the badge.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Used a 20% off coupon code at checkout. Order summary showed the discount, total reflected it, hit Place Order. Confirmation email arrived ten minutes later: full price, no discount. Third order in three weeks this has happened on. The coupon vanishes between the Place Order button and the email. Chat support reapplies it manually each time but won't tell me why it's happening, just 'a known issue our engineers are aware of.' Three weeks is enough time to disable the coupon code if it's broken.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "I have turned off 'Deals and promotions' notifications four separate times in the last three months. Every app update — and there are a lot of them — the toggle silently flips back to ON and I'm getting 6-8 lightning deal pings a day. There is no way to make this stop short of disabling all Amazon notifications system-wide, which also kills my 'package delivered' alerts. The toggle is purely cosmetic. This is a dark pattern.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "app works fine for what i use it for, ordering stuff",
+    "source": "play_store",
+    "date": "2026-05-11",
+    "rating": 4,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "its ok i guess. four stars",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 3,
+    "severity_raw": null,
+    "app_version": null
+  }
+]

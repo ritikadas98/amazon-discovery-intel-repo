@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.*
+*.local
+gcp-service-account.json
+.git
+.gitignore
+.github
+Amazon Discovery Intelligence(4).json
+n8n-gcp-hosting-guide.md
+README.md
+.DS_Store
+*.log
+.claude
