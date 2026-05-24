@@ -56,6 +56,16 @@ gcloud services enable \
   cloudscheduler.googleapis.com \
   cloudbuild.googleapis.com
 
+# Cloud Build (since 2024) no longer auto-grants permissions to the Compute
+# Engine default SA, which is what `gcloud run deploy --source .` uses for builds.
+# Grant the bundled cloudbuild.builds.builder role so source uploads/builds work.
+echo "▶ Granting Cloud Build permissions to the Compute Engine default SA…"
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${COMPUTE_SA}" \
+  --role="roles/cloudbuild.builds.builder" --quiet >/dev/null
+
 # ─── 3. Re-IAM the n8n-sa service account ─────────────────────────────────────
 echo "▶ Dropping roles/cloudsql.client from ${SA}…"
 gcloud projects remove-iam-policy-binding "${PROJECT_ID}" \
