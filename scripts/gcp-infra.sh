@@ -28,8 +28,13 @@ export SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 export SCHEDULER_SA_NAME="scheduler-invoker"
 export SCHEDULER_SA="${SCHEDULER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
-echo "Project: ${PROJECT_ID}"
-echo "Region : ${REGION}"
+# Vertex AI lives in the same project as Cloud Run by default.
+# (To use a different project, override VERTEX_PROJECT_ID and grant cross-project IAM manually.)
+export VERTEX_PROJECT_ID="${VERTEX_PROJECT_ID:-${PROJECT_ID}}"
+
+echo "Project (Cloud Run): ${PROJECT_ID}"
+echo "Project (Vertex AI): ${VERTEX_PROJECT_ID}"
+echo "Region             : ${REGION}"
 echo
 
 # ─── 1. Decommission old n8n stack ────────────────────────────────────────────
@@ -90,12 +95,24 @@ else
   unset SMTP_PASS_VALUE
 fi
 
-echo "▶ Granting secretAccessor on smtp-pass and gemini-api-key to ${SA}…"
-for secret in smtp-pass gemini-api-key; do
-  gcloud secrets add-iam-policy-binding "$secret" \
-    --member="serviceAccount:${SA}" \
-    --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
-done
+echo "▶ Granting secretAccessor on smtp-pass to ${SA}…"
+gcloud secrets add-iam-policy-binding smtp-pass \
+  --member="serviceAccount:${SA}" \
+  --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
+
+# ─── 5b. Vertex AI: enable + grant aiplatform.user ────────────────────────────
+echo "▶ Enabling Vertex AI on ${VERTEX_PROJECT_ID}…"
+gcloud services enable aiplatform.googleapis.com --project="${VERTEX_PROJECT_ID}" --quiet
+
+echo "▶ Granting roles/aiplatform.user to ${SA} on ${VERTEX_PROJECT_ID}…"
+gcloud projects add-iam-policy-binding "${VERTEX_PROJECT_ID}" \
+  --member="serviceAccount:${SA}" \
+  --role="roles/aiplatform.user" --quiet >/dev/null
+
+# ─── 5c. Clean up the old AI Studio API-key secret ────────────────────────────
+echo "▶ Deleting deprecated gemini-api-key secret (if present)…"
+gcloud secrets delete gemini-api-key --quiet 2>/dev/null \
+  || echo "  (already absent)"
 
 # ─── 6. Scheduler invoker SA ──────────────────────────────────────────────────
 if gcloud iam service-accounts describe "${SCHEDULER_SA}" >/dev/null 2>&1; then

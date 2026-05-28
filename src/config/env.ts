@@ -2,7 +2,10 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const schema = z.object({
-  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  // Vertex AI (auth via ADC — Cloud Run runtime SA in prod, gcp-service-account.json locally)
+  VERTEX_PROJECT_ID: z.string().min(1, 'VERTEX_PROJECT_ID is required'),
+  VERTEX_REGION: z.string().default('asia-south1'),
+  VERTEX_MODEL: z.string().default('gemini-2.5-flash'),
 
   // Optional: only used locally. On Cloud Run, the runtime SA is picked up via ADC.
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),

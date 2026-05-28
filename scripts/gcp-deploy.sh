@@ -24,6 +24,11 @@ export SMTP_USER="${SMTP_USER:-ritikadas98@gmail.com}"
 export DEFAULT_RECIPIENT="${DEFAULT_RECIPIENT:-ritikadas98@gmail.com}"
 export CORS_ORIGIN="${CORS_ORIGIN:-*}"
 
+# Vertex AI (defaults to same project as Cloud Run; override to use a different one)
+export VERTEX_PROJECT_ID="${VERTEX_PROJECT_ID:-${PROJECT_ID}}"
+export VERTEX_REGION="${VERTEX_REGION:-asia-south1}"
+export VERTEX_MODEL="${VERTEX_MODEL:-gemini-2.5-flash}"
+
 # ─── 1. Sanity check ──────────────────────────────────────────────────────────
 if [[ ! -f Dockerfile ]]; then
   echo "❌ No Dockerfile in $(pwd). Run this from the project root." >&2
@@ -41,8 +46,8 @@ gcloud run deploy "${SERVICE}" \
   --min-instances=0 --max-instances=2 \
   --timeout=120 \
   --allow-unauthenticated \
-  --set-env-vars="USE_MOCK=true,SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID},SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB},SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB},SMTP_HOST=smtp.gmail.com,SMTP_PORT=465,SMTP_USER=${SMTP_USER},EMAIL_FROM=${EMAIL_FROM},DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT},CORS_ORIGIN=${CORS_ORIGIN}" \
-  --set-secrets="GEMINI_API_KEY=gemini-api-key:latest,SMTP_PASS=smtp-pass:latest"
+  --set-env-vars="USE_MOCK=true,VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID},VERTEX_REGION=${VERTEX_REGION},VERTEX_MODEL=${VERTEX_MODEL},SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID},SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB},SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB},SMTP_HOST=smtp.gmail.com,SMTP_PORT=465,SMTP_USER=${SMTP_USER},EMAIL_FROM=${EMAIL_FROM},DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT},CORS_ORIGIN=${CORS_ORIGIN}" \
+  --set-secrets="SMTP_PASS=smtp-pass:latest"
 
 # ─── 3. Get URL ───────────────────────────────────────────────────────────────
 SERVICE_URL=$(gcloud run services describe "${SERVICE}" \
