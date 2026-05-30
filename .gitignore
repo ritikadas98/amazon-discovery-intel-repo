@@ -1,5 +1,8 @@
 node_modules/
 dist/
+frontend/dist/
+frontend/.env
+frontend/.firebase/
 .env
 *.local
 gcp-service-account.json

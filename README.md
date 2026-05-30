@@ -97,6 +97,57 @@ If `recipient_email` is omitted, the pipeline uses `DEFAULT_RECIPIENT` from `.en
 | "Gmail account" (OAuth2) | Skipped — use a Gmail app password instead (`SMTP_PASS`). Generate one at https://myaccount.google.com/apppasswords after enabling 2FA. |
 | "RSMTP account" | Same as above — use `SMTP_PASS`. |
 
+## Frontend
+
+A React + Vite + shadcn dashboard lives in `frontend/`. It consumes the Cloud Run API and renders three pages:
+- **Dashboard** (`/`) — latest pipeline run: KPI strip, feature-group RICE rankings chart, discovery readiness assessment
+- **History** (`/history`) — table of past weekly runs
+- **Week detail** (`/week/:weekId`) — overview tab (same as dashboard) + Signals tab with client-side filters
+
+The top bar has a **Run pipeline** button that opens a confirm dialog → simulated-progress stepper while the backend works (~30s) → toast + automatic data refresh on completion.
+
+### Dev
+
+```bash
+cd frontend
+npm install
+npm run dev   # http://localhost:5173
+```
+
+By default the frontend talks to the production Cloud Run URL. To point it at a local backend during development, create `frontend/.env`:
+
+```
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+### Build & deploy (Firebase Hosting)
+
+```bash
+cd frontend
+npm run build         # → frontend/dist/
+
+npx firebase login
+npx firebase init hosting   # public dir: dist, single-page-app: yes, no GitHub auto-deploys
+npx firebase deploy --only hosting
+```
+
+After the first deploy, **tighten CORS on the backend** to the new origin:
+```bash
+CORS_ORIGIN=https://amazon-discovery-<hash>.web.app bash scripts/gcp-deploy.sh
+```
+
+### Stack
+
+| Layer | Choice |
+|---|---|
+| Build | Vite + TypeScript |
+| UI | shadcn/ui on Tailwind v4 |
+| Routing | React Router v6 |
+| Data | TanStack Query (react-query) |
+| Charts | Recharts (via shadcn's chart wrapper) |
+| Icons | lucide-react |
+| Toasts | Sonner (via shadcn) |
+
 ## Deploying to GCP (Cloud Run)
 
 Two scripts in `scripts/` do the whole setup. Run order:

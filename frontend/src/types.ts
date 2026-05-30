@@ -1,0 +1,110 @@
+// Mirrors backend's response shapes. Source: backend src/types.ts + src/server.ts.
+
+export type Source = 'app_store' | 'play_store' | 'amazon_review' | 'unknown';
+export type TrendDirection = 'worsening' | 'stable' | 'improving';
+export type MoSCoW = 'Must Have' | 'Should Have' | 'Could Have' | "Won't Have";
+export type Readiness = 'READY' | 'NEEDS_MORE_EVIDENCE' | 'BLOCKED';
+
+/** What POST /run-pipeline returns. */
+export interface PipelineResult {
+  status: 'complete';
+  weekId: string;
+  signalCount: number;
+  topGroup: string;
+  topRiceScore: number;
+  topMoscow: MoSCoW;
+  overallReadiness: Readiness | undefined;
+  regressionCount: number;
+  completedAt: string;
+}
+
+/** A row from the "Weekly Digests" sheet (everything comes back as strings). */
+export interface DigestRow {
+  row_number: string;
+  'Week ID': string;
+  'Feature Group ID': string;
+  'Top Theme': string;
+  'Signal Count': string;
+  'Avg Severity': string;
+  'Trend Direction': TrendDirection | string;
+  'Top RICE Score': string;
+  'Top MoSCoW': MoSCoW | string;
+  'RICE Scores JSON': string;
+  'MoSCoW JSON': string;
+  'Data Quality Warning': string;
+  'WoW Delta JSON': string;
+  'Created At': string;
+  'Discovery Readiness JSON': string;
+  'Overall Group Readiness': Readiness | string;
+  'Themes Ready Count': string;
+  'Themes Blocked Count': string;
+}
+
+/** A row from the "Signals" sheet. */
+export interface SignalRow {
+  row_number: string;
+  ID: string;
+  Text: string;
+  Source: Source | string;
+  Date: string;
+  Rating: string;
+  'Severity Score': string;
+  'Feature Group ID': string;
+  'Theme ID': string;
+  'Theme Label': string;
+  'Week ID': string;
+  'App Version': string;
+  'Version Flagged': 'TRUE' | 'FALSE' | string;
+  'Created At': string;
+}
+
+/** GET /digests response envelope. */
+export interface DigestsResponse {
+  count: number;
+  returned: number;
+  rows: DigestRow[];
+}
+
+/** GET /signals response envelope. */
+export interface SignalsResponse {
+  count: number;
+  returned: number;
+  week: string | null;
+  rows: SignalRow[];
+}
+
+/** Parsed shape of the "RICE Scores JSON" / "MoSCoW JSON" columns. */
+export interface RiceScoreEntry {
+  id: string;
+  score: number;
+}
+export interface MoscowEntry {
+  id: string;
+  moscow: MoSCoW;
+}
+export interface WoWDeltaEntry {
+  id: string;
+  delta: number | null;
+}
+
+/** Parsed shape of "Discovery Readiness JSON". */
+export interface ThemeReadiness {
+  theme_id: string;
+  theme_label: string;
+  readiness: Readiness;
+  criteria: {
+    signal_volume: 'strong' | 'moderate' | 'weak';
+    source_diversity: 'strong' | 'moderate' | 'weak';
+    severity_consistency: 'strong' | 'moderate' | 'weak';
+    trend_signal: 'strong' | 'moderate' | 'weak';
+  };
+  gap_reasons: string[];
+  recommended_next_steps: string[];
+}
+
+export interface ReadinessResult {
+  group_id: string;
+  overall_readiness: Readiness;
+  readiness_summary: string;
+  themes: ThemeReadiness[];
+}
