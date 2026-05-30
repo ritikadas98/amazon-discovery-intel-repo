@@ -1,6 +1,6 @@
 [
   {
-    "text": "Updated to 5.2 yesterday. Today I Buy Now a $340 ultrawide monitor and it ships to my old apartment in Austin. I haven't lived there since 2021. The one-tap checkout on the new build doesn't show you which address it's using — I had to scroll three screens deep in the order confirmation to even find out. Support won't reroute, won't cancel, said file an A-to-z claim once it's delivered. Two-year-old default address silently restored by the update.",
+    "text": "Updated to 5.2 yesterday. Today I Buy Now a $340 ultrawide monitor and it ships to my old apartment in Austin. I haven't lived there since 2021. The one-tap checkout on the new build doesn't show you which address it's using — I had to scroll three screens deep in the order confirmation to even find out. Two-year-old default address silently restored by the update.",
     "source": "app_store",
     "date": "2026-05-16",
     "rating": 1,
@@ -8,7 +8,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "since the 5.2 update fingerprint login is a joke on my pixel 8. scans, screen flickers, throws me to password, password works, next time same dance. tried clearing fingerprints, re-enrolling, reinstalling — same loop. just disable biometric auth for the app at this point its faster to type my 18 char password 6 times a day",
+    "text": "since the 5.2 update fingerprint login is a joke on my pixel 8. scans, screen flickers, throws me to password, password works, next time same dance. tried clearing fingerprints, re-enrolling, reinstalling — same loop.",
     "source": "play_store",
     "date": "2026-05-15",
     "rating": 1,
@@ -16,7 +16,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "Just got this month's Subscribe & Save shipment and the 5.2 update apparently reset every frequency on my account. Vitamin D went from every 4 months back to monthly. Coffee from every 2 months to monthly. Dog food monthly when I had it on every 6 weeks. I now have 7 months of vitamins, 6 months of coffee, and a 40lb bag of food I don't need. Tier 1 says they'll refund the duplicates but the system won't let them restore the original cadences — I have to manually rebuild every single subscription.",
+    "text": "Just got this month's Subscribe & Save shipment and the 5.2 update apparently reset every frequency on my account. Vitamin D went from every 4 months back to monthly. Coffee from every 2 months to monthly. I now have 7 months of vitamins, 6 months of coffee, and a 40lb bag of food I don't need.",
     "source": "app_store",
     "date": "2026-05-17",
     "rating": 1,
@@ -24,7 +24,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "After the 5.2 update I cant upload photos for returns anymore. Camera icon does nothing, gallery picker dismisses itself instantly. Trying to return a damaged $260 espresso machine and the return flow literally cannot be completed in the app. Did it on the website which works fine. Why is the app even there. iPhone 15 Pro, iOS 19.2.",
+    "text": "After the 5.2 update I cant upload photos for returns anymore. Camera icon does nothing, gallery picker dismisses itself instantly. Trying to return a damaged $260 espresso machine and the return flow literally cannot be completed in the app. Did it on the website which works fine. iPhone 15 Pro, iOS 19.2.",
     "source": "app_store",
     "date": "2026-05-14",
     "rating": 1,
@@ -32,7 +32,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "Ordered a 1m black USB-C cable. Received a 2m WHITE one. Why? Because on 5.2 the variation picker on product pages updates the listing IMAGE as you scroll through colors/sizes but does NOT update your underlying selection. You see white in the photo, think you've picked white, the order goes through with whatever the page loaded with. Tested it on 4 different listings. Return shipping for a $9 cable is more than the cable. Drawer.",
+    "text": "Ordered a 1m black USB-C cable. Received a 2m WHITE one. Why? Because on 5.2 the variation picker on product pages updates the listing IMAGE as you scroll through colors/sizes but does NOT update your underlying selection. You see white in the photo, think you've picked white, the order goes through with whatever the page loaded with.",
     "source": "play_store",
     "date": "2026-05-13",
     "rating": 2,
@@ -40,7 +40,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "30+ saved searches for distributor parts. Gone after 5.2. The saved-searches section in the app is just an empty state. I run a small electronics repair shop and used these multiple times a week. Support said use the desktop site. Web has all my searches still. The app apparently has its own local cache for this and the update nuked it. Why is anything user-generated stored client-side in 2026.",
+    "text": "30+ saved searches for distributor parts. Gone after 5.2. The saved-searches section in the app is just an empty state. I run a small electronics repair shop and used these multiple times a week. Support said use the desktop site. Web has all my searches still.",
     "source": "app_store",
     "date": "2026-05-12",
     "rating": 2,
@@ -48,7 +48,7 @@
     "app_version": "5.2"
   },
   {
-    "text": "On 5.2, 2FA codes don't arrive. Tried SMS — nothing for 10+ min then it shows up in a batch of 4. Tried email backup — same. Authenticator app option is greyed out entirely. Locked out of my primary buying account for 4 days now mid-month, can't approve any orders for my office. The 'recovery email' goes to a Gmail I lost access to in 2014. There needs to be a way to verify identity that doesn't depend on this app working.",
+    "text": "On 5.2, 2FA codes don't arrive. Tried SMS — nothing for 10+ min then it shows up in a batch of 4. Tried email backup — same. Authenticator app option is greyed out entirely. Locked out of my primary buying account for 4 days now mid-month, can't approve any orders for my office.",
     "source": "play_store",
     "date": "2026-05-16",
     "rating": 1,
@@ -64,7 +64,24 @@
     "app_version": "5.2"
   },
   {
-    "text": "Bought a SanDisk Extreme 128GB. Listing said 'Ships from and sold by Amazon.com.' Came in an Amazon poly mailer with an Amazon shipping label. Card failed at 38GB written, files corrupted. Ran ChipGenius — it's a Phison controller, not a SanDisk one. Counterfeit. This is the commingled inventory problem and Amazon's response is just 'return it.' Returned it, bought from B&H instead. The replacement they offered was also a 'ships from Amazon' SanDisk so presumably also counterfeit. SanDisk on Amazon is essentially dead.",
+    "text": "Account locked for 'suspicious activity' immediately after installing the 5.2 update. The 'verify your identity' screen the lock notification points to is just a blank white screen — no controls. Called support, 87 minute hold, by the time they answered the deal I was checking out had ended.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+  {
+    "text": "After 5.2 my one-click checkout silently downgraded the shipping I'd selected. I had set Saturday delivery as default for an order, hit Buy Now, got a confirmation saying Tuesday. Re-checked the order, the shipping line is just 'Standard.' No option to change post-confirm. $4 difference but the principle stings.",
+    "source": "app_store",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": "5.2"
+  },
+
+  {
+    "text": "Bought a SanDisk Extreme 128GB. Listing said 'Ships from and sold by Amazon.com.' Came in an Amazon poly mailer with an Amazon shipping label. Card failed at 38GB written, files corrupted. Ran ChipGenius — it's a Phison controller, not a SanDisk one. Counterfeit. This is the commingled inventory problem.",
     "source": "amazon_review",
     "date": "2026-05-14",
     "rating": 1,
@@ -72,7 +89,7 @@
     "app_version": null
   },
   {
-    "text": "Searched 'usb c hub'. First six results: sponsored. Result 7 through 10: 'Amazon's Choice' badges on brands i have never heard of with 14 reviews and 4.7 stars. To find Anker or UGREEN i have to scroll past row 12. The 'Choice' badge does not appear to be based on anything but ad spend now. Search was literally the one thing this company was supposed to be good at.",
+    "text": "Searched 'usb c hub'. First six results: sponsored. Result 7 through 10: 'Amazon's Choice' badges on brands I have never heard of with 14 reviews and 4.7 stars. To find Anker or UGREEN I have to scroll past row 12. The 'Choice' badge does not appear to be based on anything but ad spend now.",
     "source": "amazon_review",
     "date": "2026-05-13",
     "rating": 2,
@@ -80,7 +97,7 @@
     "app_version": null
   },
   {
-    "text": "Returned a $180 floor lamp on May 1. UPS shows the package delivered to Amazon's Carteret NJ facility on May 5, signed for. Today (May 17) the return status flipped from 'awaiting' to 'we have not received your return' and my refund hold became a re-charge. I have the UPS receipt, the SCAN form, and the signature confirmation. Filed an A-to-z claim 11 days ago — no response, no contact, no human has looked at it. This is theft with an algorithm.",
+    "text": "Returned a $180 floor lamp on May 1. UPS shows the package delivered to Amazon's Carteret NJ facility on May 5, signed for. Today (May 17) the return status flipped from 'awaiting' to 'we have not received your return' and my refund hold became a re-charge. I have the UPS receipt, the SCAN form, and the signature confirmation.",
     "source": "amazon_review",
     "date": "2026-05-17",
     "rating": 1,
@@ -88,7 +105,7 @@
     "app_version": null
   },
   {
-    "text": "My dog's food has been on Subscribe & Save since 2024. Original price $42/bag. Last 4 shipments: $48, $53, $57, $61. Zero notifications before any of these price changes. The 'save 15%' badge is comparing against a regular price that's 45% higher than what I subscribed at. They are slowly inflating my anchor price and using the discount badge to hide it. There is no setting to opt out of price changes — you can only cancel after you've already been charged.",
+    "text": "My dog's food has been on Subscribe & Save since 2024. Original price $42/bag. Last 4 shipments: $48, $53, $57, $61. Zero notifications before any of these price changes. The 'save 15%' badge is now comparing against a regular price that's 45% higher than what I subscribed at.",
     "source": "amazon_review",
     "date": "2026-05-12",
     "rating": 1,
@@ -96,7 +113,7 @@
     "app_version": null
   },
   {
-    "text": "Phone cart and desktop cart have been completely separate for at least three weeks. Add 4 items on the train using the app — open my laptop at the office, empty cart. Refresh, log out, log back in — still empty. Open the phone again, the 4 items are still there. Same login. Same prime account. Add something on desktop, phone cart doesn't update. They are running two parallel carts and pretending they're one.",
+    "text": "Phone cart and desktop cart have been completely separate for at least three weeks. Add 4 items on the train using the app — open my laptop at the office, empty cart. Refresh, log out, log back in — still empty. Open the phone again, the 4 items are still there. They are running two parallel carts.",
     "source": "app_store",
     "date": "2026-05-15",
     "rating": 2,
@@ -104,7 +121,7 @@
     "app_version": null
   },
   {
-    "text": "Looking at a $340 espresso machine. First 60 reviews on the listing are all 5 stars and refer to a coffee GRINDER. Different product entirely, different brand, sold by a different seller. The 'variations' tab is being abused to aggregate reviews across unrelated SKUs to inflate the star count. Filter to just this product: 23 reviews, 2.4 stars, half of them describing the same broken steam wand. Amazon is letting sellers launder reviews and the default view hides it.",
+    "text": "Looking at a $340 espresso machine. First 60 reviews on the listing are all 5 stars and refer to a coffee GRINDER. Different product entirely, different brand, sold by a different seller. The 'variations' tab is being abused to aggregate reviews across unrelated SKUs to inflate the star count.",
     "source": "amazon_review",
     "date": "2026-05-14",
     "rating": 1,
@@ -112,7 +129,7 @@
     "app_version": null
   },
   {
-    "text": "Account locked for 'suspicious activity' in the middle of placing a $1240 monitor order. The lock notification links to a 'verify your identity' screen in the app that is just blank — white screen, no controls. Called support, 87 minute hold. By the time someone answered, the deal had ended and the same monitor was $210 more expensive. No raincheck, no comp, the rep said 'we can't influence pricing.' What is the point of the in-app verify flow if it's not implemented.",
+    "text": "Account locked for 'suspicious activity' in the middle of placing a $1240 monitor order. The lock notification links to a 'verify your identity' screen in the app that is just blank — white screen, no controls. Called support, 87 minute hold. By the time someone answered, the deal had ended.",
     "source": "app_store",
     "date": "2026-05-16",
     "rating": 1,
@@ -120,7 +137,7 @@
     "app_version": null
   },
   {
-    "text": "'Delivered to Amazon Hub Locker — Apollo.' No locker code email ever arrived. Not in inbox, spam, promotions, all mail, nowhere. The 'resend code' button in the app does nothing — no toast, no error, no email follows. Tried three times across two days. Package auto-returned to Amazon after 72 hours. Now waiting 5-10 business days for the refund on something I needed for a trip on Monday. The locker code email is broken on my account, apparently, and there is no way to fix it from the app.",
+    "text": "'Delivered to Amazon Hub Locker — Apollo.' No locker code email ever arrived. Not in inbox, spam, promotions, all mail, nowhere. The 'resend code' button in the app does nothing — no toast, no error. Tried three times across two days. Package auto-returned to Amazon after 72 hours.",
     "source": "play_store",
     "date": "2026-05-13",
     "rating": 1,
@@ -128,7 +145,7 @@
     "app_version": null
   },
   {
-    "text": "Returned a humidifier that arrived with a cracked base — completely sealed, never opened. Refunded $87 on a $101 order. The missing $14 is a 'restocking fee for opened items.' THE ITEM WAS NEVER OPENED. Photographed the unbroken security tape. Listing said 'Ships from and sold by Amazon.' There is no mention of any restocking fee anywhere in the listing or in the return flow. Chat support's response: 'this is automated, please escalate via email.' That email address auto-replies with a link back to the chat I just used. There is no human on the other end.",
+    "text": "Returned a humidifier that arrived with a cracked base — completely sealed, never opened. Refunded $87 on a $101 order. The missing $14 is a 'restocking fee for opened items.' THE ITEM WAS NEVER OPENED. Photographed the unbroken security tape. Listing said 'Ships from and sold by Amazon.'",
     "source": "amazon_review",
     "date": "2026-05-11",
     "rating": 1,
@@ -136,7 +153,7 @@
     "app_version": null
   },
   {
-    "text": "'Prime eligible only' filter is broken. Of 24 filtered results in a search yesterday, 9 actually shipped 2-day. The other 15 said 'arrives in 5-7 business days' once I clicked through. The filter appears to be matching items where the seller has Prime SOMEWHERE in their catalog, not on the specific SKU you're filtering. This has been broken for at least 4 months — multiple support tickets, all closed as 'working as intended.' If 'eligible' means 'sometimes maybe' that should be the badge.",
+    "text": "'Prime eligible only' filter is broken. Of 24 filtered results in a search yesterday, 9 actually shipped 2-day. The other 15 said 'arrives in 5-7 business days' once I clicked through. The filter appears to be matching items where the seller has Prime SOMEWHERE in their catalog.",
     "source": "app_store",
     "date": "2026-05-12",
     "rating": 2,
@@ -144,7 +161,7 @@
     "app_version": null
   },
   {
-    "text": "Used a 20% off coupon code at checkout. Order summary showed the discount, total reflected it, hit Place Order. Confirmation email arrived ten minutes later: full price, no discount. Third order in three weeks this has happened on. The coupon vanishes between the Place Order button and the email. Chat support reapplies it manually each time but won't tell me why it's happening, just 'a known issue our engineers are aware of.' Three weeks is enough time to disable the coupon code if it's broken.",
+    "text": "Used a 20% off coupon code at checkout. Order summary showed the discount, total reflected it, hit Place Order. Confirmation email arrived ten minutes later: full price, no discount. Third order in three weeks this has happened on. The coupon vanishes between the Place Order button and the email.",
     "source": "app_store",
     "date": "2026-05-14",
     "rating": 1,
@@ -152,7 +169,32 @@
     "app_version": null
   },
   {
-    "text": "I have turned off 'Deals and promotions' notifications four separate times in the last three months. Every app update — and there are a lot of them — the toggle silently flips back to ON and I'm getting 6-8 lightning deal pings a day. There is no way to make this stop short of disabling all Amazon notifications system-wide, which also kills my 'package delivered' alerts. The toggle is purely cosmetic. This is a dark pattern.",
+    "text": "I have turned off 'Deals and promotions' notifications four separate times in the last three months. Every app update — and there are a lot of them — the toggle silently flips back to ON and I'm getting 6-8 lightning deal pings a day. There is no way to make this stop short of disabling all Amazon notifications.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Searched 'wireless mouse for mac'. First page is 90% mice marked 'works with Windows' that nobody confirms work with macOS. Filter to 'Apple compatible' = 8 results, two of which are described in the title as 'Windows/Linux only.' Search relevance has clearly been auctioned to whoever bids highest on the keyword.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Browse 'Camping & Hiking → Tents' on the app. Half the results are 'pop-up beach tents' that are explicitly NOT camping tents. The category tree is broken or sellers are gaming categories and Amazon isn't policing it. The desktop site shows the proper subset; the app shows the bloated set.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Autocomplete suggests 'iphone 14 case' even when I've explicitly searched for and bought iPhone 17 cases six times in the last month. The personalization model is at least a generation behind, and the staleness makes search slower because I have to scroll past dead suggestions.",
     "source": "play_store",
     "date": "2026-05-15",
     "rating": 2,
@@ -160,7 +202,854 @@
     "app_version": null
   },
   {
-    "text": "app works fine for what i use it for, ordering stuff",
+    "text": "Voice search consistently mishears product names. Said 'organic chia seeds' three times — got 'organic Tia seeds,' 'organic chia siege,' and a result for a 'siege of orleans book.' Disabled voice and now I'm tap-typing on a 12.9 inch tablet which feels absurd.",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Trying to clear my search history. Settings → Browsing History → Manage → there is a 'remove all' button that does nothing. No confirmation, no error, items remain. Same problem on web. Five-year-old searches I want gone are surfacing in recommendations and ads.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Sort by 'price low to high' surfaces $0.01 listings that are scams or impossible to actually buy (out of stock immediately on tap). Effectively unusable as a sort method. The first 4 pages are noise; the actual cheapest available item is on page 5.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Image search took a photo of a tea kettle. Results: a kitchen scale, a coffee maker, three random pots, an air fryer. Not one actual kettle. This worked great in 2022. Whatever vision model is behind it now is materially worse than what was deployed three years ago.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "I set 5 search filters (brand, price, prime, rating, color), scroll through 3 pages of results, tap a product, hit back — and ALL filters are gone. Have to redo every search session. Filter persistence on back-navigation has been broken for at least 6 months.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Search 'baby formula' shows fake brands with all-caps names like 'BABYBESTOPCHOICE' before Similac or Enfamil. For a baby product category where trust is everything, the search ranking choices feel actively dangerous.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Pulled to refresh the search results — refresh succeeds but the result count drops from 487 to 0. Pull again, results return. A race condition somewhere in the search pagination that's been present in the app for at least 4 builds.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Searched a specific Anker model number (A2148). First three results were Anker A2148 listings, fourth was 'similar items' for $4 cheaper from a brand I can't pronounce. Fine. But then results 5-15 were ALL the cheaper brand. Searching a model number should not give me a wall of competitors.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tried to search for 'cat litter robot 4' (the brand name). Search interpreted 'robot' as a separate term and showed me Roombas. Quoting the phrase did not help. Brand-name searches with multi-word names are inconsistent across the app.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "When you tap a result, view the product, then go back, the position in the search results is lost. I was on row 47 — I'm now back at row 1. On long product comparisons this makes the app borderline unusable; I have to take screenshots to remember which I've already checked.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "The 'people also searched for' panel at the top of result pages is showing kitchen items when I'm searching for a SSD. No conceptual link. The cross-sell model needs a sanity check; right now it's just noise above the fold.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Item showed 'Sold by Amazon' in the search result. Tapped to view — 'Sold by ChinaWarehouse_Direct.' Added to cart, checkout, the order confirmation shows 'Sold by Amazon' again. Three different sellers across three screens, all for the same SKU. Where is my $140 actually going.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tried to use my EBT card for grocery items. Declined three times despite verified balance. Customer service said 'EBT is supported but not in your zip code right now.' I am in a major US metro. No notice on the listing that EBT may not work.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Order split into 3 shipments without my consent. Shipping in cart was 'free.' At checkout, shipping line still 'free.' Receipt: $5.99 shipping for each of two of the three packages. $12 added silently. Support reversed it but the default behavior is to charge.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "I updated my default credit card last month. Tapped Buy Now today — order went through on the OLD card which I had explicitly removed from my account. The old card is somehow still 'on file' invisibly. Had to dispute the charge with my bank to deal with it.",
+    "source": "app_store",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Apple Pay option missing for any order shipping to my home address. Works fine when shipping to my office. Same account, same card, same item. Settings show Apple Pay enabled. Mystery — and there's no way to debug it from the user side.",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Place Order button shows a loader, then no confirmation, no email, no order in 'Your Orders.' Tap it again — same. Third tap, a banner says 'Order failed.' Fourth tap, three orders appear in my history. Idempotency on Place Order is broken; you can double-charge yourself.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Applied a $25 gift card to my $42 order. Order summary showed $17 due. Submitted. Receipt charged $42 to my card, gift card balance still $25 unused. Support reapplied retroactively but won't say why it didn't apply during checkout.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tax line in cart and tax line in receipt differ by $0.74 every single time. Always upward. I'm in CA, tax is 9.5%, items are clearly taxable. It's pennies per order but pennies × billions of orders is not pennies. Why is the cart tax preview wrong.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Promo code applied — discount visible. Changed shipping speed from Standard to Two-Day. Discount silently dropped. Changed back to Standard, discount didn't re-apply. Had to remove items, re-add, re-enter code. Discount logic is brittle.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Pre-ordered a game with 'release day delivery.' Release day comes — order status 'will ship soon.' Three days later — 'shipping is delayed.' A week later — 'item temporarily unavailable.' Two weeks later refunded but the same listing is now in stock at higher price.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tried UPI as payment from India region. Selected 'Pay via UPI,' got redirected, payment app charged me, returned to app — order status: payment failed, please retry. UPI app shows debit. Two days to refund. UPI integration is half-broken.",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Pressed Buy Now on a $4 phone case. Got a banner — 'Buy now disabled for this seller.' OK, added to cart. Cart checkout reset my shipping to a 1-month-old address. Three taps to fix. Why is Buy Now sometimes disabled and why does the fallback path lose context.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Cart shows 'free shipping over $25.' My cart is $89. Shipping line: 'free.' Tap to expand: 'free for Prime items, $5.99 for non-Prime items.' Two items are non-Prime, total shipping $11.98. The marketing copy 'free over $25' is misleading.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Added 6 items, cart total $147. Hit checkout — total at top says $147. Scroll down to order summary — $158. Difference is 'estimated tax + small package fee' that wasn't disclosed in cart. The 'final price reveal' at the bottom of checkout is a dark pattern.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "I tried to delete a saved payment method (an old card from a closed account). The 'remove' button is greyed out with no explanation. Support said 'it's been on too many orders to remove.' What. No, I want it deleted. It's been on zero orders this year.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Tracking says 'delivered.' I'm home, I have a Ring doorbell, nothing showed up. The driver photo Amazon attached is somebody else's porch — clearly not my building, the door color is wrong. Filed an A-to-z claim; they want 'wait 48 hours before reporting,' as if the package will materialize.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Two-day Prime promised on a $30 router. Ordered Monday, status went 'preparing for shipment' for 4 days, finally shipped Friday, arrived the following Tuesday — 8 days. Filed Prime credit request, got a $5 promotional credit. Two-day is increasingly aspirational.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tracking went from 'arriving today by 9pm' to 'arriving tomorrow by 5pm' twelve times in a row throughout the day. Eventually arrived two days late at 11pm. The ETA system is hallucinating; I'd rather see honesty than a confidence-incorrect estimate.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Order shipped via USPS — tracking number invalid on USPS website. Tracking number works on Amazon's own page but never updates past 'label created.' Package eventually arrives 6 days later. Amazon's tracking page is the only source of truth, and it's a mock.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Asked for Saturday morning delivery and paid the premium for it. Arrived Wednesday late afternoon. Refund of the upgraded shipping fee — $4.99. The premium service has no SLA, and there's no compensation beyond returning the original premium.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Driver delivery photo is a stack of packages in a hallway I don't recognize. My apartment number is 4B, the package photo shows door '212.' Clearly delivered to wrong address. The photo proves it. Support says 'wait 24 hours.' What good will waiting do.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Item handed off from Amazon to USPS for the last mile. Disappeared. USPS tracking dead, Amazon tracking shows last update on Tuesday, today is the following Tuesday. Amazon says 'contact USPS,' USPS says 'contact shipper.' I'm out $90 and a chair leg.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Booked Saturday delivery for a weekend trip — package required for a hike. Saturday came, no package. Status: 'will arrive Tuesday.' Refunded the $5 expedited fee, no compensation for the screwed up trip. Time-sensitive shipping should have an SLA, not just a refund.",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tracking page failed to show the QR code for locker pickup. Three days of trying — empty white box where the QR should be. Drove to the locker, opened the box manually through the kiosk interface using my order ID. Why is the in-app code the only path when it's the broken one.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Changed delivery address 2 hours after ordering (well before shipping label was generated). System said 'address change confirmed.' Package shipped to the OLD address anyway. Returned to seller, refund issued, but a week wasted because the address change UI lied.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tracking page has shown 'out for delivery' for FIVE consecutive days. Every morning I look and it's out for delivery. Every evening, no package. Amazon's logistics system has clearly lost the truck or the package and is just refusing to acknowledge it.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "My address includes 'Apt 3B.' On 3 of my last 5 orders, the 'Apt 3B' part was stripped from the shipping label. Package goes to the main building lobby, doormen end up sorting them. Why is the apt field truncated at the warehouse?",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "International order from a US seller to a UK address. Tracking dead-ends at 'in customs' for 12 days. Amazon's tracking doesn't proxy any of the local courier's updates. Had to find the parcel manually via the local Royal Mail tracking number that Amazon never surfaced.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tracking claims a weather delay. Live local weather here is sunny, 72°F, no system anywhere near the route. The 'weather' excuse is a generic fallback the system uses when it doesn't know what to say. Honesty about logistics issues would land better than a fake weather alert.",
+    "source": "app_store",
+    "date": "2026-05-16",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Two packages shipped together, same tracking number. One arrived Monday, one is now lost and tracking still shows 'delivered Monday.' Amazon can't reissue a tracking number, can't 'split' an order after shipment. The data model assumes one tracking ID = one package, which is just wrong.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "I selected an Amazon Hub Counter (a pharmacy near my office) for pickup. Got the email — 'available for pickup.' Walked to the pharmacy. They had no package, no record. Walked back, checked the app — different counter location across town. The selected counter wasn't honored.",
+    "source": "play_store",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Filed an A-to-z claim 14 days ago for an undelivered package. Status: 'we are reviewing.' Replied to the original email with photos — auto-reply saying 'we'll respond within 48 hours.' That was 11 days ago. The A-to-z guarantee mechanism feels intentionally slow as a deterrent.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Refund issued to a card that was canceled by my bank 6 months ago. Asked support to reissue to current card — 'we cannot reverse a refund, please contact your bank.' Bank says 'we don't have the funds, that account is closed, contact the merchant.' Round and round.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Return label downloaded — said 'valid through May 14.' Tried to drop off May 13, UPS refused: 'label expired.' Amazon's date doesn't match UPS's date. Had to generate a new label, lost an extra day. Why is the expiration calendar wrong by one day.",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Return shipped via UPS, scanned at the warehouse on day 4. 'Refund will appear within 5 business days.' Day 12 — no refund. Day 18 — chat support says 'we're still processing.' Day 25 — auto-refunded with no explanation of the delay. Refund SLA is a fiction.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Return now requires a QR code to print, but the QR code page in the app errors out — 'unable to load.' Cannot screenshot, cannot email it, cannot use the URL on desktop because it requires the app session. Had to call support to get a paper label mailed to me.",
+    "source": "play_store",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Received the wrong item entirely — ordered a wireless keyboard, got a USB hub. Initiated return. The return offered says 'a $7.50 restocking fee will apply.' For an item the SELLER sent in error. Three escalations to remove the fee. The default state being 'charge the customer' for the seller's mistake is wild.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Took return package to UPS. Driver scanned the label, machine rejected it. 'Label not in system.' Called Amazon, they confirmed it was generated correctly. UPS said 'try in 24 hours.' Tried 24 hours later, same rejection. Eventually had to print a different carrier's label. Why does the Amazon-UPS handshake break.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Booked a 'free Amazon pickup' for a return. Pickup window: 2pm-6pm Tuesday. Tuesday: no pickup. Wednesday morning: 'we missed your pickup, please reschedule.' Rescheduled. Same thing happened. Third attempt finally succeeded. Three days lost waiting at home.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Refund issued as an Amazon gift card balance, not back to my original credit card. Nowhere during the return flow did it ask. The 'refund to original payment' option was supposed to be default. Now I have $84 trapped in Amazon credit when I wanted it back on my card.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "'This item cannot be returned' on a brand-new $200 jacket I received 3 days ago. The listing did not mention restrictions. Customer service: 'sometimes the return rules change after purchase.' Excuse me — return policy is part of the contract at purchase time, you cannot change it retroactively.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "The 'return to Whole Foods' option needs me to drive 23 miles. The 'return to UPS' option costs me a $7 'service fee.' The 'free Amazon pickup' option only available Tue/Thu in this zip code. None of these are reasonably 'free.'",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Refund came as 'Amazon credit only — non-transferable' for a $230 order. I cancel my Prime in 3 weeks. Asked support to refund to card — 'cannot reverse a credit issuance.' Functionally trapped in the ecosystem for $230 because of a refund-type defaulting choice I didn't make.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Returned a $42 item. Six weeks later, an email — 'we noticed an unusual number of returns on your account; future returns may be subject to review.' I returned three things this year out of ~80 orders. The threshold for being algorithmically flagged is opaque and feels punitive.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tried to return a defective Echo. Return policy says 30 days. I'm on day 28. The app says 'this item is past its return window.' Support corrected manually but the bug exists — the return-window calculation appears to round down by a few days for some categories.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Returnless refund offered on a $11 cable that arrived damaged. Refund processed instantly. Two weeks later — a $11 charge to my card with the memo 'item returned.' I never returned it (that's the point of returnless refund). Reversed after three support calls but absurd that it was auto-charged at all.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Product listing photos show a black-and-white striped fabric backpack. Received a solid grey backpack. Smaller too. Listing description (in fine print) says 'color may vary, see swatches' — but the swatches are also striped. There is no version of this product that is what arrived.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "The 'product details' section is auto-collapsed on the app and you have to tap a tiny chevron to expand it. Half the time tapping the chevron does nothing on iOS. Critical info (dimensions, materials, warranty) is hidden by default and inconsistently accessible.",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Q&A section on a $400 grill listing is 90% questions answered by competing sellers promoting their own listings. 'Does this fit X?' → 'No, but check our model instead [link].' Amazon's moderation of this section is essentially nonexistent.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Listing says 'weight: 1.2 oz.' Item arrived: 1.2 LB (almost 20× heavier). Used the listed weight to plan a hiking trip. The weight error is a typo somewhere in the seller's listing that Amazon's data validation didn't catch.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Listing said 'merino wool sweater.' Care tag on arrival: '100% acrylic.' Reported to seller via the listing — 'we adjust descriptions over time, please return for refund.' Materials misrepresentation is fraud, not a description 'adjustment.'",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Plus-size friendly clothing listing. All photos are size-2 models. Filter by 'plus' shows only sizes 2X+ but the photos remain the same model. No way to see how the item actually fits on the size you're buying.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "'Customers who bought this also bought' section on an Anker charger is pushing 3 listings that are direct knock-off competitors, not accessories. The recommendation widget has been weaponized against the original brand. Anker's marketing dept must love this.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Listing claims 'USB-C 3.2 Gen 2 — 10 Gbps.' Tested with the official Apple speed test, peaks at 480 Mbps. That's USB 2.0. The listing technical claims are completely fabricated and there's no enforcement.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "'Frequently returned' badge is supposed to appear on items with high return rates. I bought a coat with a 38% return rate (per the seller's own listing analytics page I happened to find). No badge anywhere on the listing. The badge selectively appears.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Reviews sorted by 'Most Helpful' surface a 5-star review from a 'verified purchase' account that has reviewed 400+ items, all 5 stars, all in the same week. Clearly a paid review farm. Sorting promotes these because they have artificial 'helpful' votes.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Product page is loaded entirely in German. Buyer is in California, browser is set to English, account locale is US-en. Other product pages on the same session are English. The page just happens to be the German listing of the same SKU, with no language selector visible.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Bought a 'mahogany' wood cutting board based on listing photos and 'material: wood' description. Arrived: plastic with a wood-print veneer. The listing technically said 'wood' in a Q&A response and 'wood-finish design' in the description. Material claims need stricter validation.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Phone case listing said 'compatible with iPhone 17 series.' Received it, doesn't fit iPhone 17 Pro Max (the size variant I ordered). Returned. Seller response: 'compatible means iPhone 17 (base only).' If you write 'series' you don't mean 'base only.'",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "The 'visual search' that lets you zoom into product photos doesn't work on this listing. The button is there, the dialog opens, the photo never loads. Means I can't check texture/stitching/details that the seller relies on the photo to convey.",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Detail page shows '4.6 stars · 1,243 ratings.' Tap reviews — actual review count is 87. The 1,243 includes ratings of unrelated listings consolidated under this ASIN (the variation-laundering problem). The headline star count is fabricated by aggregation.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Listing said 'free 1-year warranty.' Item arrived with a card saying 'warranty must be activated within 30 days at this URL.' URL is dead. Seller doesn't respond. Amazon's interpretation of 'free warranty' includes 'you must opt in or it doesn't exist.'",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "Got charged for Prime twice this month. Once on the 3rd ($14.99), again on the 17th ($14.99). Took customer service 4 days to even acknowledge it. Refunded one charge as 'a courtesy.' Mystery double-charges should not require user effort to detect and fix.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Bought one Audible book during a free trial. The free trial ended; expected. Got charged $14.95/mo for the next 4 months despite never actively subscribing. Cancellation buried 4 menus deep. The 'auto-enroll after trial' should be opt-in, not opt-out.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Bought an Echo Dot 18 months ago. Today, a $9.99 charge appeared on my Prime account labeled 'Amazon Music Unlimited — annual.' Never signed up. Support says 'it was activated when you set up your Echo, you must have skipped a screen.' Dark pattern enrollment.",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Prime Video Channels charges I never authorized — $9.99/mo for STARZ, $7.99 for AMC+, both auto-enrolled during a single click-through I made looking for free trial content. Cancellation: separate flow for each, 3 confirmations each.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Prime Day deal: $59.99 advertised on the listing. Add to cart, proceed to checkout — line item shows $89.99 with a tiny strikethrough note 'deal expired.' I added to cart 4 minutes after the deal start. The deal price is being revoked mid-session.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Kindle Unlimited 'free with Prime' books are gated behind paid KU subscription for half the titles labeled as free. Tap the book — 'subscribe to Kindle Unlimited for $11.99/mo.' The 'free with Prime' marketing is meaningfully misleading.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Prime Wardrobe try-before-you-buy: return shipping was 'free.' UPS picked up my 3-item return, then I got a $4.99 charge for 'restocking and reshipping per item.' Listing did not disclose this. $15 for what was advertised as a free service.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Subscribe & Save dropped 'free shipping on monthly bundle' silently. Used to ship as one box on the 5-item discount day. Now ships in 5 boxes, no monthly discount, no notification. Email last week was 'changes to your S&S plan' — vague, didn't mention this.",
+    "source": "amazon_review",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Got charged $139 for annual Prime renewal on May 12. No advance notification email. The 'renewal reminder' was apparently delivered to Promotions tab and filtered out. Settings show 'email reminders for renewal: enabled.' The feature is enabled in settings but the email doesn't get sent.",
+    "source": "amazon_review",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Attempting to cancel Prime: 4 screens of retention offers, each requiring me to scroll past large 'continue Prime for $X' buttons to find a small grey 'continue cancellation' link. Easily 2 minutes of dark-pattern navigation to actually cancel a $139/yr commitment.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "My adult son was added to my Amazon Household last year. Today I see his orders mixed into mine, my orders mixed into his. Privacy boundary is broken — he can see my gifts I ordered for him. Household sharing should NOT cross order histories.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Prime Reading library shows 30 books I've 'borrowed.' Tap one — 'this book is no longer available, return required by date X.' Date X was 9 months ago. The library shows books that were quietly removed from Prime Reading; tap any of them and you're asked to buy.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Prime membership tier silently changed from 'Prime' to 'Prime Lite' (no video, no music) without explicit consent. The change was announced in a single email 9 months ago that I clearly missed. The membership change should require active acknowledgment, not opt-out via inaction.",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Student discount on Prime supposed to be 50% off for verified students. Renewal came up — system charged me the full price because my .edu email expired (I graduated). No prompt to re-verify, no grace period. Either keep verifying me annually or remind me, don't silently raise the price.",
+    "source": "amazon_review",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Amazon Fresh delivery: ordered 'organic strawberries.' Substituted with 'conventional grapes.' Substitution policy says items must be 'comparable.' Strawberries to grapes is not comparable; organic to conventional is meaningfully different. The substitution logic has no semantic understanding.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Tried to gift a Kindle book via Prime. The gift flow charged the FULL retail price of the book to my card despite the book being free with Prime to me. 'Gifting overrides Prime benefits.' That's not documented anywhere.",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "App crashes opening cart on Android 15. Pixel 8 Pro, fresh install. Open the app, tap cart icon, instant crash. Cleared cache, cleared data, reinstalled — same. Crash is reproducible. Cannot place any orders from the app on this device for the past two weeks.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Background memory leak — app sits at 380MB after 10 minutes of browsing, never releases. iOS prompts to close it. Quitting and reopening clears it briefly, then it climbs again. Some component is holding references to product page images indefinitely.",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Dark mode setting randomly reverts to light mode after every 3-4 app launches. The toggle in settings shows 'dark' but the actual UI is light. Force-toggle, save, restart — light. There's a desync between persisted theme state and rendered theme.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "To recover my locked Amazon account they require a FAX of my driver's license. Not an upload, not an email — a fax. I haven't seen a fax machine since 2014. Account recovery in 2026 should not require 1990s technology.",
+    "source": "amazon_review",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Logged out of the app by accident, can't log back in on iOS — 'incorrect password.' Same password works on amazon.com on the same device's browser. The app's auth flow has its own broken state. Reinstalled, same. Eventually had to reset via web.",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Switched my Amazon locale from 'India' to 'US' after relocating. The app now intermittently shows me Indian prices, Indian payment methods, and Hindi/English mixed UI. Logging out and back in doesn't help; the locale switch is not clean.",
+    "source": "play_store",
+    "date": "2026-05-11",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Rotated my phone from portrait to landscape while in search results. The search input box disappeared entirely. Couldn't type a new query without restarting the app. Orientation handling is broken in the search view.",
+    "source": "app_store",
+    "date": "2026-05-17",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Wishlist privacy setting is 'private — only me.' Bought my partner a birthday gift via the wishlist. Our shared Echo announced 'your order for [item] has shipped' OUT LOUD in the kitchen. The Echo respects no privacy boundaries on shared accounts.",
+    "source": "amazon_review",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Push notifications arrive ~24 hours late on Android. 'Your package was delivered' fires the next day after the actual delivery. 'Your order has shipped' arrives after the order is already at the doorstep. The notification queue is severely lagged on Pixel devices.",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "App download size is 1.2 GB on iOS. No offline mode whatsoever. Browse without signal — empty screen, error, retry button. A 1.2GB bundle should at least cache yesterday's wishlist and order history for offline glance.",
+    "source": "app_store",
+    "date": "2026-05-16",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Disabled 'background app refresh' for Amazon to save battery. Still drains ~7% overnight. Some other persistent process is running outside the documented background refresh setting. iOS battery report shows Amazon as 'background activity 12%.'",
+    "source": "app_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "My account recovery email is set to a Gmail address I lost access to in 2014 (was given to someone else by Gmail's name policy). Cannot change it without logging into the recovery account. Cannot log into the recovery account because it's not mine anymore. Total catch-22.",
+    "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Search field in the app loses focus mid-typing every few keystrokes. Type 'wireless', cursor jumps to address bar, type 'mouse', cursor jumps back. Some focus-management bug introduced in the recent build. Genuinely hard to use the app.",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Sign-in with Apple appears to work — get returned to the app, see my account briefly, then logged out. The token exchange between Apple and Amazon is failing silently. Email/password login works fine. Sign-in with Apple has been broken for at least three releases.",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Profile picture for my main account is set. Switch to my kid's profile — it shows MY photo, not theirs. Switch back to mine — shows theirs. Profile images are crossed. Privacy and identity confusion every time we use a family device.",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 2,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "Asked Alexa to add a single item to my cart. She added 5 of it. Asked her to remove 4 — she removed all 5 and added 4 of a similar but wrong item. Voice → cart pipeline is wildly unreliable for any quantity other than 'one of the most recent thing.'",
+    "source": "amazon_review",
+    "date": "2026-05-11",
+    "rating": 1,
+    "severity_raw": null,
+    "app_version": null
+  },
+
+  {
+    "text": "good app",
     "source": "play_store",
     "date": "2026-05-11",
     "rating": 4,
@@ -168,8 +1057,72 @@
     "app_version": null
   },
   {
-    "text": "its ok i guess. four stars",
+    "text": "love it!! 5 stars",
     "source": "app_store",
+    "date": "2026-05-12",
+    "rating": 5,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "works fine for me, no issues recently",
+    "source": "play_store",
+    "date": "2026-05-13",
+    "rating": 4,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "decent app overall, does what i need",
+    "source": "app_store",
+    "date": "2026-05-14",
+    "rating": 3,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "okayyyy",
+    "source": "play_store",
+    "date": "2026-05-15",
+    "rating": 3,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "no complaints at the moment, app is fine",
+    "source": "amazon_review",
+    "date": "2026-05-16",
+    "rating": 4,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "great",
+    "source": "app_store",
+    "date": "2026-05-17",
+    "rating": 5,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "five stars, easy ordering",
+    "source": "play_store",
+    "date": "2026-05-14",
+    "rating": 5,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "did the job",
+    "source": "app_store",
+    "date": "2026-05-13",
+    "rating": 3,
+    "severity_raw": null,
+    "app_version": null
+  },
+  {
+    "text": "nothing to say really, it's just amazon",
+    "source": "play_store",
     "date": "2026-05-12",
     "rating": 3,
     "severity_raw": null,
