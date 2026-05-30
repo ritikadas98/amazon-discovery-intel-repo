@@ -7,6 +7,31 @@ export interface DigestEmailInput {
   weekId: string;
   meta: Meta;
   readiness: ReadinessResult | null;
+  /** Public-facing base URL of the API (for feedback link generation). */
+  baseUrl: string;
+  /** Email recipient — baked into the feedback URL so we can attribute clicks. */
+  recipientEmail: string;
+}
+
+function buildFeedbackButtons(
+  baseUrl: string,
+  themeId: string,
+  weekId: string,
+  recipientEmail: string,
+): string {
+  const url = (rating: 'useful' | 'not_useful') =>
+    `${baseUrl}/webhook/digest-feedback?theme_id=${encodeURIComponent(themeId)}` +
+    `&week_id=${encodeURIComponent(weekId)}&rating=${rating}` +
+    `&recipient=${encodeURIComponent(recipientEmail)}`;
+  return `
+    <table cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr>
+      <td style="padding-right:6px;">
+        <a href="${url('useful')}" style="display:inline-block;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:4px 10px;font-size:12px;font-weight:600;border-radius:14px;text-decoration:none;">👍 Useful</a>
+      </td>
+      <td>
+        <a href="${url('not_useful')}" style="display:inline-block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:4px 10px;font-size:12px;font-weight:600;border-radius:14px;text-decoration:none;">👎 Not useful</a>
+      </td>
+    </tr></table>`;
 }
 
 const TREND_EMOJI: Record<string, string> = { worsening: '📈', stable: '➡️', improving: '📉' };
@@ -36,7 +61,7 @@ const READINESS_BG: Record<string, string> = {
 };
 
 export function renderDigestEmail(input: DigestEmailInput): { subject: string; html: string } {
-  const { groupSummaries, topGroup, signalCount, weekId, meta, readiness } = input;
+  const { groupSummaries, topGroup, signalCount, weekId, meta, readiness, baseUrl, recipientEmail } = input;
   const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
   let regressionsBlock = '';
@@ -98,6 +123,7 @@ export function renderDigestEmail(input: DigestEmailInput): { subject: string; h
         </tr></table>
         ${t.gap_reasons && t.gap_reasons.length ? `<p style="margin:6px 0 0 0;font-size:12px;color:#6b7280;line-height:1.5;"><strong>Gaps:</strong> ${t.gap_reasons.join(' · ')}</p>` : ''}
         ${t.recommended_next_steps && t.recommended_next_steps.length ? `<p style="margin:4px 0 0 0;font-size:12px;color:#4f46e5;line-height:1.5;"><strong>Next:</strong> ${t.recommended_next_steps[0]}</p>` : ''}
+        ${buildFeedbackButtons(baseUrl, t.theme_id, weekId, recipientEmail)}
       </td></tr>
     </table>`,
     )

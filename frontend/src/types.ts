@@ -33,6 +33,8 @@ export interface DigestRow {
   'MoSCoW JSON': string;
   'Data Quality Warning': string;
   'WoW Delta JSON': string;
+  'Trend Direction JSON'?: string;
+  'Theme Breakdown JSON'?: string;
   'Created At': string;
   'Discovery Readiness JSON': string;
   'Overall Group Readiness': Readiness | string;
@@ -82,9 +84,56 @@ export interface MoscowEntry {
   id: string;
   moscow: MoSCoW;
 }
+
+/** Parsed shape of "WoW Delta JSON" — full per-group delta record. */
 export interface WoWDeltaEntry {
   id: string;
-  delta: number | null;
+  rice_delta: number | null;
+  rice_delta_pct: number | null;
+  signal_delta: number | null;
+  severity_delta: number | null;
+  moscow_changed: boolean;
+  moscow_prev: MoSCoW | null;
+  moscow_escalated: boolean;
+}
+
+/** Parsed shape of "Trend Direction JSON". */
+export interface TrendEntry {
+  id: string;
+  trend: TrendDirection;
+}
+
+/** Parsed shape of "Theme Breakdown JSON" — one entry per theme across all groups. */
+export interface ThemeBreakdownEntry {
+  theme_id: string;
+  theme_label: string;
+  feature_group_id: string;
+  trend_direction: TrendDirection;
+  signal_count: number;
+  reach: number;
+  impact: number;
+  confidence: number;
+  version_multiplier: number;
+  effort: number;
+  trend_multiplier: number;
+  system_rice: number;
+  moscow: MoSCoW;
+  readiness: Readiness;
+  gap_reasons?: string[];
+  recommended_next_steps?: string[];
+}
+
+/** A row from the "Effort Estimates" sheet, normalised by GET /effort-overrides. */
+export interface EffortOverride {
+  theme_id: string;
+  week_id: string;
+  effort: number;
+  updated_at: string;
+}
+
+export interface EffortOverridesResponse {
+  week: string | null;
+  overrides: EffortOverride[];
 }
 
 /** Parsed shape of "Discovery Readiness JSON". */

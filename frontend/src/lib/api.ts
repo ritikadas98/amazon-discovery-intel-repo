@@ -1,6 +1,7 @@
 import type {
   DigestRow,
   DigestsResponse,
+  EffortOverridesResponse,
   PipelineResult,
   SignalsResponse,
 } from '@/types';
@@ -35,7 +36,7 @@ export const api = {
   health: () => jsonFetch<{ status: string; timestamp: string }>('/health'),
 
   runPipeline: (recipient_email?: string) =>
-    jsonFetch<PipelineResult>('/run-pipeline', {
+    jsonFetch<PipelineResult>('/webhook/run-pipeline', {
       method: 'POST',
       body: JSON.stringify(recipient_email ? { recipient_email } : {}),
     }),
@@ -43,8 +44,28 @@ export const api = {
   digests: (limit = 10) =>
     jsonFetch<DigestsResponse>(`/digests?limit=${limit}`),
 
+  digestForWeek: (weekId: string) =>
+    jsonFetch<DigestsResponse>(`/digests?week=${encodeURIComponent(weekId)}&limit=1`),
+
   signalsForWeek: (weekId: string, limit = 500) =>
     jsonFetch<SignalsResponse>(`/signals?week=${encodeURIComponent(weekId)}&limit=${limit}`),
 
+  signalsForGroup: (weekId: string, groupId: string, limit = 500) =>
+    jsonFetch<SignalsResponse>(
+      `/signals?week=${encodeURIComponent(weekId)}&group=${encodeURIComponent(groupId)}&limit=${limit}`,
+    ),
+
   latestRun: () => jsonFetch<DigestRow>('/runs/latest'),
+
+  setEffort: (theme_id: string, week_id: string, effort: number) =>
+    jsonFetch<{ ok: boolean; theme_id: string; week_id: string; effort: number }>(
+      '/webhook/set-effort',
+      {
+        method: 'POST',
+        body: JSON.stringify({ theme_id, week_id, effort }),
+      },
+    ),
+
+  effortOverrides: (weekId: string) =>
+    jsonFetch<EffortOverridesResponse>(`/effort-overrides?week=${encodeURIComponent(weekId)}`),
 };

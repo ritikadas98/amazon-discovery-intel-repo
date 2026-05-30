@@ -69,9 +69,49 @@ export interface Theme {
 export interface ScoredTheme {
   theme_id: string;
   theme_label: string;
+  feature_group_id: string;
   trend_direction: TrendDirection;
   signal_count: number;
+  /** Reach component = signal_count. Kept as a named field for clarity in the API. */
+  reach: number;
+  /** Impact component = avg severity score across this theme's signals. */
+  impact: number;
+  /** Confidence component derived from source diversity. */
+  confidence: number;
+  /** Version-flagged ratio multiplier (1.0–1.2). */
+  version_multiplier: number;
+  /** Effort denominator (defaults to group-level effort, 0.8 for regression group, 1 otherwise). */
+  effort: number;
+  /** Trend multiplier applied at theme level (worsening 1.2 / stable 1.0 / improving 0.8). */
+  trend_multiplier: number;
+  /** System-computed RICE = (reach × impact × confidence × version_multiplier) / effort × trend_multiplier. */
+  system_rice: number;
+  /** Inherited from the parent group's MoSCoW after percentile cuts. */
+  moscow: MoSCoW;
+  /** Deterministic readiness from the same 4 criteria Agent 5 uses. AI-assessed value wins for top-group themes (set in run.ts). */
+  readiness: Readiness;
+  /** @deprecated use `system_rice`. Kept for backward compat with the existing `top_rice_score` selector. */
   theme_score: number;
+}
+
+export interface ThemeBreakdownEntry extends ScoredTheme {
+  gap_reasons?: string[];
+  recommended_next_steps?: string[];
+}
+
+export interface EffortOverride {
+  theme_id: string;
+  week_id: string;
+  effort: number;
+  updated_at: string;
+}
+
+export interface FeedbackEntry {
+  theme_id: string;
+  week_id: string;
+  rating: 'useful' | 'not_useful';
+  recipient: string;
+  submitted_at: string;
 }
 
 export interface Delta {

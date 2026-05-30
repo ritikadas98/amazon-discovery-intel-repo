@@ -19,6 +19,8 @@ export SCHEDULER_SA="scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 export SHEETS_DOCUMENT_ID="${SHEETS_DOCUMENT_ID:-1onm967wGWmy2YpwNJxr_UEDkFGb8Ibx22unKLXuKj3g}"
 export SHEETS_SIGNALS_TAB="${SHEETS_SIGNALS_TAB:-Signals}"
 export SHEETS_DIGESTS_TAB="${SHEETS_DIGESTS_TAB:-Weekly Digests}"
+export SHEETS_EFFORT_TAB="${SHEETS_EFFORT_TAB:-Effort Estimates}"
+export SHEETS_FEEDBACK_TAB="${SHEETS_FEEDBACK_TAB:-Feedback}"
 export EMAIL_FROM="${EMAIL_FROM:-ritikadas98@gmail.com}"
 export SMTP_USER="${SMTP_USER:-ritikadas98@gmail.com}"
 export DEFAULT_RECIPIENT="${DEFAULT_RECIPIENT:-ritikadas98@gmail.com}"
@@ -46,7 +48,7 @@ gcloud run deploy "${SERVICE}" \
   --min-instances=0 --max-instances=2 \
   --timeout=120 \
   --allow-unauthenticated \
-  --set-env-vars="USE_MOCK=true,VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID},VERTEX_REGION=${VERTEX_REGION},VERTEX_MODEL=${VERTEX_MODEL},SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID},SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB},SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB},SMTP_HOST=smtp.gmail.com,SMTP_PORT=465,SMTP_USER=${SMTP_USER},EMAIL_FROM=${EMAIL_FROM},DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT},CORS_ORIGIN=${CORS_ORIGIN}" \
+  --set-env-vars="^|^USE_MOCK=true|VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}|VERTEX_REGION=${VERTEX_REGION}|VERTEX_MODEL=${VERTEX_MODEL}|SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID}|SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB}|SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB}|SHEETS_EFFORT_TAB=${SHEETS_EFFORT_TAB}|SHEETS_FEEDBACK_TAB=${SHEETS_FEEDBACK_TAB}|SMTP_HOST=smtp.gmail.com|SMTP_PORT=465|SMTP_USER=${SMTP_USER}|EMAIL_FROM=${EMAIL_FROM}|DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT}|CORS_ORIGIN=${CORS_ORIGIN}" \
   --set-secrets="SMTP_PASS=smtp-pass:latest"
 
 # ─── 3. Get URL ───────────────────────────────────────────────────────────────
@@ -54,6 +56,12 @@ SERVICE_URL=$(gcloud run services describe "${SERVICE}" \
   --region="${REGION}" --format='value(status.url)')
 echo
 echo "▶ Service URL: ${SERVICE_URL}"
+
+# Bake the public URL back into the service so digest emails generate correct feedback links.
+echo "▶ Setting PUBLIC_BASE_URL=${SERVICE_URL} on the service…"
+gcloud run services update "${SERVICE}" \
+  --region="${REGION}" \
+  --update-env-vars="PUBLIC_BASE_URL=${SERVICE_URL}" --quiet >/dev/null
 
 # ─── 4. Grant scheduler-invoker permission to invoke ─────────────────────────
 echo "▶ Granting roles/run.invoker to ${SCHEDULER_SA}…"

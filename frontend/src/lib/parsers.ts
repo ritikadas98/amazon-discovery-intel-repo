@@ -5,7 +5,9 @@ import type {
   ReadinessResult,
   Readiness,
   RiceScoreEntry,
+  ThemeBreakdownEntry,
   TrendDirection,
+  TrendEntry,
   WoWDeltaEntry,
 } from '@/types';
 
@@ -62,6 +64,8 @@ export interface ParsedDigest {
   riceScores: RiceScoreEntry[];
   moscow: MoscowEntry[];
   wow: WoWDeltaEntry[];
+  trends: TrendEntry[];
+  themeBreakdown: ThemeBreakdownEntry[];
   readiness: ReadinessResult | null;
   overallReadiness: Readiness | null;
   themesReadyCount: number;
@@ -71,7 +75,7 @@ export interface ParsedDigest {
   rowNumber: number;
 }
 
-/** Decode a "Weekly Digests" row from the sheet (all strings + 4 JSON-encoded blobs). */
+/** Decode a "Weekly Digests" row from the sheet. */
 export function parseDigestRow(row: DigestRow): ParsedDigest {
   return {
     weekId: row['Week ID'] ?? '',
@@ -85,6 +89,8 @@ export function parseDigestRow(row: DigestRow): ParsedDigest {
     riceScores: safeParseArray<RiceScoreEntry>(row['RICE Scores JSON']),
     moscow: safeParseArray<MoscowEntry>(row['MoSCoW JSON']),
     wow: safeParseArray<WoWDeltaEntry>(row['WoW Delta JSON']),
+    trends: safeParseArray<TrendEntry>(row['Trend Direction JSON']),
+    themeBreakdown: safeParseArray<ThemeBreakdownEntry>(row['Theme Breakdown JSON']),
     readiness: safeParseObject<ReadinessResult>(row['Discovery Readiness JSON']),
     overallReadiness: toReadiness(row['Overall Group Readiness']),
     themesReadyCount: toNumber(row['Themes Ready Count']),
@@ -93,6 +99,25 @@ export function parseDigestRow(row: DigestRow): ParsedDigest {
     createdAt: row['Created At'] ?? '',
     rowNumber: toNumber(row.row_number),
   };
+}
+
+/** Format a Week ID like "2026-W22" → "Week 22 (1 Jun – 7 Jun)" (best-effort, ISO weeks). */
+export function formatWeekLabel(weekId: string): string {
+  const match = weekId.match(/^(\d{4})-W(\d{1,2})$/);
+  if (!match) return weekId;
+  const [, yearStr, weekStr] = match;
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+  // ISO week 1 is the week containing the first Thursday. Approximate Monday-of-week.
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - (jan4Day - 1) + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return `Week ${week} (${fmt(monday)} – ${fmt(sunday)})`;
 }
 
 /** Feature-group ID → human label. Mirrors backend's featureGroups.ts. */

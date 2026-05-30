@@ -12,6 +12,12 @@ const schema = z.object({
   SHEETS_DOCUMENT_ID: z.string().min(1),
   SHEETS_SIGNALS_TAB: z.string().default('Signals'),
   SHEETS_DIGESTS_TAB: z.string().default('Weekly Digests'),
+  SHEETS_EFFORT_TAB: z.string().default('Effort Estimates'),
+  SHEETS_FEEDBACK_TAB: z.string().default('Feedback'),
+
+  // Public-facing base URL of this service (used to bake links into the digest email).
+  // Required for the 👍/👎 feedback anchors to work; locally, falls back to localhost:PORT.
+  PUBLIC_BASE_URL: z.string().optional(),
 
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().default(465),

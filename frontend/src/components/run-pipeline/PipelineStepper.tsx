@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 
 interface Stage {
   label: string;
-  /** Cumulative seconds at which this stage is "complete" (next stage starts). */
   endAt: number;
 }
 
@@ -22,7 +21,6 @@ const TOTAL_ESTIMATED_SECONDS = STAGES[STAGES.length - 1].endAt + 2;
 
 interface Props {
   startedAt: number;
-  /** True when the pipeline POST has resolved (success or error). */
   done: boolean;
 }
 
@@ -37,15 +35,9 @@ export function PipelineStepper({ startedAt, done }: Props) {
     return () => window.clearInterval(id);
   }, [startedAt, done]);
 
-  const currentIdx = done
-    ? STAGES.length
-    : STAGES.findIndex((s) => elapsed < s.endAt);
+  const currentIdx = done ? STAGES.length : STAGES.findIndex((s) => elapsed < s.endAt);
   const activeIdx = currentIdx === -1 ? STAGES.length - 1 : currentIdx;
-
-  const percent = done
-    ? 100
-    : Math.min(99, Math.round((elapsed / TOTAL_ESTIMATED_SECONDS) * 100));
-
+  const percent = done ? 100 : Math.min(99, Math.round((elapsed / TOTAL_ESTIMATED_SECONDS) * 100));
   const remaining = Math.max(0, Math.ceil(TOTAL_ESTIMATED_SECONDS - elapsed));
 
   return (
@@ -65,14 +57,7 @@ export function PipelineStepper({ startedAt, done }: Props) {
           return (
             <li
               key={stage.label}
-              className={cn(
-                'flex items-center gap-2.5 text-sm',
-                isComplete
-                  ? 'text-foreground'
-                  : isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground',
-              )}
+              className={cn('flex items-center gap-2.5 text-sm', isComplete || isActive ? 'text-foreground' : 'text-muted-foreground')}
             >
               <span
                 className={cn(
@@ -84,13 +69,7 @@ export function PipelineStepper({ startedAt, done }: Props) {
                       : 'bg-muted text-muted-foreground',
                 )}
               >
-                {isComplete ? (
-                  <Check className="h-3 w-3" />
-                ) : isActive ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  idx + 1
-                )}
+                {isComplete ? <Check className="h-3 w-3" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin" /> : idx + 1}
               </span>
               <span>{stage.label}</span>
             </li>

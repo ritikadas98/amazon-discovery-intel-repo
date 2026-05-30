@@ -136,6 +136,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   };
 
   // 13. Send the digest email
+  const baseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
   const { subject, html } = renderDigestEmail({
     groupSummaries,
     topGroup: topGroupView,
@@ -143,6 +144,8 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     weekId: meta.weekId,
     meta,
     readiness,
+    baseUrl,
+    recipientEmail: recipient,
   });
   await sendEmail({ to: recipient, subject, html });
   log('Digest email sent');

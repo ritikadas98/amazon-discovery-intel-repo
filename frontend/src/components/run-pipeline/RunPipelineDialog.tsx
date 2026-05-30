@@ -30,11 +30,11 @@ export function RunPipelineDialog() {
       queryClient.invalidateQueries({ queryKey: ['runs', 'latest'] });
       queryClient.invalidateQueries({ queryKey: ['digests'] });
       queryClient.invalidateQueries({ queryKey: ['signals'] });
+      queryClient.invalidateQueries({ queryKey: ['effort'] });
       const groupName = featureGroupName(result.topGroup);
       toast.success('Pipeline complete', {
         description: `${result.weekId} · ${groupName} · RICE ${result.topRiceScore.toFixed(1)} · ${result.signalCount} signals${result.regressionCount > 0 ? ` · ${result.regressionCount} regression alert${result.regressionCount === 1 ? '' : 's'}` : ''}`,
       });
-      // Close after a beat so the user sees the "done" stepper state
       window.setTimeout(() => {
         setOpen(false);
         setStartedAt(null);
@@ -56,7 +56,7 @@ export function RunPipelineDialog() {
   };
 
   const handleOpenChange = (next: boolean) => {
-    if (isRunning) return; // block close while running
+    if (isRunning) return;
     setOpen(next);
     if (!next) {
       mutation.reset();
