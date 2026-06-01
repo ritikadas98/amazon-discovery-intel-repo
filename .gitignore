@@ -8,3 +8,6 @@ frontend/.firebase/
 gcp-service-account.json
 *.log
 .DS_Store
+
+# Local-only planning scratch (Gemini-generated, not for the repo)
+implementation_plan rag chat.md
