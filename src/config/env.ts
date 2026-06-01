@@ -14,6 +14,10 @@ const schema = z.object({
   SHEETS_DIGESTS_TAB: z.string().default('Weekly Digests'),
   SHEETS_EFFORT_TAB: z.string().default('Effort Estimates'),
   SHEETS_FEEDBACK_TAB: z.string().default('Feedback'),
+  // Live ingestion (Track 2)
+  SHEETS_SEEN_SIGNALS_TAB: z.string().default('Seen Signal IDs'),
+  SHEETS_WATCH_TAB: z.string().default('Watch Listings'),
+  INGEST_MAX_PER_SOURCE: z.coerce.number().default(50),
 
   // Public-facing base URL of this service (used to bake links into the digest email).
   // Required for the 👍/👎 feedback anchors to work; locally, falls back to localhost:PORT.

@@ -12,6 +12,14 @@ export interface RawSignal {
   rating: number | null;
   severity_raw: number | null;
   app_version: string | null;
+  /**
+   * Stable per-review identity for cross-run dedup (live ingestion only).
+   * Prefer a native ID (App Store entry id, Play reviewId); fall back to a
+   * content hash. Prefixed by source, e.g. "app_store:14127690220".
+   * Mock signals leave this undefined. Dropped by normalize() — used only at
+   * the ingestion/dedup stage, before normalization.
+   */
+  source_id?: string;
 }
 
 export interface SourceBreakdown {

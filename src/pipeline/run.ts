@@ -1,6 +1,8 @@
 import { getEnv } from '../config/env.js';
 import { config } from '../config/featureGroups.js';
 import { loadMockSignals } from '../sources/mockSignals.js';
+import { loadAppStoreSignals } from '../sources/appStore.js';
+import { commitSeenIds, filterUnseen, loadSeenIds } from '../sources/dedupe.js';
 import { normalize } from './normalize.js';
 import { cleanSignals } from '../agents/clean.js';
 import { detectRegressions } from './regression.js';
@@ -14,7 +16,7 @@ import { appendRows, readRows } from '../lib/sheets.js';
 import { sendEmail } from '../lib/email.js';
 import { renderRegressionEmail } from '../templates/regressionEmail.js';
 import { renderDigestEmail } from '../templates/digestEmail.js';
-import type { GroupSummary, PipelineResult, RunOptions, TopGroupView } from '../types.js';
+import type { GroupSummary, PipelineResult, RawSignal, RunOptions, TopGroupView } from '../types.js';
 
 export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const env = getEnv();
@@ -24,11 +26,31 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   log(`Starting run — recipient=${recipient}, mock=${env.USE_MOCK}`);
 
   // 1. Ingest
-  if (!env.USE_MOCK) {
-    throw new Error('Live ingestion not implemented. Set USE_MOCK=true.');
+  // seenToCommit holds the source_ids we ingested this run; committed to the
+  // "Seen Signal IDs" tab ONLY after the Signals rows are written (step 7), so
+  // a mid-run failure re-ingests next time instead of silently dropping reviews.
+  let rawSignals: RawSignal[];
+  let seenToCommit: RawSignal[] = [];
+  if (env.USE_MOCK) {
+    rawSignals = await loadMockSignals();
+    log(`Loaded ${rawSignals.length} mock signals`);
+  } else {
+    // Live sources fan out in parallel; each fails soft (returns []), so one
+    // dead source never aborts the run. Play Store + Amazon land in later increments.
+    const collected = (
+      await Promise.all([loadAppStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE })])
+    ).flat();
+    log(`Live ingest collected ${collected.length} signal(s) across sources`);
+
+    const seen = await loadSeenIds();
+    rawSignals = filterUnseen(collected, seen);
+    seenToCommit = rawSignals;
+    log(`After dedup: ${rawSignals.length} new (${collected.length - rawSignals.length} already seen)`);
+
+    if (rawSignals.length === 0) {
+      throw new Error('Live ingestion produced 0 new signals (all already seen, or all sources empty).');
+    }
   }
-  const rawSignals = await loadMockSignals();
-  log(`Loaded ${rawSignals.length} raw signals`);
 
   // 2. Normalize → compute meta
   const { signals: normalizedSignals, meta } = normalize(rawSignals);
@@ -64,6 +86,17 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const sheetRows = formatSignalsForSheet(tagged, meta);
   await appendRows(env.SHEETS_SIGNALS_TAB, sheetRows);
   log(`Appended ${sheetRows.length} rows to "${env.SHEETS_SIGNALS_TAB}"`);
+
+  // Signals are now persisted — safe to mark this run's source_ids as seen.
+  if (seenToCommit.length > 0) {
+    try {
+      await commitSeenIds(seenToCommit);
+      log(`Committed ${seenToCommit.length} source_id(s) to "${env.SHEETS_SEEN_SIGNALS_TAB}"`);
+    } catch (err) {
+      // Non-fatal: worst case we re-ingest these next run (dedup is best-effort).
+      console.error('[pipeline] commitSeenIds failed (will re-ingest next run):', err);
+    }
+  }
 
   // 8. Read last week's digests for WoW deltas
   const lastWeekData = await readRows(env.SHEETS_DIGESTS_TAB);
