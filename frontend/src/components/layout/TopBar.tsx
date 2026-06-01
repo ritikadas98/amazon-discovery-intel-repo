@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileText, ListChecks, BarChart3 } from 'lucide-react';
+import { FileText, ListChecks, BarChart3, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { groupColor } from '@/lib/colors';
 import { featureGroupName } from '@/lib/parsers';
@@ -10,6 +10,7 @@ const PAGES = [
   { to: '/digest', label: 'Digest', icon: FileText },
   { to: '/signals', label: 'Signals', icon: ListChecks },
   { to: '/report', label: 'Report', icon: BarChart3 },
+  { to: '/chat', label: 'Chat', icon: MessageSquare },
 ];
 
 export function TopBar() {
@@ -28,7 +29,7 @@ export function TopBar() {
         <nav className="flex items-center gap-1 ml-2">
           {PAGES.map((p) => {
             const Icon = p.icon;
-            const isActive = pageTitle === ({ '/digest': 'Digest', '/signals': 'Signals', '/report': 'Discovery Report' } as Record<string, string>)[p.to];
+            const isActive = pageTitle === ({ '/digest': 'Digest', '/signals': 'Signals', '/report': 'Discovery Report', '/chat': 'Chat' } as Record<string, string>)[p.to];
             return (
               <Link
                 key={p.to}

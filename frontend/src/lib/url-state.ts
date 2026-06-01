@@ -49,6 +49,7 @@ export function usePageTitle(): string {
   const location = useLocation();
   if (location.pathname.startsWith('/signals')) return 'Signals';
   if (location.pathname.startsWith('/report')) return 'Discovery Report';
+  if (location.pathname.startsWith('/chat')) return 'Chat';
   if (location.pathname.startsWith('/digest')) return 'Digest';
   return 'Dashboard';
 }

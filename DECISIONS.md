@@ -15,6 +15,49 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — RAG chat (Track 1): streaming, endpoint name, citations
+
+**What changed.** Built the RAG chat feature on `feat/rag-chat`:
+`POST /webhook/chat` streams a Gemini reply (SSE) over a context-stuffed
+corpus (latest 3 digests + up to 200 signals, scoped by group/week); a
+`/chat` page renders the stream with clickable `[signal <ID>]` citations.
+
+**PM rationale.** First conversational surface over the corpus — lets a PM
+ask "what's hot in Returns this week?" instead of reading tables. Kept v1
+cheap and shippable: context-stuffing (no vector DB) is ~$0.001/turn and
+fine while the corpus is bounded (140 mock signals). Streaming because a
+PM watching tokens appear reads as faster than a 5-10s blank wait.
+
+**Mechanics.**
+- `streamGemini()` (async generator over `:streamGenerateContent?alt=sse`)
+  added beside `callGemini` in `src/lib/gemini.ts`; deliberately omits the
+  `responseMimeType: application/json` that `callGemini` forces — chat is
+  prose, not JSON. `src/agents/chat.ts` shapes context (compact digest
+  fields, never the heavy JSON columns) and streams. `src/server.ts` adds
+  the SSE endpoint (400 before headers flush; `event: error` after).
+- Frontend: `ChatPage` + `ChatMessage`, a `chatStream` SSE reader in
+  `api.ts` (EventSource is GET-only, so a manual `fetch` + reader).
+
+**Decisions inside this one.**
+- **Endpoint name `/webhook/chat`**, not the Gemini-draft's `/chat/stream`
+  — matches the repo's `/webhook/*` POST convention and the name already
+  committed in §6/§15.
+- **Citation matching loosened.** Verification showed the model isn't
+  consistent — it mixes `[signal <ID>]`, `signal <ID>`, and bare `<ID>`.
+  v1 badges any ID-shaped token (`YYYY-WNN-index`) rather than only the
+  bracketed form, so all citations become interactive.
+- **No markdown library.** `react-markdown` isn't a dep; v1 renders text
+  with `whitespace-pre-wrap` + the citation pass. Markdown is a later add.
+- **Session-only history.** No `Chat History` sheet tab yet.
+
+**Considered & not done.** Vector RAG / embeddings — deferred until the
+corpus outgrows the prompt window (live ingestion will force this). A
+non-streaming JSON variant — rejected for the worse felt-latency; the
+generator design makes a fallback trivial if ever needed. Multi-turn
+persistence — deferred to a later sheet tab.
+
+---
+
 ## 2026-06-01 — Fix scheduler-update flag in gcp-deploy.sh
 
 **What changed.** In `scripts/gcp-deploy.sh`, the "update existing job"

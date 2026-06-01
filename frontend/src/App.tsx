@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { DigestPage } from '@/routes/DigestPage';
 import { SignalsPage } from '@/routes/SignalsPage';
 import { ReportPage } from '@/routes/ReportPage';
+import { ChatPage } from '@/routes/ChatPage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/digest" element={<DigestPage />} />
           <Route path="/signals" element={<SignalsPage />} />
           <Route path="/report" element={<ReportPage />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="*" element={<Navigate to="/digest?group=all" replace />} />
         </Route>
       </Routes>

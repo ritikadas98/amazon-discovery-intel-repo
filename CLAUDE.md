@@ -375,6 +375,27 @@ Appends to **Feedback** tab: `Week ID, Feature Group ID, PM Email, Rating, Recie
 **Response 200:** small HTML thank-you page (browser-facing).
 **Response 400:** plain text "Bad request: …"
 
+### `POST /webhook/chat` (RAG chat, Track 1)
+Streams a Gemini reply as **Server-Sent Events** (not JSON).
+**Request body:**
+```json
+{
+  "message": "What are the top complaints in scope this week?",
+  "history": [{ "role": "user", "content": "…" }, { "role": "assistant", "content": "…" }],
+  "group": "returns_refunds",
+  "week": "2026-W22"
+}
+```
+`history`, `group`, `week` are optional. `group` omitted/`all` → no group filter.
+Context is **stuffed, not retrieved** (no embeddings): latest 3 Weekly Digests
+(compact fields) + up to 200 newest Signals scoped by group/week. The model is
+told to cite evidence as `[signal <ID>]` using real `Signals.ID` values.
+**Response (stream):** `text/event-stream`. Token frames are `data: {"text":"…"}`;
+the stream ends with `event: done`; failures emit `event: error` with
+`data: {"error":"…"}`. Headers: `Cache-Control: no-cache`, `X-Accel-Buffering: no`.
+**Response 400 (before stream opens):** `{ "error": "message is required." }`
+**Note:** session-only — no chat history persisted to the sheet.
+
 ---
 
 ## §7. Frontend route map
@@ -385,6 +406,7 @@ Appends to **Feedback** tab: `Week ID, Feature Group ID, PM Email, Rating, Recie
 | `/digest?group=X[&week=Y]` | `DigestPage` | Default landing. Branches: All Groups view vs Single Group view |
 | `/signals?group=X[&week=Y]` | `SignalsPage` | Paginated, filterable signal browser (5-tier severity, inline expand) |
 | `/report?group=X[&week=Y]` | `ReportPage` | Discovery Report — theme RICE breakdown with editable effort, evidence gap cards, next steps |
+| `/chat?group=X[&week=Y]` | `ChatPage` | RAG chat over the in-scope corpus; streams replies with clickable `[signal <ID>]` citations |
 | `/*` | redirect to `/digest?group=all` | catch-all |
 
 **URL params** (`?group`, `?week`):
@@ -404,11 +426,14 @@ frontend/src/
 │   ├── DigestPage.tsx            Branches AllGroupsView vs SingleGroupView
 │   ├── SignalsPage.tsx           Paginated table with 4 filters + row expand
 │   └── ReportPage.tsx            Group Readiness + ThemeRiceBreakdown + EvidenceGapCards + NextSteps
+│   └── ChatPage.tsx             RAG chat: streams POST /webhook/chat (SSE), resolves [signal <ID>] citations to in-scope signals
 ├── components/
 │   ├── layout/
 │   │   ├── AppLayout.tsx         Sidebar + TopBar + Outlet
 │   │   ├── Sidebar.tsx           Week selector + 7 group nav items + "All Groups" + last-run footer
-│   │   └── TopBar.tsx            Page title + 3 page tabs + active group pill + Run pipeline button
+│   │   └── TopBar.tsx            Page title + 4 page tabs (Digest/Signals/Report/Chat) + active group pill + Run pipeline button
+│   ├── chat/
+│   │   └── ChatMessage.tsx         Renders a bubble; turns [signal <ID>] into badges with a tooltip showing the signal text
 │   ├── digest/
 │   │   ├── OpportunityHero.tsx       Hero card (group color border, top theme, severity/trend/delta)
 │   │   ├── RankingTable.tsx          Cross-group ranking (only used in All Groups view)
@@ -742,12 +767,20 @@ secret in Secret Manager is deprecated and can be deleted.
 These appear in `CONTEXT.md` §6 and are referenced from various components
 as TODOs or placeholders. Don't be surprised when:
 
-### RAG chat (planned next)
-- Not started.
-- Plan: `/chat` route, `POST /webhook/chat` endpoint with SSE streaming,
-  context-stuffing (no embeddings) of latest 3 digests + last 200 signals
-  filtered by active group. Citations via `[signal #ID]` parsing.
-- Estimated effort: ~1 day.
+### RAG chat — BUILT (2026-06-02)
+- `/chat` route + `POST /webhook/chat` (SSE), context-stuffing (no
+  embeddings) of latest 3 digests + up to 200 signals scoped by
+  group/week. See §6 for the endpoint, §7/§8 for the frontend.
+- `streamGemini()` in `src/lib/gemini.ts`; `handleChatStream()` /
+  `buildChatContext()` in `src/agents/chat.ts`; UI in
+  `frontend/src/routes/ChatPage.tsx` + `components/chat/ChatMessage.tsx`.
+- Citations: model emits `[signal <ID>]` with real `Signals.ID` values;
+  the frontend badges any ID-shaped token (`YYYY-WNN-index`) — bracketed,
+  `signal <ID>`, or bare — and resolves it to the signal text on hover.
+- Session-only (no persisted history). Vertex calls are now 3 per pipeline
+  run + 1 per chat turn.
+- Still TODO: not yet on prod Cloud Run until this branch is deployed;
+  vector RAG remains the upgrade path if the corpus outgrows the prompt.
 
 ### Live ingestion (planned after RAG)
 - `USE_MOCK=true` is hard-set; `false` will throw in `src/pipeline/run.ts`.
@@ -860,7 +893,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `types.ts` | Shared types: `RawSignal`, `CleanedSignal`, `TaggedSignal`, `Theme`, `ScoredTheme`, `ScoredGroup`, `Delta`, `Meta`, `ReadinessResult`, `PipelineResult`, etc. |
 | `config/env.ts` | zod-validated env loader. Single source of truth for env vars. |
 | `config/featureGroups.ts` | The 7 feature groups (id, name, keywords). Used by the synthesize prompt. |
-| `lib/gemini.ts` | `callGemini(prompt, opts)` — Vertex AI REST call with cached `GoogleAuth`. `parseJsonOrThrow` helper. |
+| `lib/gemini.ts` | `callGemini(prompt, opts)` — Vertex AI REST call with cached `GoogleAuth`. `parseJsonOrThrow` helper. `streamGemini(prompt, opts)` — async generator over `:streamGenerateContent?alt=sse`, text (not JSON) output, for chat. |
 | `lib/sheets.ts` | `appendRows(tab, rows)` + `readRows(tab)`. Uses ADC via `googleapis`. |
 | `lib/email.ts` | `sendEmail({ to, subject, html })` — Nodemailer over SMTP. |
 | `sources/mockSignals.ts` | Loads `data/signals.json`. The only source of signals today. |
@@ -873,6 +906,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `pipeline/format.ts` | Row-shaping helpers for `appendRows`. |
 | `agents/clean.ts` | Agent 1: dedup + irrelevance + severity + version_flagged. Gemini call. |
 | `agents/synthesize.ts` | Agent 3: theme clustering + feature-group tagging. Gemini call. |
+| `agents/chat.ts` | RAG chat (Track 1): `buildChatContext()` scopes 3 digests + 200 signals by group/week; `handleChatStream()` builds the prompt and streams via `streamGemini`. |
 | `agents/readiness.ts` | Agent 5: discovery readiness assessment for top group. Gemini call. |
 | `templates/digestEmail.ts` | Full digest HTML with 👍/👎 anchors. Receives `baseUrl` + `recipientEmail`. |
 | `templates/regressionEmail.ts` | Regression alert HTML. |

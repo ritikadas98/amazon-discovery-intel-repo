@@ -172,7 +172,7 @@ Feedback header so writes line up.
 ```
 ┌──────────────────────────────────────────────┐
 │  Frontend (React + Vite + shadcn)            │
-│  Routes: /digest /signals /report  /chat (planned)
+│  Routes: /digest /signals /report /chat
 │  Hosting: local dev now; Firebase Hosting later
 └──────────────────────────┬───────────────────┘
                            │ HTTPS + CORS
@@ -254,6 +254,10 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 - Pipeline runs end-to-end from `/run-pipeline` (old path)
 - Digest + regression emails send
 - DECISIONS.md + CONTEXT.md present at repo root
+- **RAG chat (Track 1) built + verified locally (2026-06-02)** —
+  `/chat` route + `POST /webhook/chat` (SSE), streams a Gemini reply with
+  clickable `[signal <ID>]` citations. On the `feat/rag-chat` branch; not
+  yet deployed to prod Cloud Run.
 
 ### In flight / pending user action
 
@@ -271,7 +275,6 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 
 ### Decided but not built
 
-- **RAG chat** — semantics + scope laid out (see §6); not started.
 - **Live ingestion** — semantics + scope laid out (see §6); not started.
 - **Firebase Hosting deploy of the frontend** — local dev only at the
   moment.
@@ -280,21 +283,22 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 
 ## 6. What's next (and the order)
 
-### Track 1 — RAG chat (build first)
+### Track 1 — RAG chat — DONE (2026-06-02, on `feat/rag-chat`)
 
-A conversational interface for the existing corpus.
+A conversational interface for the existing corpus. Built as specified:
 
-- **Architecture:** Lightweight context-stuffing for v1. No embeddings.
-  No vector DB. The endpoint loads the latest 3 weekly digests + the
-  last 200 signals (filtered by `?group=` if set) and sends them to
-  Gemini 2.5 Flash with the user's question + previous turns.
-- **Frontend:** New route `/chat` with a streaming chat UI. Citations:
-  the model is prompted to cite `[signal #ID]`; the frontend turns those
-  into hover-cards / links.
-- **Persistence:** Session-only for v1 (no chat history in the sheet
-  yet).
-- **Effort:** ~1 day.
-- **Cost:** ~$0.001 per chat turn. Negligible.
+- **Architecture:** context-stuffing for v1, no embeddings/vector DB.
+  `POST /webhook/chat` loads the latest 3 weekly digests + up to 200
+  signals (scoped by `group`/`week`) and streams Gemini 2.5 Flash over
+  SSE with the question + prior turns.
+- **Frontend:** `/chat` route, streaming chat UI (`ChatPage`). The model
+  cites `[signal <ID>]` with real signal IDs; `ChatMessage` badges any
+  ID-shaped token and shows the signal text on hover.
+- **Persistence:** session-only (no chat history in the sheet).
+- **Verified:** locally end-to-end (Playwright + installed Chrome) — tokens
+  stream, all cited IDs badge, tooltips resolve. Cost ~$0.001/turn.
+- **Remaining:** deploy `feat/rag-chat` to Cloud Run; prod doesn't have
+  `/webhook/chat` yet.
 
 ### Track 2 — Live ingestion (build after RAG)
 
