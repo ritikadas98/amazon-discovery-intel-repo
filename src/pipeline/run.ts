@@ -3,6 +3,7 @@ import { config } from '../config/featureGroups.js';
 import { loadMockSignals } from '../sources/mockSignals.js';
 import { loadAppStoreSignals } from '../sources/appStore.js';
 import { loadPlayStoreSignals } from '../sources/playStore.js';
+import { loadAmazonSignals } from '../sources/amazon.js';
 import { commitSeenIds, filterUnseen, loadSeenIds } from '../sources/dedupe.js';
 import { normalize } from './normalize.js';
 import { cleanSignals } from '../agents/clean.js';
@@ -37,11 +38,12 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     log(`Loaded ${rawSignals.length} mock signals`);
   } else {
     // Live sources fan out in parallel; each fails soft (returns []), so one
-    // dead source never aborts the run. Amazon (Jina) lands in the next increment.
+    // dead source never aborts the run.
     const collected = (
       await Promise.all([
         loadAppStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
         loadPlayStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
+        loadAmazonSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
       ])
     ).flat();
     log(`Live ingest collected ${collected.length} signal(s) across sources`);
