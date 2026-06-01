@@ -4,6 +4,7 @@ import cors from 'cors';
 import { getEnv } from './config/env.js';
 import { runPipeline } from './pipeline/run.js';
 import { appendRows, readRows } from './lib/sheets.js';
+import { handleChatStream, type ChatTurn } from './agents/chat.js';
 
 const env = getEnv();
 const app = express();
@@ -218,13 +219,61 @@ app.get('/webhook/digest-feedback', async (req: Request, res: Response) => {
   }
 });
 
+// ─── RAG chat (Track 1) ──────────────────────────────────────────────────────
+// Streams a Gemini reply as Server-Sent Events. Body:
+//   { message: string, history?: {role,content}[], group?: string, week?: string }
+function sanitizeHistory(raw: unknown): ChatTurn[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ChatTurn[] = [];
+  for (const item of raw) {
+    const role = (item as { role?: unknown })?.role;
+    const content = (item as { content?: unknown })?.content;
+    if ((role === 'user' || role === 'assistant') && typeof content === 'string' && content.trim()) {
+      out.push({ role, content });
+    }
+  }
+  return out;
+}
+
+app.post('/webhook/chat', async (req: Request, res: Response) => {
+  const message = String(req.body?.message ?? '').trim();
+  if (!message) {
+    res.status(400).json({ error: 'message is required.' });
+    return;
+  }
+  const history = sanitizeHistory(req.body?.history);
+  const group = req.body?.group ? String(req.body.group) : undefined;
+  const week = req.body?.week ? String(req.body.week) : undefined;
+
+  // Once we flush SSE headers, all errors must be reported as SSE events
+  // (we can no longer switch to a JSON status code).
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // disable proxy buffering (Cloud Run / nginx)
+  res.flushHeaders();
+
+  try {
+    for await (const delta of handleChatStream(message, history, group, week)) {
+      res.write(`data: ${JSON.stringify({ text: delta })}\n\n`);
+    }
+    res.write('event: done\ndata: {}\n\n');
+    res.end();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[server] chat failed:', msg);
+    res.write(`event: error\ndata: ${JSON.stringify({ error: msg })}\n\n`);
+    res.end();
+  }
+});
+
 // ─── Boot ────────────────────────────────────────────────────────────────────
 const server = app.listen(env.PORT, () => {
   console.log(`[server] Listening on http://localhost:${env.PORT}`);
   console.log(
     `[server] Endpoints: GET /health, GET /digests, GET /signals, GET /runs/latest, ` +
       `GET /effort-overrides, GET /webhook/digest-feedback, POST /run-pipeline, ` +
-      `POST /webhook/run-pipeline, POST /webhook/set-effort`,
+      `POST /webhook/run-pipeline, POST /webhook/set-effort, POST /webhook/chat`,
   );
 });
 

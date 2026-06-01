@@ -41,13 +41,19 @@ function thinkingBudgetFromLevel(level: 'minimal' | 'medium' | 'high'): number {
   }
 }
 
-export async function callGemini(prompt: string, opts: GeminiOptions = {}): Promise<string> {
+/** Build the Vertex AI model endpoint URL for a given method (e.g. "generateContent"). */
+function vertexModelUrl(method: string): string {
   const env = getEnv();
+  return (
+    `https://${env.VERTEX_REGION}-aiplatform.googleapis.com/v1/projects/${env.VERTEX_PROJECT_ID}` +
+    `/locations/${env.VERTEX_REGION}/publishers/google/models/${env.VERTEX_MODEL}:${method}`
+  );
+}
+
+export async function callGemini(prompt: string, opts: GeminiOptions = {}): Promise<string> {
   const { temperature = 0.1, maxOutputTokens = 8192, thinkingLevel = 'minimal' } = opts;
 
-  const url =
-    `https://${env.VERTEX_REGION}-aiplatform.googleapis.com/v1/projects/${env.VERTEX_PROJECT_ID}` +
-    `/locations/${env.VERTEX_REGION}/publishers/google/models/${env.VERTEX_MODEL}:generateContent`;
+  const url = vertexModelUrl('generateContent');
 
   const body = {
     contents: [
@@ -89,6 +95,91 @@ export async function callGemini(prompt: string, opts: GeminiOptions = {}): Prom
   const data = (await res.json()) as GeminiResponse;
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   return rawText.replace(/```json|```/g, '').trim();
+}
+
+/**
+ * Streaming counterpart to callGemini. Yields plain-text deltas as the model
+ * produces them, using Vertex AI's :streamGenerateContent?alt=sse endpoint.
+ *
+ * Unlike callGemini, this deliberately does NOT set responseMimeType to JSON —
+ * chat replies are prose/markdown. Caller is responsible for any framing
+ * (e.g. wrapping deltas in SSE for an HTTP response).
+ */
+export async function* streamGemini(
+  prompt: string,
+  opts: GeminiOptions = {},
+): AsyncGenerator<string> {
+  const { temperature = 0.3, maxOutputTokens = 2048, thinkingLevel = 'minimal' } = opts;
+
+  const url = vertexModelUrl('streamGenerateContent') + '?alt=sse';
+
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ],
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      // No responseMimeType — we want free-form text, not JSON.
+      thinkingConfig: {
+        thinkingBudget: thinkingBudgetFromLevel(thinkingLevel),
+      },
+    },
+  };
+
+  const client = await getAuthClient();
+  const accessToken = (await client.getAccessToken()).token;
+  if (!accessToken) {
+    throw new Error('Vertex AI auth: GoogleAuth returned no access token.');
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Vertex AI stream error (${res.status}): ${errText.substring(0, 500)}`);
+  }
+  if (!res.body) {
+    throw new Error('Vertex AI stream error: response had no body.');
+  }
+
+  // Parse the SSE stream: events are separated by blank lines; payload lines
+  // start with "data:" and carry a JSON GenerateContentResponse chunk.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let newlineIdx: number;
+    while ((newlineIdx = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.slice(0, newlineIdx).trim();
+      buffer = buffer.slice(newlineIdx + 1);
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice('data:'.length).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const chunk = JSON.parse(payload) as GeminiResponse;
+        const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) yield text;
+      } catch {
+        // Partial / non-JSON keep-alive line — ignore and wait for more.
+      }
+    }
+  }
 }
 
 export function parseJsonOrThrow<T>(cleaned: string, label: string): T {
