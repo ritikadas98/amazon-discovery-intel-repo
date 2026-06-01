@@ -15,6 +15,48 @@ overwrite history).
 
 ---
 
+## 2026-06-01 — Match the existing Sheet schema (don't migrate it)
+
+**What changed.** Backend write/read code adapted to the **existing**
+column names on the `Effort Estimates` and `Feedback` tabs instead of the
+simpler schema I originally coded. The digest email's 👍/👎 URLs now carry
+`feature_group_id` so the backend has it to write.
+
+- `Effort Estimates` columns: `Theme ID | Feature Group ID | Week ID |
+  Effort Value | Set By | Set At`
+- `Feedback` columns: `Week ID | Feature Group ID | PM Email | Rating |
+  Recieved At` (the "Recieved" misspelling is the existing header — code
+  matches it as-is so writes land in the right column).
+
+**PM rationale.** The sheet was built first; the code came second. When
+they disagree, the sheet wins — PMs are already working with this schema
+(maybe filtering, pivoting, etc. on `Feature Group ID` and `Set By`), and
+forcing them to drop columns or rename headers would break that work.
+Code is cheaper to change than a populated spreadsheet. Also matters that
+`Feature Group ID` and `Set By` are *useful* — accountability columns the
+original schema had but my code didn't.
+
+**Mechanics.**
+- `src/server.ts` — `/webhook/set-effort` now accepts `feature_group_id`
+  and `set_by` in the body; writes the 6-column row. `/effort-overrides`
+  reads `Effort Value` + `Set At`. `/webhook/digest-feedback` now accepts
+  `feature_group_id` and `pm_email` query params; writes the 5-column row
+  (with the misspelling preserved).
+- `src/templates/digestEmail.ts` — `buildFeedbackButtons` bakes
+  `feature_group_id` into the URL. All themes in the readiness block belong
+  to the top group, so we use `topGroup.group_id` for that.
+- `frontend/src/lib/api.ts` — `setEffort` signature gained `feature_group_id`
+  and optional `set_by`.
+- `frontend/src/components/report/ThemeRiceBreakdownTable.tsx` — passes
+  `t.feature_group_id` when calling the mutation.
+
+**Considered & not done.** Adding a migration step to align the sheet to
+my original schema (bad — destructive on a populated sheet; rejection on
+principle). Making `Set By` an authenticated user identity (rejected for
+v1 — no frontend auth yet; defaults to `DEFAULT_RECIPIENT`).
+
+---
+
 ## 2026-06-01 — Per-group DigestPage rebuild
 
 **What changed.** Single-group DigestPage (e.g. `/digest?group=returns_refunds`)

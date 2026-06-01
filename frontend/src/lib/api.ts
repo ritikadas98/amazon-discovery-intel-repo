@@ -57,12 +57,18 @@ export const api = {
 
   latestRun: () => jsonFetch<DigestRow>('/runs/latest'),
 
-  setEffort: (theme_id: string, week_id: string, effort: number) =>
+  setEffort: (
+    theme_id: string,
+    week_id: string,
+    effort: number,
+    feature_group_id: string,
+    set_by?: string,
+  ) =>
     jsonFetch<{ ok: boolean; theme_id: string; week_id: string; effort: number }>(
       '/webhook/set-effort',
       {
         method: 'POST',
-        body: JSON.stringify({ theme_id, week_id, effort }),
+        body: JSON.stringify({ theme_id, week_id, effort, feature_group_id, set_by }),
       },
     ),
 

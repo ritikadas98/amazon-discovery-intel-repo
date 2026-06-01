@@ -16,13 +16,15 @@ export interface DigestEmailInput {
 function buildFeedbackButtons(
   baseUrl: string,
   themeId: string,
+  featureGroupId: string,
   weekId: string,
-  recipientEmail: string,
+  pmEmail: string,
 ): string {
   const url = (rating: 'useful' | 'not_useful') =>
     `${baseUrl}/webhook/digest-feedback?theme_id=${encodeURIComponent(themeId)}` +
+    `&feature_group_id=${encodeURIComponent(featureGroupId)}` +
     `&week_id=${encodeURIComponent(weekId)}&rating=${rating}` +
-    `&recipient=${encodeURIComponent(recipientEmail)}`;
+    `&pm_email=${encodeURIComponent(pmEmail)}`;
   return `
     <table cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr>
       <td style="padding-right:6px;">
@@ -123,7 +125,7 @@ export function renderDigestEmail(input: DigestEmailInput): { subject: string; h
         </tr></table>
         ${t.gap_reasons && t.gap_reasons.length ? `<p style="margin:6px 0 0 0;font-size:12px;color:#6b7280;line-height:1.5;"><strong>Gaps:</strong> ${t.gap_reasons.join(' · ')}</p>` : ''}
         ${t.recommended_next_steps && t.recommended_next_steps.length ? `<p style="margin:4px 0 0 0;font-size:12px;color:#4f46e5;line-height:1.5;"><strong>Next:</strong> ${t.recommended_next_steps[0]}</p>` : ''}
-        ${buildFeedbackButtons(baseUrl, t.theme_id, weekId, recipientEmail)}
+        ${buildFeedbackButtons(baseUrl, t.theme_id, topGroup.group_id, weekId, recipientEmail)}
       </td></tr>
     </table>`,
     )

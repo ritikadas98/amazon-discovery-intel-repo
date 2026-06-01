@@ -32,8 +32,15 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
   }, [overrides]);
 
   const setEffortMutation = useMutation({
-    mutationFn: ({ theme_id, effort }: { theme_id: string; effort: number }) =>
-      api.setEffort(theme_id, weekId, effort),
+    mutationFn: ({
+      theme_id,
+      effort,
+      feature_group_id,
+    }: {
+      theme_id: string;
+      effort: number;
+      feature_group_id: string;
+    }) => api.setEffort(theme_id, weekId, effort, feature_group_id),
     onSuccess: (_data, variables) => {
       // Optimistically reflect the new override (without a refetch round-trip).
       queryClient.setQueryData<{ week: string | null; overrides: EffortOverride[] }>(
@@ -105,7 +112,13 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
                   <TableCell>
                     <SegmentedEffortSelector
                       value={effortValue}
-                      onChange={(v) => setEffortMutation.mutate({ theme_id: t.theme_id, effort: v })}
+                      onChange={(v) =>
+                        setEffortMutation.mutate({
+                          theme_id: t.theme_id,
+                          effort: v,
+                          feature_group_id: t.feature_group_id,
+                        })
+                      }
                       disabled={setEffortMutation.isPending}
                     />
                   </TableCell>

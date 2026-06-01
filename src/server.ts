@@ -93,10 +93,14 @@ app.get('/runs/latest', async (_req: Request, res: Response) => {
 });
 
 // ─── Effort overrides (Enhancement 5) ────────────────────────────────────────
+// Existing "Effort Estimates" sheet columns:
+//   Theme ID | Feature Group ID | Week ID | Effort Value | Set By | Set At
 app.post('/webhook/set-effort', async (req: Request, res: Response) => {
   try {
     const theme_id = String(req.body?.theme_id ?? '').trim();
     const week_id = String(req.body?.week_id ?? '').trim();
+    const feature_group_id = String(req.body?.feature_group_id ?? '').trim();
+    const set_by = String(req.body?.set_by ?? env.DEFAULT_RECIPIENT ?? '').trim();
     const effortRaw = Number(req.body?.effort);
 
     if (!theme_id || !week_id || !Number.isFinite(effortRaw) || effortRaw <= 0) {
@@ -109,9 +113,11 @@ app.post('/webhook/set-effort', async (req: Request, res: Response) => {
     await appendRows(env.SHEETS_EFFORT_TAB, [
       {
         'Theme ID': theme_id,
+        'Feature Group ID': feature_group_id,
         'Week ID': week_id,
-        Effort: effortRaw,
-        'Updated At': new Date().toISOString(),
+        'Effort Value': effortRaw,
+        'Set By': set_by,
+        'Set At': new Date().toISOString(),
       },
     ]);
     res.json({ ok: true, theme_id, week_id, effort: effortRaw });
@@ -141,8 +147,10 @@ app.get('/effort-overrides', async (req: Request, res: Response) => {
       overrides: Object.values(latestByKey).map((r) => ({
         theme_id: r['Theme ID'],
         week_id: r['Week ID'],
-        effort: Number(r.Effort),
-        updated_at: r['Updated At'],
+        feature_group_id: r['Feature Group ID'],
+        effort: Number(r['Effort Value']),
+        set_by: r['Set By'],
+        updated_at: r['Set At'],
       })),
     });
   } catch (err) {
@@ -175,12 +183,16 @@ function thankYouHtml(rating: string, theme_id: string): string {
 </body></html>`;
 }
 
+// Existing "Feedback" sheet columns:
+//   Week ID | Feature Group ID | PM Email | Rating | Recieved At
+//   (the "Recieved" misspelling is the existing header — we match it as-is.)
 app.get('/webhook/digest-feedback', async (req: Request, res: Response) => {
   try {
     const theme_id = String(req.query.theme_id ?? '').trim();
     const week_id = String(req.query.week_id ?? '').trim();
+    const feature_group_id = String(req.query.feature_group_id ?? '').trim();
     const rating = String(req.query.rating ?? '').trim();
-    const recipient = String(req.query.recipient ?? '').trim();
+    const pm_email = String(req.query.pm_email ?? req.query.recipient ?? '').trim();
 
     if (!theme_id || !week_id || !VALID_RATINGS.has(rating)) {
       res.status(400).type('text/plain').send(
@@ -191,11 +203,11 @@ app.get('/webhook/digest-feedback', async (req: Request, res: Response) => {
 
     await appendRows(env.SHEETS_FEEDBACK_TAB, [
       {
-        'Theme ID': theme_id,
         'Week ID': week_id,
+        'Feature Group ID': feature_group_id,
+        'PM Email': pm_email,
         Rating: rating,
-        Recipient: recipient,
-        'Submitted At': new Date().toISOString(),
+        'Recieved At': new Date().toISOString(),
       },
     ]);
 
