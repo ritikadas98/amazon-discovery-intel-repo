@@ -791,6 +791,7 @@ These appear in `CONTEXT.md` §6 and are referenced from various components
 as TODOs or placeholders. Don't be surprised when:
 
 ### RAG chat — BUILT (2026-06-02)
+> Deep-dive: **`docs/RAG_CHAT.md`** (build & working narrative).
 - `/chat` route + `POST /webhook/chat` (SSE), context-stuffing (no
   embeddings) of latest 3 digests + up to 200 signals scoped by
   group/week. See §6 for the endpoint, §7/§8 for the frontend.
@@ -806,6 +807,7 @@ as TODOs or placeholders. Don't be surprised when:
   vector RAG remains the upgrade path if the corpus outgrows the prompt.
 
 ### Live ingestion — BUILT (2026-06-02)
+> Deep-dive: **`docs/LIVE_INGESTION.md`** (build & working narrative).
 - `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`: the three
   sources fan out in parallel (each fails soft → `[]`), results are deduped
   against the `Seen Signal IDs` tab, and `source_id`s are committed there
