@@ -1,8 +1,12 @@
 # Project context — Amazon Discovery Intelligence
 
 A master narrative for understanding *what this project is, why it's shaped
-the way it is, and where it's going*. Pair this with `DECISIONS.md` (the
-per-decision log) for the full picture.
+the way it is, and where it's going*. One of three project-level docs:
+
+- **`CONTEXT.md`** (this file) — narrative + state + what's next. For humans.
+- **`DECISIONS.md`** — per-decision log with PM rationale. For humans.
+- **`CLAUDE.md`** — terse instructions for AI assistants (commands,
+  conventions, gotchas). Auto-loaded by Claude Code.
 
 If you're new to the codebase, read this top-to-bottom. If you're picking
 up after time away, jump to **§5 — Current state** and **§6 — What's next**.
@@ -217,8 +221,9 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 │       └── lib/           api.ts, colors.ts, parsers.ts, url-state.ts
 ├── data/signals.json      140-signal mock fixture
 ├── scripts/               gcp-infra.sh, gcp-deploy.sh
+├── CLAUDE.md              AI-assistant instructions (auto-loaded)
+├── CONTEXT.md             This file (narrative + state)
 ├── DECISIONS.md           Per-decision log (PM rationale)
-├── CONTEXT.md             This file
 └── n8n-gcp-hosting-guide.md  Original n8n hosting steps (kept for history)
 ```
 
@@ -339,18 +344,22 @@ deferred the split.)
 
 ## 8. How to use this document
 
-- **For onboarding:** read top-to-bottom. Then skim `DECISIONS.md` for
-  the tradeoffs.
+- **For onboarding (human):** read top-to-bottom. Then skim `DECISIONS.md`
+  for the tradeoffs.
+- **For onboarding (AI assistant):** `CLAUDE.md` is auto-loaded first;
+  treat this file as referenced from there.
 - **For "what's the state right now":** §5.
 - **For "what's coming next":** §6.
 - **For "why is X this way":** check `DECISIONS.md` first (per-decision
   index), fall back to the chronological story in §3 here.
+- **For commands + conventions + gotchas:** `CLAUDE.md`.
 - **For deploy / sheet edits / debugging:** see `README.md`.
 
 This file should be kept in sync with reality. When something material
 changes — a phase completes, a dilemma resolves, an architectural
 decision flips — update the relevant section here AND add an entry to
-`DECISIONS.md`. The two together are the project's institutional memory.
+`DECISIONS.md`. The two together (plus `CLAUDE.md` for the AI-facing
+view) are the project's institutional memory.
 
 ---
 

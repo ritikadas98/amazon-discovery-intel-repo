@@ -15,6 +15,38 @@ overwrite history).
 
 ---
 
+## 2026-06-01 — Add CLAUDE.md as the third project doc
+
+**What changed.** Added `CLAUDE.md` at the repo root — reference-shaped
+instructions auto-loaded by Claude Code on every session in this repo.
+Covers: read-first pointers, hard rules (always update both docs, never
+amend, preserve the "Recieved At" misspelling, never force-push master),
+key commands (backend + frontend + GCP), sheet schema for all 5 tabs,
+conventions, common gotchas, and a useful-files-at-a-glance index.
+
+**PM rationale.** The two existing docs (`CONTEXT.md` for narrative,
+`DECISIONS.md` for rationale) are written for *humans*. They're long-form
+and chronological. An AI assistant joining a session benefits more from a
+terse reference card — what commands exist, what conventions are
+load-bearing, what gotchas have already bitten us. Without `CLAUDE.md`,
+Claude re-discovers things like "the Feedback header is misspelled" or
+"appendRows aligns by header" each session. With it, those are
+front-of-mind from token zero.
+
+**Mechanics.** Repo root `CLAUDE.md`. Cross-references `CONTEXT.md` and
+`DECISIONS.md` so the AI doesn't read the same content twice. The "hard
+rules" section codifies the default-update behaviour the user established
+earlier today.
+
+**Considered & not done.** Putting everything in one mega-file (rejected
+— different docs serve different audiences; long files get ignored).
+Generating it from code via a script (rejected — overkill; it's stable
+content). A second `.cursor/rules` or equivalent (deferred — `CLAUDE.md`
+covers the main assistant; we can add others if the team uses different
+tooling).
+
+---
+
 ## 2026-06-01 — Match the existing Sheet schema (don't migrate it)
 
 **What changed.** Backend write/read code adapted to the **existing**
