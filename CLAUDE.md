@@ -99,9 +99,10 @@ the docs index it.
 8. **The Cloud Run service runs an older revision unless freshly deployed.**
    A 404 on a recently-added endpoint means "redeploy needed." Don't
    debug application code for HTTP 404s on `/webhook/...` paths.
-9. **`USE_MOCK=true`** is the default. Setting it to `false` will break
-   until live sources are implemented. Live ingestion is in §15 (not
-   built).
+9. **`USE_MOCK=true`** is the default. As of 2026-06-02, `false` runs LIVE
+   ingestion (App Store RSS + Play Store + Amazon-via-Jina), deduped against
+   the `Seen Signal IDs` tab. Live runs need the `Seen Signal IDs` and
+   `Watch Listings` tabs to exist (see §9). See §15.
 
 ---
 
@@ -536,8 +537,27 @@ by row_number when read by `/effort-overrides`.
 | `Rating` | `useful`\|`not_useful` | |
 | `Recieved At` | ISO timestamp | **Misspelling is intentional** — matches existing header |
 
+### Tab: `Seen Signal IDs` (live-ingestion dedup, append-only)
+| Column | Example | Notes |
+|---|---|---|
+| `Source ID` | `app_store:14127690220` | `<source>:<native-id-or-hash>`; one per ingested review |
+| `Seen At` | ISO timestamp | When it was first ingested |
+
+Written only when `USE_MOCK=false`, after a successful Signals write. Read at
+the start of each live run to skip already-seen reviews. **Create this tab
+(with both headers) before the first live run** — missing tab fails open.
+
+### Tab: `Watch Listings` (Amazon ASIN watch list for live ingestion)
+| Column | Example | Notes |
+|---|---|---|
+| `ASIN` | `B07DY2QRF6` | Amazon product id (the `/dp/<ASIN>` segment) |
+| `Marketplace` | `com` / `in` | TLD; `amazon.<tld>` is fetched. Defaults to `com` if blank |
+
+Read by `src/sources/amazon.ts`. **Create + populate this tab before the
+first live run** — empty/missing tab simply skips the Amazon source.
+
 ### Tab: `Jina Cache`
-Reserved for future Amazon product review scraper. Empty.
+Reserved for caching Jina Reader responses (not used yet). Empty.
 
 ---
 
@@ -556,6 +576,9 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SHEETS_DIGESTS_TAB` | optional | `Weekly Digests` | |
 | `SHEETS_EFFORT_TAB` | optional | `Effort Estimates` | |
 | `SHEETS_FEEDBACK_TAB` | optional | `Feedback` | |
+| `SHEETS_SEEN_SIGNALS_TAB` | optional | `Seen Signal IDs` | Live-ingestion dedup tab |
+| `SHEETS_WATCH_TAB` | optional | `Watch Listings` | Amazon ASIN watch list |
+| `INGEST_MAX_PER_SOURCE` | optional | `50` | Cap on newest reviews per live source per run |
 | `PUBLIC_BASE_URL` | optional | — | Used to render feedback links in digest email. Auto-set to the service URL by `scripts/gcp-deploy.sh` after deploy |
 | `SMTP_HOST` | optional | `smtp.gmail.com` | |
 | `SMTP_PORT` | optional | `465` | |
@@ -564,7 +587,7 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `EMAIL_FROM` | required | — | `From:` header |
 | `DEFAULT_RECIPIENT` | optional | — | Fallback for `/run-pipeline` and the cron job |
 | `PORT` | optional | `3000` | |
-| `USE_MOCK` | optional | `true` | When `false`, the pipeline will throw — live ingestion not implemented yet |
+| `USE_MOCK` | optional | `true` | When `false`, runs live ingestion (App Store + Play Store + Amazon/Jina), deduped via the Seen Signal IDs tab |
 | `CRON_SCHEDULE` | optional | `0 9 1 * *` | Cron string (used only if running an in-process scheduler; Cloud Run uses Cloud Scheduler) |
 | `CORS_ORIGIN` | optional | `*` | Frontend origin. Switch to specific URL once Firebase is deployed |
 
@@ -782,17 +805,28 @@ as TODOs or placeholders. Don't be surprised when:
 - Still TODO: not yet on prod Cloud Run until this branch is deployed;
   vector RAG remains the upgrade path if the corpus outgrows the prompt.
 
-### Live ingestion (planned after RAG)
-- `USE_MOCK=true` is hard-set; `false` will throw in `src/pipeline/run.ts`.
-- Plan: 3 source modules under `src/sources/`:
-  - `appStore.ts` — iTunes Customer Reviews RSS for app ID `297606951`.
-  - `playStore.ts` — `google-play-scraper` npm package for
-    `com.amazon.mShop.android.shopping`.
-  - `amazonReviews.ts` — Jina Reader (`r.jina.ai/<url>`) for a curated
-    watch list of ASINs stored in a new `Watch Listings` sheet tab.
-- Needs a "Seen Signal IDs" dedup mechanism (new sheet tab or column).
-- The "Jina Cache" sheet tab is reserved for caching Jina Reader responses.
-- Estimated effort: ~3 days.
+### Live ingestion — BUILT (2026-06-02)
+- `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`: the three
+  sources fan out in parallel (each fails soft → `[]`), results are deduped
+  against the `Seen Signal IDs` tab, and `source_id`s are committed there
+  ONLY after the Signals rows are written (so a mid-run failure re-ingests
+  rather than dropping reviews). Per-source cap = `INGEST_MAX_PER_SOURCE`
+  (default 50). Throws if 0 new signals survive dedup.
+- Source modules under `src/sources/`:
+  - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native
+    entry id → `source_id`.
+  - `playStore.ts` — `google-play-scraper` for
+    `com.amazon.mShop.android.shopping`. reviewId → `source_id`.
+  - `amazon.ts` — Jina Reader on `/dp/<ASIN>` pages (the `/product-reviews/`
+    path is sign-in-walled). Reads ASINs from the `Watch Listings` tab.
+    `parseAmazonReviews()` handles US + IN/UK date layouts. permalink review
+    id → `source_id`, else a content hash.
+  - `dedupe.ts` — `loadSeenIds` / `filterUnseen` / `commitSeenIds`.
+- Manual prerequisite: the `Seen Signal IDs` and `Watch Listings` tabs must
+  exist (see §9). Missing tabs fail open (App/Play still ingest; Amazon skips).
+- Still reserved/unused: the `Jina Cache` tab (caching Jina responses is a
+  future optimization). Region/country is hardcoded `us` for App/Play; the
+  Amazon source honors per-ASIN marketplace from the Watch Listings tab.
 
 ### Pipeline split (deferred)
 - Currently a single ~30-50s job. If live ingestion pushes past Cloud
@@ -896,7 +930,11 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `lib/gemini.ts` | `callGemini(prompt, opts)` — Vertex AI REST call with cached `GoogleAuth`. `parseJsonOrThrow` helper. `streamGemini(prompt, opts)` — async generator over `:streamGenerateContent?alt=sse`, text (not JSON) output, for chat. |
 | `lib/sheets.ts` | `appendRows(tab, rows)` + `readRows(tab)`. Uses ADC via `googleapis`. |
 | `lib/email.ts` | `sendEmail({ to, subject, html })` — Nodemailer over SMTP. |
-| `sources/mockSignals.ts` | Loads `data/signals.json`. The only source of signals today. |
+| `sources/mockSignals.ts` | Loads `data/signals.json`. Used when `USE_MOCK=true`. |
+| `sources/appStore.ts` | Live: iTunes Customer Reviews RSS (app 297606951) → RawSignal[]. Fails soft. |
+| `sources/playStore.ts` | Live: google-play-scraper reviews for the Amazon app → RawSignal[]. Fails soft. |
+| `sources/amazon.ts` | Live: Jina Reader on /dp/<ASIN> pages from the Watch Listings tab. `parseAmazonReviews()` parses the markdown. Fails soft. |
+| `sources/dedupe.ts` | Cross-run dedup vs the Seen Signal IDs tab (loadSeenIds/filterUnseen/commitSeenIds). |
 | `pipeline/run.ts` | The orchestrator. Wires every stage in order, fires regression email in parallel. |
 | `pipeline/normalize.ts` | Validates raw signals, computes weekId + dataQualityWarning. |
 | `pipeline/regression.ts` | Detects ≥5-signal version clusters. |

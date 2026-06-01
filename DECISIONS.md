@@ -15,6 +15,47 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Live ingestion (Track 2): three sources, dedup, caps
+
+**What changed.** `USE_MOCK=false` now runs real ingestion instead of
+throwing. Three sources under `src/sources/` fan out in parallel —
+App Store RSS, Play Store (google-play-scraper), and Amazon product reviews
+(Jina Reader on /dp/ pages) — deduped against a new `Seen Signal IDs` tab.
+On `feat/live-ingestion`.
+
+**PM rationale.** This is the point of the whole system — analyzing *real*
+customer signal, not a fixture. Built incrementally (App → Play → Amazon),
+each source verified against live data before the next, so we never debugged
+three fragile external integrations at once.
+
+**Mechanics + decisions inside this one.**
+- **Incremental, verified-live per source.** App Store and Play Store each
+  return 50 well-formed signals; the Amazon parser was developed against real
+  Jina captures (US + IN).
+- **Volume cap (`INGEST_MAX_PER_SOURCE`, 50).** `cleanSignals` stuffs every
+  signal into one Gemini prompt; uncapped live volume would blow the token
+  limit and the 120s timeout. ~150/run keeps us safe.
+- **Commit Seen IDs only after the Signals write.** A mid-run failure then
+  re-ingests next time instead of silently dropping never-analyzed reviews.
+- **Per-source fail-soft.** Each source catches and returns `[]`; one dead
+  source (Play scraper breaking, Jina rate-limited) never aborts the run.
+  Run only throws if 0 new signals survive dedup across all sources.
+- **Amazon: /dp/ not /product-reviews/.** The reviews path is sign-in-walled
+  via Jina; the product page's public "top reviews" parse fine. Yields a
+  handful per ASIN — expected. Parser handles US ("May 30, 2026") and IN/UK
+  ("8 December 2025") date layouts; permalink review id → source_id, else a
+  content hash. 8 starter ASINs (mixed .com/.in) live in a `Watch Listings`
+  tab, editable without code.
+- **source_id on RawSignal**, dropped by normalize — used only at ingest/dedup.
+
+**Considered & not done.** Jina response caching (the reserved `Jina Cache`
+tab) — deferred; not needed at this volume. Pipeline split (ingest/analyse)
+— still deferred until a live run actually exceeds 120s. Auto-fallback to the
+mock fixture when live is thin — rejected; the existing dataQualityWarning
+already surfaces low volume, and silently swapping in mock data would mislead.
+
+---
+
 ## 2026-06-02 — RAG chat (Track 1): streaming, endpoint name, citations
 
 **What changed.** Built the RAG chat feature on `feat/rag-chat`:

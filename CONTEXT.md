@@ -238,7 +238,9 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 | `Weekly Digests` | One row per weekly run (top group + JSON arrays for all groups) | Writes on every run; the `Trend Direction JSON` + `Theme Breakdown JSON` headers were added 2026-06-01 |
 | `Effort Estimates` | PM-set effort overrides per (theme, week) | Writes on Discovery Report effort-segment click |
 | `Feedback` | PM 👍/👎 ratings per theme | Writes on email-button click |
-| `Jina Cache` | (placeholder, unused yet) | Will be used by Amazon product review scraper |
+| `Seen Signal IDs` | Cross-run dedup for live ingestion (`Source ID`, `Seen At`) | Written on live runs; create before first live run |
+| `Watch Listings` | Amazon ASIN watch list (`ASIN`, `Marketplace`) | Read by the Amazon source; create + populate before first live run |
+| `Jina Cache` | (placeholder, unused yet) | Reserved for caching Jina Reader responses |
 
 ---
 
@@ -256,8 +258,13 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 - DECISIONS.md + CONTEXT.md present at repo root
 - **RAG chat (Track 1) built + verified locally (2026-06-02)** —
   `/chat` route + `POST /webhook/chat` (SSE), streams a Gemini reply with
-  clickable `[signal <ID>]` citations. On the `feat/rag-chat` branch; not
-  yet deployed to prod Cloud Run.
+  clickable `[signal <ID>]` citations. Merged to master + **deployed to prod
+  Cloud Run** (verified streaming live).
+- **Live ingestion (Track 2) built + verified per-source (2026-06-02)** —
+  `USE_MOCK=false` ingests App Store RSS + Play Store + Amazon-via-Jina,
+  deduped via the `Seen Signal IDs` tab. On the `feat/live-ingestion`
+  branch; not yet merged/deployed. Needs the `Seen Signal IDs` + `Watch
+  Listings` tabs created before the first live run.
 
 ### In flight / pending user action
 
@@ -275,7 +282,6 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 
 ### Decided but not built
 
-- **Live ingestion** — semantics + scope laid out (see §6); not started.
 - **Firebase Hosting deploy of the frontend** — local dev only at the
   moment.
 
@@ -300,26 +306,26 @@ A conversational interface for the existing corpus. Built as specified:
 - **Remaining:** deploy `feat/rag-chat` to Cloud Run; prod doesn't have
   `/webhook/chat` yet.
 
-### Track 2 — Live ingestion (build after RAG)
+### Track 2 — Live ingestion — DONE (2026-06-02, on `feat/live-ingestion`)
 
-Three sources, in order of effort:
+All three sources built and verified per-source; `USE_MOCK=false` drives them:
 
-1. **App Store** (iTunes Customer Reviews RSS) — free, no auth, JSON.
-   App ID `297606951` (Amazon Shopping). ~2h.
-2. **Play Store** — unofficial `google-play-scraper` npm package.
-   Package `com.amazon.mShop.android.shopping`. ~3h. Will break
-   occasionally when Google changes Play Store HTML; needs a graceful
-   fallback.
-3. **Amazon product reviews** — Jina Reader (`r.jina.ai/<url>`) for the
-   hard one. Needs a watch list of curated ASINs (see §7 — strategy is
-   one ASIN per feature group, stored in a new `Watch Listings` sheet
-   tab). ~1.5 days.
+1. **App Store** — iTunes Customer Reviews RSS, app `297606951`
+   (`src/sources/appStore.ts`). Verified: 50 reviews, native ids.
+2. **Play Store** — `google-play-scraper` for
+   `com.amazon.mShop.android.shopping` (`src/sources/playStore.ts`). Fails
+   soft (fragile by nature). Verified: 50 reviews, reviewIds.
+3. **Amazon product reviews** — Jina Reader on `/dp/<ASIN>` pages, ASINs from
+   the `Watch Listings` tab (`src/sources/amazon.ts`). The `/product-reviews/`
+   path is sign-in-walled, so we parse the product page's public "top
+   reviews". Verified offline against real US (.com) and IN (.in) captures —
+   13 clean reviews each, both date layouts handled.
 
-Combined live ingestion adds a new `Seen Signal IDs` mechanism to dedupe
-across runs (so we don't re-process reviews we've already seen). Pipeline
-stays single-job for now; split into ingest + analyse only if it starts
-exceeding Cloud Run's 120s timeout. (See `DECISIONS.md` for why we
-deferred the split.)
+Dedup: `Seen Signal IDs` tab + `src/sources/dedupe.ts`; source_ids committed
+only after the Signals write. Per-source cap `INGEST_MAX_PER_SOURCE` (50).
+Pipeline stays single-job; split into ingest + analyse only if it exceeds
+Cloud Run's 120s timeout (see `DECISIONS.md`). **Remaining: merge + deploy,
+create the `Seen Signal IDs` + `Watch Listings` tabs, do the first live run.**
 
 ### Track 3 — Future / not committed
 
@@ -338,7 +344,7 @@ deferred the split.)
 
 | Question | Why it's still open |
 |---|---|
-| **Which ASINs to watch for Amazon product reviews?** | Need user to curate 5-7 starter ASINs (one per feature group ideally). Without them, live-ingestion of product reviews can't begin. |
+| ~~Which ASINs to watch for Amazon product reviews?~~ | _Resolved 2026-06-02:_ 8 starter ASINs provided (mixed .com/.in across cookware, electronics, beauty, grooming, home, grocery). They live in the `Watch Listings` tab and can be edited anytime without code changes. |
 | **Where to put the chat — own page or slide-out panel?** | Defaulting to `/chat` as a new page; can revisit if PM workflow shows they want it as a panel from any page. |
 | **Persistent chat history?** | Session-only for v1. If PMs want to revisit prior conversations, add a `Chat History` sheet tab later. |
 | **Authentication?** | API is publicly invokable. Fine for internal dev; needs an answer (Firebase Auth? API key middleware? IAP?) before the frontend is on a real domain. |
