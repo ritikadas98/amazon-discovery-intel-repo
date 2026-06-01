@@ -820,7 +820,13 @@ as TODOs or placeholders. Don't be surprised when:
   - `amazon.ts` — Jina Reader on `/dp/<ASIN>` pages (the `/product-reviews/`
     path is sign-in-walled). Reads ASINs from the `Watch Listings` tab.
     `parseAmazonReviews()` handles US + IN/UK date layouts. permalink review
-    id → `source_id`, else a content hash.
+    id → `source_id`, else a content hash. **`isPlatformRelevant()` filters
+    out product-opinion noise** — keeps only ≤3★ reviews or non-5★ reviews
+    naming a platform/listing problem (counterfeit, damaged, wrong item,
+    return/refund, seller, etc.). NOTE: low/intermittent yield — `/dp/` top
+    reviews skew positive, and Amazon sometimes serves Jina a CAPTCHA; the
+    source fails soft to `[]`. The real problem reviews (1-2★) are behind the
+    sign-in wall Jina can't pass.
   - `dedupe.ts` — `loadSeenIds` / `filterUnseen` / `commitSeenIds`.
 - Manual prerequisite: the `Seen Signal IDs` and `Watch Listings` tabs must
   exist (see §9). Missing tabs fail open (App/Play still ingest; Amazon skips).

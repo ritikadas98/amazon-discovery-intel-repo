@@ -101,6 +101,36 @@ export function parseAmazonReviews(markdown: string): ParsedReview[] {
   return out;
 }
 
+// Platform / listing / fulfillment problem signals — the use-case-relevant axis
+// for Amazon product reviews. The /dp/ "top reviews" skew positive and
+// product-focused, which is noise for us; this keeps only reviews that either
+// rate low (a dissatisfied customer) or mention a platform/listing/fulfillment
+// problem (counterfeit, damaged, wrong item, return/refund, seller, etc.).
+const PROBLEM_RE = new RegExp(
+  [
+    'counterfeit', 'fake', 'knock[\\s-]?off', 'replica', 'inauthentic', 'not genuine',
+    'damaged', 'broken', 'defective', 'cracked', 'leak(?:ed|ing)?',
+    'not as described', 'different from (?:the )?(?:listing|picture|photo|description)',
+    "doesn'?t match", 'wrong (?:item|product|size|colou?r|version)',
+    'missing', 'never (?:arrived|came|delivered)', 'not delivered', "didn'?t (?:arrive|come)",
+    'return', 'refund', 'money back', 'replacement', 'exchange',
+    'seller', 'third[\\s-]?party', '3rd party', 'marketplace',
+    'expired', 'used (?:item|product)', 'second[\\s-]?hand', 'opened box', 'previously opened',
+    'warranty', 'scam', 'fraud', 'ripped off',
+  ].join('|'),
+  'i',
+);
+
+/** Keep low-rated (<=3) reviews or any non-5-star review naming a platform/
+ *  listing problem. The 5-star exclusion drops keyword false positives like
+ *  "I'll return to buy more" in glowing reviews — a genuine platform complaint
+ *  almost never comes with a perfect rating. */
+export function isPlatformRelevant(r: ParsedReview): boolean {
+  if (r.rating !== null && r.rating <= 3) return true;
+  if (r.rating === 5) return false;
+  return PROBLEM_RE.test(`${r.title} ${r.body}`);
+}
+
 interface WatchEntry {
   asin: string;
   tld: string; // amazon marketplace TLD, e.g. "com", "in"
@@ -137,8 +167,14 @@ async function fetchJina(url: string): Promise<string | null> {
 }
 
 function reviewsForAsin(entry: WatchEntry, markdown: string): RawSignal[] {
-  const parsed = parseAmazonReviews(markdown).slice(0, PER_ASIN_CAP);
-  return parsed.map((p) => {
+  const parsed = parseAmazonReviews(markdown);
+  const relevant = parsed.filter(isPlatformRelevant);
+  if (relevant.length !== parsed.length) {
+    console.log(
+      `[amazon] ${entry.asin}: ${relevant.length}/${parsed.length} review(s) passed the relevance filter`,
+    );
+  }
+  return relevant.slice(0, PER_ASIN_CAP).map((p) => {
     const text = p.title && !p.body.startsWith(p.title) ? `${p.title}. ${p.body}` : p.body;
     const idPart = p.reviewId ?? `${entry.asin}:${hash(p.body)}`;
     return {

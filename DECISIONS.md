@@ -15,6 +15,37 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Amazon source: relevance filter (and its honest limits)
+
+**What changed.** Added `isPlatformRelevant()` to `src/sources/amazon.ts`:
+Amazon product reviews are kept only if they rate ≤3★ or (non-5★ and) name a
+platform/listing/fulfillment problem (counterfeit, damaged, wrong item,
+return/refund, seller, never-arrived, …). Pure product praise is dropped.
+
+**PM rationale.** Product reviews are mostly opinions about the *product*
+(*"great sound quality"*), not Amazon's platform/listing quality, which is our
+use case. Unfiltered, they'd pollute the themes with off-topic clusters. The
+filter keeps the use-case-relevant axis (counterfeits, fulfillment, returns,
+listing accuracy — the June scope) and discards the rest.
+
+**Honest limitation (verified).** For well-reviewed products the yield is ~0:
+the `/dp/` page shows helpful/positive "top reviews," and the problem reviews
+(1-2★) live behind a sign-in wall Jina can't pass. Tested against real
+captures: US lip balm 13→0, IN earbuds 13→0 kept (all pure praise — correctly
+dropped). Amazon also sometimes serves Jina a CAPTCHA page (observed on the
+vacuum ASIN) → source returns []. So App Store + Play Store are the reliable
+signal; Amazon is best-effort and will contribute little until we can reach
+critical reviews (authenticated fetch / paid reviews API — future). The 5★
+exclusion on the keyword branch removes false positives like "I'll return to
+buy more" in glowing reviews.
+
+**Considered & not done.** Reaching 1-2★ reviews via authenticated
+scraping/paid API — out of scope for v1. Dropping the Amazon source entirely —
+kept it (flag-gated, fail-soft, filtered) since it occasionally catches a real
+listing/fulfillment complaint and costs nothing when empty.
+
+---
+
 ## 2026-06-02 — Live ingestion (Track 2): three sources, dedup, caps
 
 **What changed.** `USE_MOCK=false` now runs real ingestion instead of
