@@ -15,35 +15,58 @@ overwrite history).
 
 ---
 
+## 2026-06-01 — Expand CLAUDE.md to a self-contained handoff reference
+
+**What changed.** `CLAUDE.md` rewritten from terse-reference (~110 lines)
+to comprehensive handoff document (~600 lines). Now includes 18 sections:
+pipeline-flow-in-detail (with the RICE formula, MoSCoW cuts, readiness
+rubric, WoW logic written out explicitly), full API reference with
+request/response shapes, frontend route map + component inventory, sheet
+schema with example values, env var reference table, common gotchas with
+resolution steps, how-to recipes for common operations, file-by-file map.
+
+**PM rationale.** User is moving this project to a different Claude Code
+instance and explicitly asked for "as detailed as possible." The doc has
+to be sufficient on its own — no conversation context to fall back on.
+Brevity is the wrong trade-off when the next assistant has zero prior
+knowledge. Worth the token cost: every session loads it as the floor
+context, and saving even one round-trip ("what's the RICE formula?") pays
+for the tokens many times over.
+
+**Mechanics.** Top of file states the use case ("fresh session in a new
+Claude Code instance") and the rule that drift must be fixed in the same
+commit that exposed it. Cross-references to `CONTEXT.md` for narrative
+and `DECISIONS.md` for rationale — `CLAUDE.md` deliberately avoids
+duplicating those.
+
+**Considered & not done.** Splitting into multiple files
+(`CLAUDE-architecture.md`, `CLAUDE-api.md`, etc.) — rejected because
+Claude Code auto-loads `CLAUDE.md` but not supplementary files, and
+fragmentation makes drift more likely. Keeping the original terse version
+— rejected because the user explicitly said "as detailed as possible"
+for the handoff use case.
+
+---
+
 ## 2026-06-01 — Add CLAUDE.md as the third project doc
 
 **What changed.** Added `CLAUDE.md` at the repo root — reference-shaped
 instructions auto-loaded by Claude Code on every session in this repo.
-Covers: read-first pointers, hard rules (always update both docs, never
-amend, preserve the "Recieved At" misspelling, never force-push master),
-key commands (backend + frontend + GCP), sheet schema for all 5 tabs,
-conventions, common gotchas, and a useful-files-at-a-glance index.
 
 **PM rationale.** The two existing docs (`CONTEXT.md` for narrative,
-`DECISIONS.md` for rationale) are written for *humans*. They're long-form
-and chronological. An AI assistant joining a session benefits more from a
-terse reference card — what commands exist, what conventions are
-load-bearing, what gotchas have already bitten us. Without `CLAUDE.md`,
-Claude re-discovers things like "the Feedback header is misspelled" or
-"appendRows aligns by header" each session. With it, those are
-front-of-mind from token zero.
+`DECISIONS.md` for rationale) are written for *humans*. An AI assistant
+joining a session benefits more from a structured reference. Without
+`CLAUDE.md`, the next Claude re-discovers things like "the Feedback header
+is misspelled" or "appendRows aligns by header" each session.
 
 **Mechanics.** Repo root `CLAUDE.md`. Cross-references `CONTEXT.md` and
 `DECISIONS.md` so the AI doesn't read the same content twice. The "hard
 rules" section codifies the default-update behaviour the user established
 earlier today.
 
-**Considered & not done.** Putting everything in one mega-file (rejected
-— different docs serve different audiences; long files get ignored).
-Generating it from code via a script (rejected — overkill; it's stable
-content). A second `.cursor/rules` or equivalent (deferred — `CLAUDE.md`
-covers the main assistant; we can add others if the team uses different
-tooling).
+**Considered & not done.** Stuffing everything into `CONTEXT.md`
+(rejected — different docs serve different audiences). Generating it
+from code via a script (rejected — overkill).
 
 ---
 

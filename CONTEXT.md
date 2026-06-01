@@ -5,8 +5,11 @@ the way it is, and where it's going*. One of three project-level docs:
 
 - **`CONTEXT.md`** (this file) — narrative + state + what's next. For humans.
 - **`DECISIONS.md`** — per-decision log with PM rationale. For humans.
-- **`CLAUDE.md`** — terse instructions for AI assistants (commands,
-  conventions, gotchas). Auto-loaded by Claude Code.
+- **`CLAUDE.md`** — comprehensive self-contained handoff reference for AI
+  assistants. Auto-loaded by Claude Code. Includes full pipeline detail,
+  API reference, sheet schema, env vars, gotchas, how-to recipes, and a
+  file-by-file map — designed to make a brand-new Claude instance
+  productive without conversation context.
 
 If you're new to the codebase, read this top-to-bottom. If you're picking
 up after time away, jump to **§5 — Current state** and **§6 — What's next**.
