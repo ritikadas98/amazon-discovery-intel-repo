@@ -235,7 +235,7 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 | Tab | Purpose | Status |
 |---|---|---|
 | `Signals` | One row per cleaned signal (text + metadata + theme tag) | Writes on every run |
-| `Weekly Digests` | One row per weekly run (top group + JSON arrays for all groups) | Writes on every run; **needs 2 new column headers** (`Trend Direction JSON`, `Theme Breakdown JSON`) — pending user manual edit |
+| `Weekly Digests` | One row per weekly run (top group + JSON arrays for all groups) | Writes on every run; the `Trend Direction JSON` + `Theme Breakdown JSON` headers were added 2026-06-01 |
 | `Effort Estimates` | PM-set effort overrides per (theme, week) | Writes on Discovery Report effort-segment click |
 | `Feedback` | PM 👍/👎 ratings per theme | Writes on email-button click |
 | `Jina Cache` | (placeholder, unused yet) | Will be used by Amazon product review scraper |
@@ -257,18 +257,17 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 
 ### In flight / pending user action
 
-- **Cloud Run is on an older revision.** The new code (`/webhook/*`
+- _(resolved 2026-06-01)_ **Cloud Run redeployed.** Revision
+  `amazon-discovery-00013-l9w` now serves the current code (`/webhook/*`
   endpoints, per-theme breakdown, feedback anchors, schema-aware Effort
-  Estimates / Feedback writes) is on `master` but the deployed service
-  doesn't have it. User needs to run `bash scripts/gcp-deploy.sh` from
-  Cloud Shell.
-- **Two Weekly Digests headers not yet added.** `Trend Direction JSON`
-  and `Theme Breakdown JSON` must be added to row 1 of the Weekly
-  Digests sheet tab. Without them, even a fresh pipeline run won't
-  populate those columns (the `appendRows` helper aligns by header
-  name).
-- **Until both of the above are done**, the Report page's Theme RICE
-  Breakdown table shows "No themes in this group's breakdown."
+  Estimates / Feedback writes). Verified live via `/health` and
+  `/effort-overrides`.
+- _(resolved 2026-06-01)_ **Weekly Digests headers added.**
+  `Trend Direction JSON` and `Theme Breakdown JSON` are now in row 1 of
+  the Weekly Digests sheet tab.
+- With both resolved, the Report page's Theme RICE Breakdown table should
+  populate on the next pipeline run (it was previously showing "No themes
+  in this group's breakdown").
 
 ### Decided but not built
 

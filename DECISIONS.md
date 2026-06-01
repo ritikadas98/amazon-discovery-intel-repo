@@ -15,6 +15,33 @@ overwrite history).
 
 ---
 
+## 2026-06-01 — Fix scheduler-update flag in gcp-deploy.sh
+
+**What changed.** In `scripts/gcp-deploy.sh`, the "update existing job"
+branch passed `--headers=` to `gcloud scheduler jobs update http`, which
+rejects it (`unrecognized arguments: --headers`). Changed to
+`--update-headers=`. The `create` branch keeps `--headers=` (valid there).
+
+**PM rationale.** The deploy ran clean through Cloud Build, the new Cloud
+Run revision, IAM, and `PUBLIC_BASE_URL` — only the final scheduler-update
+step errored, on a repo with a pre-existing monthly job. The bug was
+silent on first-ever deploys (which hit the `create` branch) and only
+surfaced on the first re-deploy of an existing environment. Left
+unfixed, every future redeploy would error at the end even though the
+service deployed fine.
+
+**Mechanics.** `gcloud scheduler jobs create http` accepts `--headers`;
+`gcloud scheduler jobs update http` accepts `--update-headers` /
+`--clear-headers` instead. One-line change in the update branch. Verified
+by running the corrected `update http` command manually in Cloud Shell —
+job `amazon-discovery-monthly` is `ENABLED`, next run 2026-07-01.
+
+**Considered & not done.** Switching the update branch to a
+delete-then-create — rejected as heavier and it would reset job history /
+state. Keeping the update idempotent with the correct flag is simpler.
+
+---
+
 ## 2026-06-01 — Expand CLAUDE.md to a self-contained handoff reference
 
 **What changed.** `CLAUDE.md` rewritten from terse-reference (~110 lines)

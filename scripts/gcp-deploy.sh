@@ -83,7 +83,7 @@ if [[ -n "${JOB_EXISTS}" ]]; then
     --time-zone="Asia/Kolkata" \
     --uri="${SERVICE_URL}/run-pipeline" \
     --http-method=POST \
-    --headers="Content-Type=application/json" \
+    --update-headers="Content-Type=application/json" \
     --message-body="{\"recipient_email\":\"${DEFAULT_RECIPIENT}\"}" \
     --oidc-service-account-email="${SCHEDULER_SA}"
 else
