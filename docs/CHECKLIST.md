@@ -105,3 +105,59 @@ little Gemini + writes rows + emails.
 - Trigger a run: `curl -X POST "$SERVICE_URL/webhook/run-pipeline" -H 'Content-Type: application/json' -d '{"recipient_email":"…","use_mock":false}'`
 - Tail logs: `gcloud run services logs read amazon-discovery --region=asia-south1 --limit=50`
 - Local dev: backend `npm run dev`; frontend `cd frontend && npm run dev`
+
+---
+
+## F. Smoke test — verify everything works
+
+Do the **final redeploy + one Live run** first, so both sources have data.
+
+**Backend**
+- [ ] `curl $SERVICE_URL/health` → `{"status":"ok",…}`
+- [ ] `curl '$SERVICE_URL/digests?limit=3'` → returns rows
+- [ ] `gcloud scheduler jobs describe amazon-discovery-monthly --location=asia-south1` → `state: ENABLED` + next run date
+
+**Run pipeline (both modes)**
+- [ ] Toggle **Sample** → Run pipeline → dialog reads "Run on Sample data" → completes, success toast, **email arrives**
+- [ ] Toggle **Live** → Run → "Run on Live data" → completes
+- [ ] Logs show `source=Sample/Live`, `Cleaned: N`, `Synthesized`, `Appended N rows`, **no "invalid JSON"**
+- [ ] Sheet: new Signals + Weekly Digests rows carry `Data Source` = Sample/Live
+
+**Toggle + badge**
+- [ ] Sample → violet "Sample data" badge; Live → green "Live data … pulled <date>" badge
+- [ ] Sidebar counts + total change when you flip the toggle
+- [ ] Hover each toggle button → explanation tooltip
+
+**Digest page**
+- [ ] All Groups: hero theme, Feature Group Ranking (RICE/MoSCoW/Δ/trend), readiness alert, data-quality banner, 7-day sparkline
+- [ ] Click a group → theme cards (R/I/C/E + RICE + MoSCoW), top signals, **Source Mix chart** (Sample = app/play/amazon mix; Live = Play-heavy), RICE trend
+
+**Signals page**
+- [ ] Table loads; search / source-channel / severity filters, sort, pagination, row-expand all work
+- [ ] Reflects active group + week + Sample/Live
+
+**Report page**
+- [ ] Pick a group → readiness summary + Theme RICE breakdown
+- [ ] Click an effort segment (XS/S/M/L/XL) → PM-adjusted RICE updates instantly
+- [ ] Reload → effort persists (saved to Effort Estimates tab)
+- [ ] Evidence-gap cards + next-steps render
+
+**Chat**
+- [ ] Chat FAB on every page → opens `/chat`
+- [ ] Header reads "Chatting over <group> · week … · Sample/Live data"
+- [ ] Ask a question → streams; cites `[signal …]` as badges; hover a badge → signal text
+- [ ] Flip source → answer scopes to that source only
+
+**Email / feedback**
+- [ ] Digest email received (styled, themes, 👍/👎 buttons)
+- [ ] Click 👍/👎 → "recorded ✓" page → row appears in the Feedback tab
+- [ ] (If a ≥5 same-version cluster exists) regression-alert email arrives
+
+**Cross-cutting**
+- [ ] Dark-mode toggle (top bar) works
+- [ ] group / week / source persist in the URL across pages
+- [ ] Week selector shows one entry per week (no dupes)
+
+**WoW (needs 2+ runs of the same source)**
+- [ ] First run of a source → **no deltas** (clean baseline) — correct
+- [ ] Second same-source run → deltas appear (Δ column + MoSCoW escalation badges)
