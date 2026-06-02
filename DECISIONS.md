@@ -15,6 +15,25 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Chat respects the Sample/Live source
+
+**What changed.** The RAG chat now scopes to the active source. `POST
+/webhook/chat` accepts `source`; `buildChatContext` filters the 3 digests + 200
+signals by `Data Source` (untagged → live). ChatPage passes `useActiveSource()`,
+filters its citation-resolution signals + week fallback by source, and shows
+"· Sample/Live data" in the chat header.
+
+**PM rationale.** Chat was the one surface still ignoring the toggle — it stuffed
+Sample + Live signals together, so on the Sample view it would answer over real
+data too (and vice versa). Now it reasons over exactly the data you're viewing,
+with citations from the same source. Consistency across the whole dashboard.
+
+**Considered & not done.** A blended "all sources" chat mode — no; the toggle is
+the mental model, and mixing fixture with real data is exactly what we've avoided
+everywhere else.
+
+---
+
 ## 2026-06-02 — "Run pipeline" follows the Sample/Live toggle
 
 **What changed.** The Run dialog now triggers a run in the *currently-viewed*

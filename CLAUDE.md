@@ -390,12 +390,15 @@ Streams a Gemini reply as **Server-Sent Events** (not JSON).
   "message": "What are the top complaints in scope this week?",
   "history": [{ "role": "user", "content": "…" }, { "role": "assistant", "content": "…" }],
   "group": "returns_refunds",
-  "week": "2026-W22"
+  "week": "2026-W22",
+  "source": "sample"
 }
 ```
-`history`, `group`, `week` are optional. `group` omitted/`all` → no group filter.
-Context is **stuffed, not retrieved** (no embeddings): latest 3 Weekly Digests
-(compact fields) + up to 200 newest Signals scoped by group/week. The model is
+`history`, `group`, `week`, `source` are optional. `group` omitted/`all` → no
+group filter. `source` (`sample`|`live`) scopes context to that `Data Source`
+tag, so chat reasons over the same data the active toggle shows. Context is
+**stuffed, not retrieved** (no embeddings): latest 3 Weekly Digests (compact
+fields) + up to 200 newest Signals scoped by group/week/source. The model is
 told to cite evidence as `[signal <ID>]` using real `Signals.ID` values.
 **Response (stream):** `text/event-stream`. Token frames are `data: {"text":"…"}`;
 the stream ends with `event: done`; failures emit `event: error` with

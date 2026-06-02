@@ -15,6 +15,13 @@ function byRowDesc(a: Record<string, string>, b: Record<string, string>): number
   return parseInt(b.row_number ?? '0', 10) - parseInt(a.row_number ?? '0', 10);
 }
 
+/** Match a row to the active data source ('sample' | 'live'); untagged rows
+ *  read as 'live'. No source → no filter (e.g. cron/curl without a source). */
+function matchesSource(r: Record<string, string>, source?: string): boolean {
+  if (!source) return true;
+  return (r['Data Source'] || 'Live').toLowerCase() === source;
+}
+
 /** Compact view of a Weekly Digests row — omits the heavy JSON columns. */
 function compactDigest(r: Record<string, string>) {
   return {
@@ -54,16 +61,24 @@ interface ChatContext {
  * Load and scope the corpus for a chat turn: latest 3 digests + up to 200
  * signals, filtered by group/week when provided. Newest first.
  */
-export async function buildChatContext(group?: string, week?: string): Promise<ChatContext> {
+export async function buildChatContext(
+  group?: string,
+  week?: string,
+  source?: string,
+): Promise<ChatContext> {
   const env = getEnv();
   const [digestRows, signalRows] = await Promise.all([
     readRows(env.SHEETS_DIGESTS_TAB),
     readRows(env.SHEETS_SIGNALS_TAB),
   ]);
 
-  const digests = [...digestRows].sort(byRowDesc).slice(0, MAX_DIGESTS).map(compactDigest);
+  const digests = [...digestRows]
+    .sort(byRowDesc)
+    .filter((r) => matchesSource(r, source))
+    .slice(0, MAX_DIGESTS)
+    .map(compactDigest);
 
-  let signals = [...signalRows].sort(byRowDesc);
+  let signals = [...signalRows].sort(byRowDesc).filter((r) => matchesSource(r, source));
   if (week) signals = signals.filter((r) => r['Week ID'] === week);
   if (group && group !== 'all') signals = signals.filter((r) => r['Feature Group ID'] === group);
   const scopedSignals = signals.slice(0, MAX_SIGNALS).map(compactSignal);
@@ -111,8 +126,9 @@ export async function* handleChatStream(
   history: ChatTurn[],
   group?: string,
   week?: string,
+  source?: string,
 ): AsyncGenerator<string> {
-  const ctx = await buildChatContext(group, week);
+  const ctx = await buildChatContext(group, week, source);
   const prompt = buildChatPrompt(ctx, history, message);
   yield* streamGemini(prompt, { temperature: 0.3, thinkingLevel: 'minimal', maxOutputTokens: 2048 });
 }

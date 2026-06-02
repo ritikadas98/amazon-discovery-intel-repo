@@ -247,6 +247,7 @@ app.post('/webhook/chat', async (req: Request, res: Response) => {
   const history = sanitizeHistory(req.body?.history);
   const group = req.body?.group ? String(req.body.group) : undefined;
   const week = req.body?.week ? String(req.body.week) : undefined;
+  const source = req.body?.source ? String(req.body.source).toLowerCase() : undefined;
 
   // Once we flush SSE headers, all errors must be reported as SSE events
   // (we can no longer switch to a JSON status code).
@@ -257,7 +258,7 @@ app.post('/webhook/chat', async (req: Request, res: Response) => {
   res.flushHeaders();
 
   try {
-    for await (const delta of handleChatStream(message, history, group, week)) {
+    for await (const delta of handleChatStream(message, history, group, week, source)) {
       res.write(`data: ${JSON.stringify({ text: delta })}\n\n`);
     }
     res.write('event: done\ndata: {}\n\n');

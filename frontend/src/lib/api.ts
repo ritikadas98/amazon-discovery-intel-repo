@@ -90,6 +90,7 @@ export interface ChatStreamRequest {
   history?: ChatTurn[];
   group?: string;
   week?: string;
+  source?: string;
 }
 
 export interface ChatStreamHandlers {

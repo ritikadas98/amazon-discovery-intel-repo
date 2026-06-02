@@ -14,7 +14,8 @@ a question like *"What are the top complaints in Returns this week?"*, and gets
 a streamed answer that **cites the specific signals it's reasoning from** — each
 `[signal <ID>]` rendered as a badge that reveals the real review text on hover.
 
-It is scoped: the chat respects the active `?group=` and `?week=` from the URL,
+It is scoped: the chat respects the active `?group=`, `?week=`, and `?source=`
+(Sample/Live data-source toggle) from the URL,
 so "this week / this group" means exactly what the rest of the dashboard shows.
 
 ## 2. The core design choice: context-stuffing, not vector RAG

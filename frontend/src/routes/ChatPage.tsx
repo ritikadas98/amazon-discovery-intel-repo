@@ -10,9 +10,9 @@ import type { ChatMessageData } from '@/components/chat/ChatMessage';
 import { api, chatStream } from '@/lib/api';
 import type { ChatTurn } from '@/lib/api';
 import type { SignalRow } from '@/types';
-import { useActiveGroup, useActiveWeek } from '@/lib/url-state';
+import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
 import { groupColor } from '@/lib/colors';
-import { featureGroupName } from '@/lib/parsers';
+import { featureGroupName, rowSource } from '@/lib/parsers';
 
 const SUGGESTIONS = [
   'What are the top complaints in scope this week?',
@@ -23,16 +23,22 @@ const SUGGESTIONS = [
 export function ChatPage() {
   const group = useActiveGroup();
   const weekParam = useActiveWeek();
+  const activeSource = useActiveSource();
 
-  // Resolve a week to scope context + citations (fall back to latest run).
+  // Resolve a week to scope context + citations (fall back to the latest run
+  // of the active source).
   const digestsQuery = useQuery({
-    queryKey: ['digests', 1],
-    queryFn: () => api.digests(1),
+    queryKey: ['digests', 20],
+    queryFn: () => api.digests(20),
     enabled: !weekParam,
   });
-  const weekId = weekParam ?? digestsQuery.data?.rows[0]?.['Week ID'] ?? null;
+  const latestSourceWeek = (digestsQuery.data?.rows ?? []).find(
+    (r) => rowSource(r['Data Source']) === activeSource,
+  )?.['Week ID'];
+  const weekId = weekParam ?? latestSourceWeek ?? null;
 
   // Signals in scope — used to resolve [signal <ID>] citations to their text.
+  // Filtered by the active source so citations match the data chat reasons over.
   const signalsQuery = useQuery({
     queryKey: ['signals', group, weekId],
     queryFn: () =>
@@ -40,11 +46,13 @@ export function ChatPage() {
     enabled: !!weekId,
   });
   const signalsById = useMemo(() => {
-    const rows = signalsQuery.data?.rows ?? [];
+    const rows = (signalsQuery.data?.rows ?? []).filter(
+      (r) => rowSource(r['Data Source']) === activeSource,
+    );
     const map = new Map<string, SignalRow>();
     for (const r of rows) map.set(r.ID, r);
     return map;
-  }, [signalsQuery.data]);
+  }, [signalsQuery.data, activeSource]);
 
   const accentHex = group === 'all' ? '#64748b' : groupColor(group).hex;
   const scopeLabel = group === 'all' ? 'All Groups' : featureGroupName(group);
@@ -94,6 +102,7 @@ export function ChatPage() {
         history,
         group: group === 'all' ? undefined : group,
         week: weekId ?? undefined,
+        source: activeSource,
       },
       {
         onToken: appendToAssistant,
@@ -125,6 +134,7 @@ export function ChatPage() {
                 {' '}· week <span className="font-mono">{weekId}</span>
               </>
             ) : null}
+            {' '}· <span className="font-medium text-foreground">{activeSource === 'sample' ? 'Sample' : 'Live'} data</span>
           </span>
         </div>
 
