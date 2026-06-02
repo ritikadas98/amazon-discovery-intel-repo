@@ -134,11 +134,12 @@ USE_MOCK=false  → sources = [playStore]                       (always on)
   by this tag, so the curated fixture and real ingestion stay two clear,
   navigable states (never blended). Needs the `Data Source` header on both tabs.
 - **`INGEST_MAX_PER_SOURCE` (default 150)** caps newest-N per source. We raised
-  it from 50 because Play Store is now the primary source. Ceiling note: the
-  clean/synthesize Gemini calls process *every* signal in one prompt with an
-  ~8192-token output budget — ~200 signals is the practical max before the
-  clean-stage JSON risks truncation, and the 120s Cloud Run timeout also bounds
-  it. Beyond ~200 we'd need to **batch the AI calls** (a pipeline change).
+  it from 50 because Play Store is now the primary source. The clean/synthesize
+  Gemini calls process *every* signal in one prompt and emit one JSON object per
+  signal; they use a **32768-token output budget + retry** (`callGeminiJson`),
+  which comfortably handles the default combined totals. (At 8192 the clean
+  stage truncated ~140 signals → "invalid JSON" — fixed.) The 120s Cloud Run
+  timeout is the next bound; far larger batches would still want AI-call batching.
 
 ## 6. Why product reviews are filtered — `isPlatformRelevant()`
 

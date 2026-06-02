@@ -1,4 +1,4 @@
-import { callGemini, parseJsonOrThrow } from '../lib/gemini.js';
+import { callGeminiJson } from '../lib/gemini.js';
 import type { CleanedSignal, RawSignal } from '../types.js';
 
 interface CleanResult {
@@ -38,8 +38,14 @@ ${JSON.stringify(signals, null, 2)}`;
 export async function cleanSignals(rawSignals: RawSignal[]): Promise<CleanedSignal[]> {
   const indexed = rawSignals.map((s, i) => ({ id: i, ...s }));
   const prompt = buildPrompt(indexed);
-  const cleaned = await callGemini(prompt, { temperature: 0.1, thinkingLevel: 'minimal' });
-  const results = parseJsonOrThrow<CleanResult[]>(cleaned, 'cleanSignals');
+  // One JSON object per signal → bump the output budget so ~150+ signals don't
+  // truncate the response (the default 8192 overflows around 140 pretty-printed
+  // results). Retry once on a bad parse.
+  const results = await callGeminiJson<CleanResult[]>(
+    prompt,
+    { temperature: 0.1, thinkingLevel: 'minimal', maxOutputTokens: 32768 },
+    'cleanSignals',
+  );
 
   const out: CleanedSignal[] = [];
   for (const r of results) {

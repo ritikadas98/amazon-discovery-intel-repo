@@ -1,4 +1,4 @@
-import { callGemini, parseJsonOrThrow } from '../lib/gemini.js';
+import { callGeminiJson } from '../lib/gemini.js';
 import { config } from '../config/featureGroups.js';
 import type { CleanedSignal, TaggedSignal, TrendDirection } from '../types.js';
 
@@ -85,8 +85,13 @@ ${JSON.stringify(signals, null, 2)}`;
 export async function synthesize(cleanedSignals: CleanedSignal[]): Promise<TaggedSignal[]> {
   const indexed = cleanedSignals.map((s, i) => ({ id: i, ...s }));
   const prompt = buildPrompt(indexed);
-  const cleaned = await callGemini(prompt, { temperature: 0.2, thinkingLevel: 'minimal' });
-  const parsed = parseJsonOrThrow<SynthesisResponse>(cleaned, 'synthesize');
+  // Output includes a tag per signal → raise the budget so larger batches don't
+  // truncate. Retry once on a bad parse.
+  const parsed = await callGeminiJson<SynthesisResponse>(
+    prompt,
+    { temperature: 0.2, thinkingLevel: 'minimal', maxOutputTokens: 32768 },
+    'synthesize',
+  );
 
   const { themes, signal_tags } = parsed;
 

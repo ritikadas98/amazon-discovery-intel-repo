@@ -594,7 +594,7 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SHEETS_FEEDBACK_TAB` | optional | `Feedback` | |
 | `SHEETS_SEEN_SIGNALS_TAB` | optional | `Seen Signal IDs` | Live-ingestion dedup tab |
 | `SHEETS_WATCH_TAB` | optional | `Watch Listings` | Amazon ASIN watch list |
-| `INGEST_MAX_PER_SOURCE` | optional | `150` | Cap on newest reviews per live source per run (~200 ceiling before AI-call batching needed) |
+| `INGEST_MAX_PER_SOURCE` | optional | `150` | Cap on newest reviews per live source per run (clean/synthesize use a 32768-token budget, so the default totals fit comfortably) |
 | `ENABLE_APP_STORE` | optional | `true` | App Store source (0 from Cloud Run — Apple IP block; set false to disable) |
 | `ENABLE_AMAZON_PLP` | optional | `true` | Amazon PLP/Jina source (usually thin; set false to disable) |
 | `PUBLIC_BASE_URL` | optional | — | Used to render feedback links in digest email. Auto-set to the service URL by `scripts/gcp-deploy.sh` after deploy |
@@ -762,12 +762,15 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --role="roles/aiplatform.user"
 ```
 
-### "Gemini returned invalid JSON"
-The model occasionally produces unparseable output despite the prompt.
-The `parseJsonOrThrow` helper in `src/lib/gemini.ts` catches this and
-includes the first 200 chars of the bad response in the error. Re-run
-usually fixes it (LLM nondeterminism). If chronic, lower `temperature`
-in the agent's call options.
+### "Gemini returned invalid JSON" (e.g. `cleanSignals: … invalid JSON`)
+Two causes: (1) **truncation** — clean/synthesize emit one JSON object per
+signal, so a large batch overflows the output-token cap and the array is cut
+off mid-element (the error shows a *valid-looking* prefix because it's only the
+first 200 chars). (2) LLM nondeterminism. Fixes in place: clean + synthesize use
+`callGeminiJson()` (`src/lib/gemini.ts`) with `maxOutputTokens: 32768` (handles
+~hundreds of signals) and a **retry on a bad parse**. If still chronic, lower
+`temperature` or raise the budget further. A one-off re-run also usually clears
+nondeterministic failures.
 
 ### "Zero signals survived cleaning"
 Agent 1 marked everything as duplicate/irrelevant. Possible causes:
@@ -834,8 +837,8 @@ as TODOs or placeholders. Don't be surprised when:
   (Apple IP block) and Amazon PLP is usually thin — they're on per "use whatever
   is substantial", but Play Store is the dependable source. Results are deduped
   against `Seen Signal IDs`; `source_id`s committed ONLY after the Signals write.
-  Per-source cap `INGEST_MAX_PER_SOURCE` (default 150; ~200 ceiling before
-  AI-call batching). Throws if 0 new signals survive dedup. (Reddit planned —
+  Per-source cap `INGEST_MAX_PER_SOURCE` (default 150; clean/synthesize use a
+  32768-token output budget + retry, so the combined totals parse fine). Throws if 0 new signals survive dedup. (Reddit planned —
   see `docs/LIVE_INGESTION.md` §9.)
 - Source modules under `src/sources/`:
   - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native

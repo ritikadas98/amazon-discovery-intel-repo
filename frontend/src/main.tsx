@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <App />
-        <Toaster position="bottom-right" />
+        <Toaster position="bottom-right" richColors closeButton duration={8000} />
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,

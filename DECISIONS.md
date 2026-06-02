@@ -15,6 +15,31 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Fix clean/synthesize truncation (invalid JSON) + readable toast
+
+**What changed.** clean + synthesize now call `callGeminiJson()` with
+`maxOutputTokens: 32768` and a retry-on-bad-parse. The error toast got
+`richColors` + a close button + 8s duration.
+
+**Root cause.** clean/synthesize emit one JSON object per signal. With ~140
+signals pretty-printed, the response overflowed the default **8192** output cap
+and was cut off mid-array → `cleanSignals: Vertex AI returned invalid JSON`
+(the message showed a valid-looking prefix because it's only the first 200
+chars). A real failure, not nondeterminism — though the retry now also absorbs
+the occasional malformed response. Verified: 137 mock signals → clean 129 →
+synthesize 129, no truncation.
+
+**Mechanics.** New `callGeminiJson<T>(prompt, opts, label, attempts=2)` in
+`gemini.ts` wraps callGemini + parseJsonOrThrow with a retry; clean + synthesize
+use it at 32768 tokens. Toast: `<Toaster richColors closeButton duration={8000}>`
+in `main.tsx` — error toasts were low-contrast grey and truncated.
+
+**Considered & not done.** Batching the AI calls per chunk — unnecessary at
+current volumes (32768 fits hundreds of signals); revisit only for far larger
+batches. Compacting the clean prompt's JSON output — the token bump is simpler.
+
+---
+
 ## 2026-06-02 — Chat respects the Sample/Live source
 
 **What changed.** The RAG chat now scopes to the active source. `POST

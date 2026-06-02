@@ -189,3 +189,31 @@ export function parseJsonOrThrow<T>(cleaned: string, label: string): T {
     throw new Error(`${label}: Vertex AI returned invalid JSON: ${cleaned.substring(0, 200)}`);
   }
 }
+
+/**
+ * callGemini + parseJsonOrThrow with a retry. The model occasionally returns
+ * malformed/truncated JSON (LLM nondeterminism); a re-call usually succeeds.
+ * Pass a generous maxOutputTokens for large per-signal responses.
+ */
+export async function callGeminiJson<T>(
+  prompt: string,
+  opts: GeminiOptions,
+  label: string,
+  attempts = 2,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const text = await callGemini(prompt, opts);
+      return parseJsonOrThrow<T>(text, label);
+    } catch (err) {
+      lastErr = err;
+      console.warn(
+        `[gemini] ${label} attempt ${i}/${attempts} failed: ${
+          err instanceof Error ? err.message.slice(0, 140) : String(err)
+        }`,
+      );
+    }
+  }
+  throw lastErr;
+}
