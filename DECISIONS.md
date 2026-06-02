@@ -15,6 +15,31 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Re-enable all 3 sources + shared substance filter
+
+**What changed.** Flipped `ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` back to
+default **true** (all three sources run). Extracted the substance filter to
+`src/sources/substance.ts` (`hasSubstance` — ≥25 chars & ≥5 words) and applied
+it to **all three** sources; Amazon additionally keeps `isPlatformRelevant`.
+
+**PM rationale.** User: "use whatever's substantial." Rather than hard-disable
+the thin sources, run them all and let the substance/relevance filters keep
+only useful content. Costs little (each fails soft) and captures the occasional
+real signal from App Store / Amazon.
+
+**Honest expectation (unchanged).** App Store still yields 0 from Cloud Run
+(Apple IP block — works locally); Amazon PLP is still mostly positive top-reviews
++ CAPTCHAs. Play Store remains the dependable source. The filter just ensures
+that *if* App Store/Amazon surface something, it meets the same length bar.
+
+**Considered & not done.** Per-source substance thresholds — one shared bar is
+simpler and consistent. Reverting the earlier "Play-only default" entirely —
+no, the flags + filters mean all-on is low-cost; the earlier reasoning (App
+Store blocked, PLP thin) still holds as the honest expectation, just not as a
+hard disable.
+
+---
+
 ## 2026-06-02 — Dedupe weeks in the sidebar selector
 
 **What changed.** The Sidebar week dropdown now dedupes by `Week ID` before

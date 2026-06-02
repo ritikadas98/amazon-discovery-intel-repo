@@ -1,5 +1,6 @@
 import { readRows } from '../lib/sheets.js';
 import { getEnv } from '../config/env.js';
+import { hasSubstance } from './substance.js';
 import type { RawSignal } from '../types.js';
 
 /**
@@ -168,13 +169,15 @@ async function fetchJina(url: string): Promise<string | null> {
 
 function reviewsForAsin(entry: WatchEntry, markdown: string): RawSignal[] {
   const parsed = parseAmazonReviews(markdown);
-  const relevant = parsed.filter(isPlatformRelevant);
-  if (relevant.length !== parsed.length) {
+  // Must be both platform-relevant AND substantive (same length bar as the
+  // other sources).
+  const kept = parsed.filter((p) => isPlatformRelevant(p) && hasSubstance(`${p.title} ${p.body}`));
+  if (kept.length !== parsed.length) {
     console.log(
-      `[amazon] ${entry.asin}: ${relevant.length}/${parsed.length} review(s) passed the relevance filter`,
+      `[amazon] ${entry.asin}: ${kept.length}/${parsed.length} review(s) passed relevance+substance filters`,
     );
   }
-  return relevant.slice(0, PER_ASIN_CAP).map((p) => {
+  return kept.slice(0, PER_ASIN_CAP).map((p) => {
     const text = p.title && !p.body.startsWith(p.title) ? `${p.title}. ${p.body}` : p.body;
     const idPart = p.reviewId ?? `${entry.asin}:${hash(p.body)}`;
     return {

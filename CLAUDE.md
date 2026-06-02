@@ -581,8 +581,8 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SHEETS_SEEN_SIGNALS_TAB` | optional | `Seen Signal IDs` | Live-ingestion dedup tab |
 | `SHEETS_WATCH_TAB` | optional | `Watch Listings` | Amazon ASIN watch list |
 | `INGEST_MAX_PER_SOURCE` | optional | `150` | Cap on newest reviews per live source per run (~200 ceiling before AI-call batching needed) |
-| `ENABLE_APP_STORE` | optional | `false` | Opt-in App Store source (0 from Cloud Run — Apple IP block) |
-| `ENABLE_AMAZON_PLP` | optional | `false` | Opt-in Amazon PLP/Jina source (product-opinion, low yield) |
+| `ENABLE_APP_STORE` | optional | `true` | App Store source (0 from Cloud Run — Apple IP block; set false to disable) |
+| `ENABLE_AMAZON_PLP` | optional | `true` | Amazon PLP/Jina source (usually thin; set false to disable) |
 | `PUBLIC_BASE_URL` | optional | — | Used to render feedback links in digest email. Auto-set to the service URL by `scripts/gcp-deploy.sh` after deploy |
 | `SMTP_HOST` | optional | `smtp.gmail.com` | |
 | `SMTP_PORT` | optional | `465` | |
@@ -812,15 +812,16 @@ as TODOs or placeholders. Don't be surprised when:
 
 ### Live ingestion — BUILT (2026-06-02)
 > Deep-dive: **`docs/LIVE_INGESTION.md`** (build & working narrative).
-- `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`. **Default
-  fan-out = Play Store only** (the reliable source). App Store and Amazon PLP
-  are opt-in via `ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` (both default off —
-  App Store is IP-blocked from Cloud Run, PLP is product-opinion not platform
-  signal). Sources fan out in parallel (each fails soft → `[]`), results are
-  deduped against the `Seen Signal IDs` tab, and `source_id`s are committed
-  ONLY after the Signals rows are written. Per-source cap =
-  `INGEST_MAX_PER_SOURCE` (default 150; ~200 ceiling before AI-call batching).
-  Throws if 0 new signals survive dedup. (Reddit is the planned next source —
+- `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`. **All three
+  sources run by default** (`ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` default
+  true; set false to disable). Each fails soft → `[]` and is filtered for
+  **substance** (`src/sources/substance.ts` — ≥25 chars & ≥5 words; Amazon also
+  keeps `isPlatformRelevant`). Honest reality: App Store yields 0 from Cloud Run
+  (Apple IP block) and Amazon PLP is usually thin — they're on per "use whatever
+  is substantial", but Play Store is the dependable source. Results are deduped
+  against `Seen Signal IDs`; `source_id`s committed ONLY after the Signals write.
+  Per-source cap `INGEST_MAX_PER_SOURCE` (default 150; ~200 ceiling before
+  AI-call batching). Throws if 0 new signals survive dedup. (Reddit planned —
   see `docs/LIVE_INGESTION.md` §9.)
 - Source modules under `src/sources/`:
   - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native
@@ -962,6 +963,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `sources/playStore.ts` | Live: google-play-scraper reviews for the Amazon app → RawSignal[]. `hasSubstance` filter drops short/low-detail reviews; over-fetches (limit×2) to keep volume. Fails soft. |
 | `sources/amazon.ts` | Live: Jina Reader on /dp/<ASIN> pages from the Watch Listings tab. `parseAmazonReviews()` parses the markdown. Fails soft. |
 | `sources/dedupe.ts` | Cross-run dedup vs the Seen Signal IDs tab (loadSeenIds/filterUnseen/commitSeenIds). |
+| `sources/substance.ts` | `hasSubstance(text)` — shared length/word-count filter applied by all three sources. |
 | `pipeline/run.ts` | The orchestrator. Wires every stage in order, fires regression email in parallel. |
 | `pipeline/normalize.ts` | Validates raw signals, computes weekId + dataQualityWarning. |
 | `pipeline/regression.ts` | Detects ≥5-signal version clusters. |

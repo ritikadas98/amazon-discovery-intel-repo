@@ -18,14 +18,16 @@ product-listing-page (PLP) reviews (which are about the *product*). So:
 | Source | State | Why |
 |---|---|---|
 | **Play Store** (Android) | **ON** — the reliable signal | Reviews of the Amazon app; works from Cloud Run |
-| **App Store** (iOS) | OFF by default (`ENABLE_APP_STORE`) | Apple blocks the Cloud Run datacenter IP → 0 in prod. Needs a proxy/API |
-| **Amazon PLP** (Jina) | OFF by default (`ENABLE_AMAZON_PLP`) | Product-opinion, not platform signal; low yield (see §6/§8) |
+| **App Store** (iOS) | ON (`ENABLE_APP_STORE`, default true) | Reviews of the app, but yields 0 from Cloud Run (Apple IP block); works locally. Kept on per "use whatever's substantial" |
+| **Amazon PLP** (Jina) | ON (`ENABLE_AMAZON_PLP`, default true) | Usually thin (positive top-reviews + CAPTCHAs), but a real listing/fulfillment complaint occasionally surfaces (see §6/§8) |
 | **Reddit** | Planned | Where platform complaints actually live (see §9) |
 
-Default live fan-out is therefore **Play Store only** today, with App Store /
-PLP as opt-in behaviours, and Reddit as the planned addition. Everything
-downstream (clean → regression → synthesize → RICE → digest) is unchanged;
-live ingestion only swaps what `Step 1` of `run.ts` produces.
+All three run by default; each fails soft and is filtered (substance for all,
+plus relevance for Amazon — see §6). Set `ENABLE_APP_STORE=false` /
+`ENABLE_AMAZON_PLP=false` to disable. Honest reality: **Play Store is the
+dependable source**; the others contribute occasionally. Everything downstream
+(clean → regression → synthesize → RICE → digest) is unchanged; live ingestion
+only swaps what `Step 1` of `run.ts` produces.
 
 ## 2. The contract every source satisfies
 

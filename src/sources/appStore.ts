@@ -1,4 +1,5 @@
 import type { RawSignal } from '../types.js';
+import { hasSubstance } from './substance.js';
 
 // Amazon Shopping app on the (US) App Store.
 const AMAZON_APP_ID = '297606951';
@@ -110,6 +111,10 @@ export async function loadAppStoreSignals(
     }
   }
 
-  console.log(`[appStore] collected ${out.length} review(s)`);
-  return out.slice(0, limit);
+  const substantive = out.filter((s) => hasSubstance(s.text));
+  console.log(
+    `[appStore] collected ${out.length} raw, ${substantive.length} with substance ` +
+      `(dropped ${out.length - substantive.length} short/low-detail)`,
+  );
+  return substantive.slice(0, limit);
 }

@@ -1,22 +1,9 @@
 import gplay from 'google-play-scraper';
 import type { RawSignal } from '../types.js';
+import { hasSubstance } from './substance.js';
 
 // Amazon Shopping app on the Google Play Store.
 const AMAZON_PACKAGE = 'com.amazon.mShop.android.shopping';
-
-// Play reviews skew short and generic ("good app", "fix it", emoji-only). A
-// substance bar drops those before they reach the AI stages — they carry no
-// actionable product signal and just dilute the themes. Language-agnostic:
-// a length floor + a word-count floor (so Hindi/regional reviews still pass;
-// the clean agent handles language/relevance downstream).
-const MIN_CHARS = 25;
-const MIN_WORDS = 5;
-
-export function hasSubstance(text: string): boolean {
-  const t = (text ?? '').trim();
-  if (t.length < MIN_CHARS) return false;
-  return t.split(/\s+/).filter(Boolean).length >= MIN_WORDS;
-}
 
 interface PlayReview {
   id?: string;

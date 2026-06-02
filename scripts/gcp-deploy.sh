@@ -32,10 +32,11 @@ export USE_MOCK="${USE_MOCK:-false}"
 export INGEST_MAX_PER_SOURCE="${INGEST_MAX_PER_SOURCE:-150}"
 export SHEETS_SEEN_SIGNALS_TAB="${SHEETS_SEEN_SIGNALS_TAB:-Seen Signal IDs}"
 export SHEETS_WATCH_TAB="${SHEETS_WATCH_TAB:-Watch Listings}"
-# Source toggles — Play Store always on; App Store (Cloud Run IP-blocked by
-# Apple) and Amazon PLP (product-opinion, not platform signal) default OFF.
-export ENABLE_APP_STORE="${ENABLE_APP_STORE:-false}"
-export ENABLE_AMAZON_PLP="${ENABLE_AMAZON_PLP:-false}"
+# Source toggles — all three on by default (each fails soft + is filtered).
+# App Store yields 0 from Cloud Run (Apple IP block); Amazon PLP is usually
+# thin. Set to false to disable a source.
+export ENABLE_APP_STORE="${ENABLE_APP_STORE:-true}"
+export ENABLE_AMAZON_PLP="${ENABLE_AMAZON_PLP:-true}"
 
 # Vertex AI (defaults to same project as Cloud Run; override to use a different one)
 export VERTEX_PROJECT_ID="${VERTEX_PROJECT_ID:-${PROJECT_ID}}"
