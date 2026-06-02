@@ -200,16 +200,21 @@ export async function loadAmazonSignals(opts: { limit?: number } = {}): Promise<
 
   let watch: WatchEntry[];
   try {
-    watch = readWatchList(await readRows(env.SHEETS_WATCH_TAB));
+    const rows = await readRows(env.SHEETS_WATCH_TAB);
+    watch = readWatchList(rows);
+    if (watch.length === 0) {
+      const headers = rows[0] ? Object.keys(rows[0]).filter((k) => k !== 'row_number') : [];
+      console.warn(
+        `[amazon] watch list empty: tab "${env.SHEETS_WATCH_TAB}" → ${rows.length} data row(s); ` +
+          `headers found = ${JSON.stringify(headers)} (need a header row with "ASIN"). Skipping.`,
+      );
+      return [];
+    }
   } catch (err) {
     console.warn(
       `[amazon] could not read "${env.SHEETS_WATCH_TAB}" (skipping Amazon source):`,
       err instanceof Error ? err.message : err,
     );
-    return [];
-  }
-  if (watch.length === 0) {
-    console.log('[amazon] watch list empty; skipping.');
     return [];
   }
 
