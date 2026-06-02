@@ -15,6 +15,21 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Dedupe weeks in the sidebar selector
+
+**What changed.** The Sidebar week dropdown now dedupes by `Week ID` before
+rendering options.
+
+**PM rationale / mechanics.** Each run appends a Weekly Digests row (hard rule
+#7 — not idempotent), so a single week legitimately has many rows. The
+~6 test runs during go-live made the dropdown render six identical
+"Week 23" items and garbled the trigger text. Deduping to one option per week
+fixes the display; it also stabilized the per-group signal counts (the broken
+selector value had been confusing the signals query). Surfaced while previewing
+the dashboard on localhost against prod data.
+
+---
+
 ## 2026-06-02 — Frontend hosting: Vercel/Netlify (not Firebase)
 
 **What changed.** Frontend hosting target switched from Firebase (the old plan

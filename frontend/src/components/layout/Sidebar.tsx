@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { groupColor } from '@/lib/colors';
-import { FEATURE_GROUP_NAMES, featureGroupName, formatWeekLabel, parseDigestRow } from '@/lib/parsers';
+import { FEATURE_GROUP_NAMES, featureGroupName, formatWeekLabel } from '@/lib/parsers';
 import { useActiveGroup, useActiveWeek, useScopedLinkBuilder, useSetParam } from '@/lib/url-state';
 import { api } from '@/lib/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +65,21 @@ export function Sidebar() {
 
   const totalSignals = signalsQuery.data?.count ?? 0;
 
+  // Each run appends a Weekly Digests row, so the same week can appear many
+  // times. Dedupe to one option per week (newest first) for the week selector.
+  const uniqueWeeks = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const row of digestsQuery.data?.rows ?? []) {
+      const w = row['Week ID'];
+      if (w && !seen.has(w)) {
+        seen.add(w);
+        out.push(w);
+      }
+    }
+    return out;
+  }, [digestsQuery.data]);
+
   const lastRunIso = digestsQuery.data?.rows[0]?.['Created At'];
 
   // The route doesn't always live under /digest. Highlight nav by group only,
@@ -93,15 +108,12 @@ export function Sidebar() {
             <SelectValue placeholder="Latest" />
           </SelectTrigger>
           <SelectContent>
-            {(digestsQuery.data?.rows ?? []).map((row) => {
-              const d = parseDigestRow(row);
-              return (
-                <SelectItem key={d.weekId} value={d.weekId} className="text-xs">
-                  {formatWeekLabel(d.weekId)}
-                </SelectItem>
-              );
-            })}
-            {(digestsQuery.data?.rows ?? []).length === 0 && (
+            {uniqueWeeks.map((week) => (
+              <SelectItem key={week} value={week} className="text-xs">
+                {formatWeekLabel(week)}
+              </SelectItem>
+            ))}
+            {uniqueWeeks.length === 0 && (
               <SelectItem value="none" disabled className="text-xs">
                 No runs yet
               </SelectItem>
