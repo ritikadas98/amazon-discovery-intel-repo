@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { groupColor } from '@/lib/colors';
-import { FEATURE_GROUP_NAMES, featureGroupName, formatWeekLabel } from '@/lib/parsers';
-import { useActiveGroup, useActiveWeek, useScopedLinkBuilder, useSetParam } from '@/lib/url-state';
+import { FEATURE_GROUP_NAMES, featureGroupName, formatWeekLabel, rowSource } from '@/lib/parsers';
+import { useActiveGroup, useActiveSource, useActiveWeek, useScopedLinkBuilder, useSetParam } from '@/lib/url-state';
 import { api } from '@/lib/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -34,6 +34,7 @@ function formatLastRun(iso: string): string {
 export function Sidebar() {
   const activeGroup = useActiveGroup();
   const activeWeek = useActiveWeek();
+  const activeSource = useActiveSource();
   const buildLink = useScopedLinkBuilder();
   const setParam = useSetParam();
   const location = useLocation();
@@ -44,32 +45,43 @@ export function Sidebar() {
     queryFn: () => api.digests(10),
   });
 
+  // Scope everything in the sidebar to the active data source (Sample vs Live).
+  const sourceDigests = useMemo(
+    () => (digestsQuery.data?.rows ?? []).filter((r) => rowSource(r['Data Source']) === activeSource),
+    [digestsQuery.data, activeSource],
+  );
+
   // Group counts derived from this week's signals
-  const weekId = activeWeek ?? digestsQuery.data?.rows[0]?.['Week ID'];
+  const weekId = activeWeek ?? sourceDigests[0]?.['Week ID'];
   const signalsQuery = useQuery({
     queryKey: ['signals', 'all', weekId],
     queryFn: () => api.signalsForWeek(weekId!),
     enabled: !!weekId,
   });
 
+  const sourceSignals = useMemo(
+    () => (signalsQuery.data?.rows ?? []).filter((r) => rowSource(r['Data Source']) === activeSource),
+    [signalsQuery.data, activeSource],
+  );
+
   const countsByGroup = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const row of signalsQuery.data?.rows ?? []) {
+    for (const row of sourceSignals) {
       const id = row['Feature Group ID'];
       if (!id) continue;
       map[id] = (map[id] ?? 0) + 1;
     }
     return map;
-  }, [signalsQuery.data]);
+  }, [sourceSignals]);
 
-  const totalSignals = signalsQuery.data?.count ?? 0;
+  const totalSignals = sourceSignals.length;
 
   // Each run appends a Weekly Digests row, so the same week can appear many
   // times. Dedupe to one option per week (newest first) for the week selector.
   const uniqueWeeks = useMemo(() => {
     const seen = new Set<string>();
     const out: string[] = [];
-    for (const row of digestsQuery.data?.rows ?? []) {
+    for (const row of sourceDigests) {
       const w = row['Week ID'];
       if (w && !seen.has(w)) {
         seen.add(w);
@@ -77,9 +89,9 @@ export function Sidebar() {
       }
     }
     return out;
-  }, [digestsQuery.data]);
+  }, [sourceDigests]);
 
-  const lastRunIso = digestsQuery.data?.rows[0]?.['Created At'];
+  const lastRunIso = sourceDigests[0]?.['Created At'];
 
   // The route doesn't always live under /digest. Highlight nav by group only,
   // while leaving the user on whichever page they're on (clicking nav swaps group).
@@ -100,7 +112,7 @@ export function Sidebar() {
           Week
         </p>
         <Select
-          value={activeWeek ?? digestsQuery.data?.rows[0]?.['Week ID'] ?? ''}
+          value={activeWeek ?? sourceDigests[0]?.['Week ID'] ?? ''}
           onValueChange={(v) => setParam('week', v || null)}
         >
           <SelectTrigger className="w-full h-8 text-xs">

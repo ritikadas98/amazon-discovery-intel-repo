@@ -6,6 +6,7 @@ import { featureGroupName } from '@/lib/parsers';
 import { useActiveGroup, usePageTitle, useScopedLinkBuilder } from '@/lib/url-state';
 import { RunPipelineDialog } from '@/components/run-pipeline/RunPipelineDialog';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { SourceToggle } from '@/components/layout/SourceToggle';
 
 const PAGES = [
   { to: '/digest', label: 'Digest', icon: FileText },
@@ -47,6 +48,10 @@ export function TopBar() {
             );
           })}
         </nav>
+
+        <div className="ml-3">
+          <SourceToggle />
+        </div>
 
         <div className="mx-auto">
           <span

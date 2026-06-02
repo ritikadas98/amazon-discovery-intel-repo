@@ -65,7 +65,8 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
 
   // 2. Normalize → compute meta
   const { signals: normalizedSignals, meta } = normalize(rawSignals);
-  log(`Normalized ${normalizedSignals.length} signals; weekId=${meta.weekId}`);
+  meta.dataSource = env.USE_MOCK ? 'Sample' : 'Live';
+  log(`Normalized ${normalizedSignals.length} signals; weekId=${meta.weekId}; source=${meta.dataSource}`);
 
   // 3. Agent 1: clean (dedup + irrelevance + severity + version_flagged)
   const cleaned = await cleanSignals(normalizedSignals);

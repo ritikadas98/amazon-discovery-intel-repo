@@ -42,6 +42,9 @@ export interface Meta {
   sourceBreakdown: SourceBreakdown;
   dataQualityWarning: string | null;
   regressions: Regression[];
+  /** Provenance of this run's data, persisted to the sheet so the UI can
+   *  separate the curated fixture from real ingestion. Set in run.ts. */
+  dataSource: 'Sample' | 'Live';
 }
 
 export interface FeatureGroup {

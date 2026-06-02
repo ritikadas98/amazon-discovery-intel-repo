@@ -4,7 +4,8 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { groupColor } from '@/lib/colors';
-import { parseDigestRow } from '@/lib/parsers';
+import { parseDigestRow, rowSource } from '@/lib/parsers';
+import { useActiveSource } from '@/lib/url-state';
 import { api } from '@/lib/api';
 
 interface Props {
@@ -12,13 +13,14 @@ interface Props {
 }
 
 export function GroupRiceTrend({ groupId }: Props) {
+  const activeSource = useActiveSource();
   const { data, isLoading } = useQuery({
     queryKey: ['digests', 12],
     queryFn: () => api.digests(12),
   });
 
   const series = useMemo(() => {
-    const rows = data?.rows ?? [];
+    const rows = (data?.rows ?? []).filter((r) => rowSource(r['Data Source']) === activeSource);
     // /digests returns newest first; chart wants oldest left → newest right
     const points = rows.slice().reverse().map((r) => {
       const d = parseDigestRow(r);
@@ -29,7 +31,7 @@ export function GroupRiceTrend({ groupId }: Props) {
       };
     });
     return points.filter((p) => p.rice > 0);
-  }, [data, groupId]);
+  }, [data, groupId, activeSource]);
 
   const color = groupColor(groupId).hex;
   const chartConfig = {

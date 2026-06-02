@@ -281,6 +281,12 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
     Cloud Run (Apple IP block) and Amazon PLP is thin. **Reddit** is the planned
     next source (same datacenter-IP-block risk as App Store).
   - Amazon source is best-effort/low-yield (positive top-reviews, CAPTCHAs).
+- **Sample/Live data-source toggle (2026-06-02).** Each run is tagged `Sample`
+  (mock) or `Live` (`Data Source` column on Signals + Weekly Digests); a top-bar
+  toggle + provenance badge filter the whole dashboard by tag. Lets the demo
+  show the curated analysis (Sample) and real data (Live) as two clear,
+  navigable states without blending. Needs the `Data Source` header added to
+  both sheet tabs before live runs populate it.
 
 ### In flight / pending user action
 

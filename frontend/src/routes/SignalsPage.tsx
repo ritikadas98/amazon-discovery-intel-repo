@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { groupColor, severityTier } from '@/lib/colors';
-import { featureGroupName, toNumber } from '@/lib/parsers';
-import { useActiveGroup, useActiveWeek } from '@/lib/url-state';
+import { featureGroupName, rowSource, toNumber } from '@/lib/parsers';
+import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
 import { api } from '@/lib/api';
 
 const PAGE_SIZE = 20;
@@ -47,6 +47,7 @@ function ratingStars(rating: number): React.ReactNode {
 export function SignalsPage() {
   const group = useActiveGroup();
   const weekParam = useActiveWeek();
+  const activeSource = useActiveSource();
 
   // We need a week to fetch signals. If absent, fetch latest digest to discover the latest week.
   const digestsQuery = useQuery({
@@ -75,9 +76,13 @@ export function SignalsPage() {
   useEffect(() => {
     setPage(1);
     setExpanded(new Set());
-  }, [group, weekId, search, sourceFilter, severityBucket, sortKey]);
+  }, [group, weekId, search, sourceFilter, severityBucket, sortKey, activeSource]);
 
-  const rows = signalsQuery.data?.rows ?? [];
+  // Scope to the active data source (Sample vs Live) — distinct from the
+  // signal-channel `sourceFilter` (app_store/play_store/amazon_review).
+  const rows = (signalsQuery.data?.rows ?? []).filter(
+    (r) => rowSource(r['Data Source']) === activeSource,
+  );
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();

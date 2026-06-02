@@ -11,14 +11,16 @@ import { ThemeListForGroup } from '@/components/digest/ThemeListForGroup';
 import { TopSignalsForGroup } from '@/components/digest/TopSignalsForGroup';
 import { SourceMixChart } from '@/components/digest/SourceMixChart';
 import { GroupRiceTrend } from '@/components/digest/GroupRiceTrend';
+import { SourceBadge } from '@/components/digest/SourceBadge';
 import { api } from '@/lib/api';
-import { parseDigestRow, type ParsedDigest } from '@/lib/parsers';
-import { useActiveGroup, useActiveWeek } from '@/lib/url-state';
+import { parseDigestRow, rowSource, type ParsedDigest } from '@/lib/parsers';
+import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
 import type { SignalRow } from '@/types';
 
 export function DigestPage() {
   const activeGroup = useActiveGroup();
   const activeWeek = useActiveWeek();
+  const activeSource = useActiveSource();
 
   const digestsQuery = useQuery({
     queryKey: ['digests', 'all'],
@@ -26,11 +28,13 @@ export function DigestPage() {
   });
 
   const row = useMemo(() => {
-    const rows = digestsQuery.data?.rows ?? [];
+    const rows = (digestsQuery.data?.rows ?? []).filter(
+      (r) => rowSource(r['Data Source']) === activeSource,
+    );
     if (rows.length === 0) return null;
     if (activeWeek) return rows.find((r) => r['Week ID'] === activeWeek) ?? rows[0];
     return rows[0];
-  }, [digestsQuery.data, activeWeek]);
+  }, [digestsQuery.data, activeWeek, activeSource]);
 
   const digest = useMemo(() => (row ? parseDigestRow(row) : null), [row]);
 
@@ -58,19 +62,29 @@ export function DigestPage() {
       <Card>
         <CardContent className="py-12 text-center">
           <p className="text-sm text-muted-foreground">
-            No pipeline runs yet. Click "Run pipeline" in the top bar to create the first one.
+            No <strong>{activeSource === 'sample' ? 'Sample' : 'Live'}</strong> runs yet.{' '}
+            {activeSource === 'sample'
+              ? 'Switch to Live data, or run the pipeline with USE_MOCK=true.'
+              : 'Switch to Sample data, or run the pipeline.'}
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const signals = signalsQuery.data?.rows ?? [];
+  const signals = (signalsQuery.data?.rows ?? []).filter(
+    (r) => rowSource(r['Data Source']) === activeSource,
+  );
 
-  return activeGroup === 'all' ? (
-    <AllGroupsView digest={digest} signals={signals} />
-  ) : (
-    <SingleGroupView digest={digest} groupId={activeGroup} signals={signals} />
+  return (
+    <div className="space-y-4">
+      <SourceBadge source={digest.dataSource} pulledAt={digest.createdAt} />
+      {activeGroup === 'all' ? (
+        <AllGroupsView digest={digest} signals={signals} />
+      ) : (
+        <SingleGroupView digest={digest} groupId={activeGroup} signals={signals} />
+      )}
+    </div>
   );
 }
 

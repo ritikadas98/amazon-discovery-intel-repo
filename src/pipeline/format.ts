@@ -23,6 +23,7 @@ export function formatSignalsForSheet(signals: TaggedSignal[], meta: Meta): Reco
     'App Version': s.app_version || '',
     'Version Flagged': s.version_flagged ? 'TRUE' : 'FALSE',
     'Created At': now,
+    'Data Source': meta.dataSource,
   }));
 }
 
@@ -100,5 +101,6 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     'Overall Group Readiness': readiness?.overall_readiness ?? '',
     'Themes Ready Count': themesReady,
     'Themes Blocked Count': themesBlocked,
+    'Data Source': meta.dataSource,
   };
 }

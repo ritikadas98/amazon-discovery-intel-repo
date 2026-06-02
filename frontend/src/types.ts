@@ -40,6 +40,7 @@ export interface DigestRow {
   'Overall Group Readiness': Readiness | string;
   'Themes Ready Count': string;
   'Themes Blocked Count': string;
+  'Data Source'?: 'Sample' | 'Live' | string;
 }
 
 /** A row from the "Signals" sheet. */
@@ -58,6 +59,7 @@ export interface SignalRow {
   'App Version': string;
   'Version Flagged': 'TRUE' | 'FALSE' | string;
   'Created At': string;
+  'Data Source'?: 'Sample' | 'Live' | string;
 }
 
 /** GET /digests response envelope. */

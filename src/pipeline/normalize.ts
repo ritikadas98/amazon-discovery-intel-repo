@@ -68,6 +68,7 @@ export function normalize(raw: RawSignal[], now: Date = new Date()): NormalizeRe
     sourceBreakdown: breakdown,
     dataQualityWarning,
     regressions: [],
+    dataSource: 'Live', // default; run.ts overrides based on USE_MOCK
   };
 
   return { signals: normalized, meta };

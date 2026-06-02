@@ -73,6 +73,7 @@ export interface ParsedDigest {
   dataQualityWarning: string;
   createdAt: string;
   rowNumber: number;
+  dataSource: 'Sample' | 'Live';
 }
 
 /** Decode a "Weekly Digests" row from the sheet. */
@@ -98,7 +99,14 @@ export function parseDigestRow(row: DigestRow): ParsedDigest {
     dataQualityWarning: row['Data Quality Warning'] ?? '',
     createdAt: row['Created At'] ?? '',
     rowNumber: toNumber(row.row_number),
+    dataSource: (row['Data Source'] ?? '').toLowerCase() === 'sample' ? 'Sample' : 'Live',
   };
+}
+
+/** Normalize a raw "Data Source" cell to 'sample' | 'live' for filtering
+ *  (untagged/legacy rows default to 'live'). */
+export function rowSource(raw: string | undefined | null): 'sample' | 'live' {
+  return (raw ?? '').toLowerCase() === 'sample' ? 'sample' : 'live';
 }
 
 /** Format a Week ID like "2026-W22" → "Week 22 (1 Jun – 7 Jun)" (best-effort, ISO weeks). */

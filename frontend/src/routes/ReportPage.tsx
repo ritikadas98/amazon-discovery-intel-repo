@@ -6,14 +6,16 @@ import { GroupReadinessSummary } from '@/components/report/GroupReadinessSummary
 import { ThemeRiceBreakdownTable } from '@/components/report/ThemeRiceBreakdownTable';
 import { EvidenceGapCards } from '@/components/report/EvidenceGapCards';
 import { NextStepsList } from '@/components/report/NextStepsList';
+import { SourceBadge } from '@/components/digest/SourceBadge';
 import { api } from '@/lib/api';
-import { parseDigestRow } from '@/lib/parsers';
-import { useActiveGroup, useActiveWeek } from '@/lib/url-state';
+import { parseDigestRow, rowSource } from '@/lib/parsers';
+import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
 import type { Readiness } from '@/types';
 
 export function ReportPage() {
   const group = useActiveGroup();
   const activeWeek = useActiveWeek();
+  const activeSource = useActiveSource();
 
   const digestsQuery = useQuery({
     queryKey: ['digests', 20],
@@ -21,11 +23,13 @@ export function ReportPage() {
   });
 
   const row = useMemo(() => {
-    const rows = digestsQuery.data?.rows ?? [];
+    const rows = (digestsQuery.data?.rows ?? []).filter(
+      (r) => rowSource(r['Data Source']) === activeSource,
+    );
     if (rows.length === 0) return null;
     if (activeWeek) return rows.find((r) => r['Week ID'] === activeWeek) ?? rows[0];
     return rows[0];
-  }, [digestsQuery.data, activeWeek]);
+  }, [digestsQuery.data, activeWeek, activeSource]);
 
   const digest = useMemo(() => (row ? parseDigestRow(row) : null), [row]);
 
@@ -91,6 +95,7 @@ export function ReportPage() {
 
   return (
     <div className="space-y-4">
+      <SourceBadge source={digest.dataSource} pulledAt={digest.createdAt} />
       <GroupReadinessSummary
         groupId={group}
         weekId={digest.weekId}

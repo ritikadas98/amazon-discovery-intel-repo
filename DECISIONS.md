@@ -15,6 +15,36 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Explicit Sample/Live data-source toggle
+
+**What changed.** Each run is tagged `Sample` (USE_MOCK) or `Live` via a new
+`Data Source` column on **Signals** + **Weekly Digests**. A first-class top-bar
+**SourceToggle** (`Sample data | Live data`) + a **SourceBadge** filter the whole
+dashboard by that tag. `?source=` URL param, `useActiveSource()` (default
+`live`).
+
+**PM rationale.** Reviewer legibility — the dual-source story must be *visible*,
+not narrated. A reviewer (and the user) couldn't tell "this week is mock, that's
+live"; now one labeled switch says it. Sample = "look at the analysis quality on
+a representative dataset"; Live = "and it's real". This **replaces the rejected
+`week_id`-backdating idea** (a hidden curl flag nobody could see). It also avoids
+blending mock + live in one run (which would mask real week-over-week movement).
+
+**Mechanics.** `Meta.dataSource` set in `run.ts` from `env.USE_MOCK`; `format.ts`
+writes `Data Source` on both row types. Frontend filters client-side via
+`rowSource(row['Data Source'])` across Digest, Report, Signals, Sidebar (counts +
+week list + last-run), and GroupRiceTrend — Sample/Live can even share a week, so
+the tag (not the week) separates them. Default `live` so the dashboard is never
+unexpectedly empty (untagged/legacy rows read as live); the demo flips to Sample
+intentionally.
+
+**Considered & not done.** `week_id` override — rejected (invisible/confusing).
+Server-side source filtering — unnecessary; client-side on the existing
+`/digests` + `/signals` payloads is enough. A provenance badge was kept (cheap,
+high legibility); blending sources in one run was rejected.
+
+---
+
 ## 2026-06-02 — Re-enable all 3 sources + shared substance filter
 
 **What changed.** Flipped `ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` back to

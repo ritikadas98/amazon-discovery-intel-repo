@@ -415,7 +415,10 @@ the stream ends with `event: done`; failures emit `event: error` with
 **URL params** (`?group`, `?week`):
 - `group` — feature group ID or `all`. Read via `useActiveGroup()`. Defaults to `all`.
 - `week` — `YYYY-WNN` format. Read via `useActiveWeek()`. Defaults to latest from `/digests`.
-- Sidebar nav preserves these via `useScopedLinkBuilder()`.
+- `source` — `sample` or `live`. Read via `useActiveSource()` (default
+  `live`). Filters the whole dashboard by the digest/signals `Data Source` tag.
+- Sidebar nav preserves these via `useScopedLinkBuilder()` (it copies all
+  params, so `source` carries across pages automatically).
 
 ---
 
@@ -434,7 +437,8 @@ frontend/src/
 │   ├── layout/
 │   │   ├── AppLayout.tsx         Sidebar + TopBar + Outlet + persistent ChatFab (floating launcher → /chat). Fixed h-svh; only main scrolls
 │   │   ├── Sidebar.tsx           Week selector + 7 group nav items + "All Groups" + last-run footer
-│   │   └── TopBar.tsx            Page title + 3 page tabs (Digest/Signals/Report) + active group pill + theme toggle + Run pipeline button. (Chat is the floating FAB, not a tab.)
+│   │   ├── TopBar.tsx            Page title + 3 page tabs (Digest/Signals/Report) + SourceToggle + active group pill + theme toggle + Run pipeline button. (Chat is the floating FAB, not a tab.)
+│   │   └── SourceToggle.tsx      Sample data / Live data segmented toggle → ?source= ; filters the whole dashboard
 │   ├── chat/
 │   │   └── ChatMessage.tsx         Renders a bubble; turns [signal <ID>] into badges with a tooltip showing the signal text
 │   ├── digest/
@@ -446,7 +450,8 @@ frontend/src/
 │   │   ├── ThemeListForGroup.tsx     Single-group: per-theme cards with R/I/C/E + RICE + MoSCoW
 │   │   ├── TopSignalsForGroup.tsx    Single-group: top 5 highest-severity signals
 │   │   ├── SourceMixChart.tsx        Single-group: 3-bar source split (app_store/play_store/amazon_review)
-│   │   └── GroupRiceTrend.tsx        Single-group: line chart of this group's RICE across last 12 weeks
+│   │   ├── GroupRiceTrend.tsx        Single-group: line chart of this group's RICE across last 12 weeks
+│   │   └── SourceBadge.tsx           Provenance chip (Sample / Live) atop Digest + Report
 │   ├── report/
 │   │   ├── GroupReadinessSummary.tsx       READY/PARTIAL/NOT_READY badge + counts
 │   │   ├── ThemeRiceBreakdownTable.tsx     The table with editable effort, PM-adjusted RICE recompute
@@ -493,6 +498,7 @@ has Editor access.
 | `App Version` | `5.2` | May be empty |
 | `Version Flagged` | `TRUE`\|`FALSE` | From clean stage |
 | `Created At` | `2026-05-23T18:00:34.221Z` | ISO timestamp |
+| `Data Source` | `Sample`\|`Live` | Run provenance — `Sample` (USE_MOCK) or `Live`. Drives the dashboard Sample/Live toggle. **Add this header to row 1.** |
 
 ### Tab: `Weekly Digests` (one row per pipeline run)
 | Column | Example | Notes |
@@ -514,6 +520,7 @@ has Editor access.
 | `Data Quality Warning` | `""` or warning text | |
 | `WoW Delta JSON` | `[{id, rice_delta, signal_delta, severity_delta, moscow_escalated, moscow_prev, …}]` | Per-group |
 | `Created At` | ISO timestamp | |
+| `Data Source` | `Sample`\|`Live` | Run provenance; drives the Sample/Live UI toggle. **Add this header to row 1.** |
 | `Trend Direction JSON` | `[{id, trend}]` | Per-group trend |
 | `Theme Breakdown JSON` | array of `ThemeBreakdownEntry` | All themes across all groups with R/I/C/E |
 

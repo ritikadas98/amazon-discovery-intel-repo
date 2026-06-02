@@ -128,6 +128,11 @@ USE_MOCK=false  → sources = [playStore]                       (always on)
 ```
 - Sources fan out **in parallel**; each fails soft, so one dead source never
   aborts the run. Default = Play Store only (see §1).
+- **Provenance tag:** `run.ts` sets `meta.dataSource = USE_MOCK ? 'Sample' :
+  'Live'`, written to the `Data Source` column on both Signals and Weekly
+  Digests. The dashboard's top-bar **Sample/Live toggle** (`?source=`) filters
+  by this tag, so the curated fixture and real ingestion stay two clear,
+  navigable states (never blended). Needs the `Data Source` header on both tabs.
 - **`INGEST_MAX_PER_SOURCE` (default 150)** caps newest-N per source. We raised
   it from 50 because Play Store is now the primary source. Ceiling note: the
   clean/synthesize Gemini calls process *every* signal in one prompt with an

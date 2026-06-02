@@ -14,6 +14,16 @@ export function useActiveWeek(): string | null {
   return params.get('week');
 }
 
+/** Data provenance toggle: 'sample' (curated fixture) or 'live' (real ingestion).
+ *  Defaults to 'live' — always shows whatever data exists (untagged/legacy rows
+ *  read as live), so the dashboard is never unexpectedly empty; the demo flips to
+ *  'sample' intentionally to show the analysis on the curated dataset. */
+export type SourceParam = 'sample' | 'live';
+export function useActiveSource(): SourceParam {
+  const [params] = useSearchParams();
+  return (params.get('source') || '').toLowerCase() === 'sample' ? 'sample' : 'live';
+}
+
 /**
  * Build a URL that preserves the current group/week selection across pages.
  * Used by the sidebar nav and top-bar links.
