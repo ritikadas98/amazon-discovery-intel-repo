@@ -85,9 +85,13 @@ async function fetchPage(url: string, country: string): Promise<RssEntry[]> {
 export async function loadAppStoreSignals(
   opts: { limit?: number; countries?: string[] } = {},
 ): Promise<RawSignal[]> {
-  // Cloud Run is asia-south1: Apple serves an empty /us/ feed to that datacenter
-  // IP (HTTP 200, 0 entries), so try the India store first, then fall back to US.
-  // Both are reviews of the same app; mixing markets is acceptable.
+  // We try multiple country stores because Apple's reviews RSS only serves an IP
+  // whose country matches the store path (verified locally: /us/ → 50, /in/ → 0).
+  // KNOWN LIMITATION: from the Cloud Run (asia-south1) IP, BOTH /in/ and /us/
+  // return HTTP 200 with 0 entries — Apple blocks the Google datacenter IP range
+  // outright, so App Store yields 0 in prod regardless of country. It works from
+  // a non-datacenter IP (local). Getting iOS reviews in prod needs a proxy /
+  // residential egress / 3rd-party API. Play Store covers app reviews meanwhile.
   const { limit = PAGE_SIZE, countries = ['in', 'us'] } = opts;
   const out: RawSignal[] = [];
 

@@ -41,11 +41,12 @@ happens at ingestion, *before* normalize.
 - Retry-on-empty (3 attempts) + logs HTTP status / entry count per attempt.
   **Gotcha: do NOT send a custom `User-Agent`/`Accept` header** — Apple returns
   an empty feed (HTTP 200, 0 entries) for those; plain `fetch` works.
-- **Country-IP match:** Apple's reviews RSS only serves reviews to an IP whose
-  country matches the store path. `/us/` returns 50 from a US/residential IP but
-  EMPTY from the India Cloud Run IP; `/in/` is the reverse. So the source tries
-  `['in','us']` in order — Cloud Run (asia-south1) gets India app reviews from
-  `/in/`. Verified both directions locally.
+- **Country-IP match + a Cloud Run block.** Apple's reviews RSS only serves an
+  IP whose country matches the store path (locally `/us/` → 50, `/in/` → 0), so
+  the source tries `['in','us']`. BUT from the Cloud Run (asia-south1) IP **both
+  stores return HTTP 200 / 0 entries** — Apple blocks the Google datacenter IP
+  range outright. So App Store yields 0 in prod; it only works from a
+  non-datacenter IP (local). See §8.
 
 ### Play Store — `src/sources/playStore.ts`
 - `google-play-scraper` v10 `reviews()` for `com.amazon.mShop.android.shopping`,
@@ -148,10 +149,14 @@ week-1 baseline.
 
 ## 8. Reliability & honest limitations
 
-- **Play Store** is reliable (50/run from Cloud Run). **App Store** needs the
-  country-matching store: from the India Cloud Run IP, `/us/` returns empty and
-  `/in/` returns reviews — handled by the `['in','us']` fallback (see §3).
-  Both are reviews *of the Amazon app* — on-use-case.
+- **Play Store** is the reliable app-review source (50/run from Cloud Run).
+  **App Store is blocked from Cloud Run** — Apple returns 0 entries to the
+  datacenter IP for every store (see §3). It works locally; getting iOS reviews
+  in prod needs a proxy / residential egress / 3rd-party API. Both are reviews
+  *of the Amazon app* — on-use-case when they flow.
+- **Amazon** reads the watch list correctly in prod (all ASINs fetched) but
+  yields ~0: well-reviewed `.com` products are all-praise (filtered out), `.in`
+  product pages return CAPTCHAs. Best-effort by design.
 - **Amazon product reviews are best-effort and low-yield:**
   - The `/dp/` "top reviews" skew positive/helpful; the problem reviews (1-2★)
     that we actually want are behind the sign-in wall Jina can't pass.

@@ -15,7 +15,31 @@ overwrite history).
 
 ---
 
-## 2026-06-02 — App Store fix: country-matching store (`in` first)
+## 2026-06-02 — App Store: blocked from Cloud Run (prod disproved the `in` fix)
+
+**What changed (finding, not code).** Prod logs after deploying the `['in','us']`
+fallback showed **both** `[appStore:in]` and `[appStore:us]` returning
+`HTTP 200, 0 entries` from the Cloud Run IP. So the country-match theory (from
+local data) was only half the story: from the Google/Cloud-Run datacenter IP
+range, Apple's reviews RSS is **blocked entirely** — no country works. App Store
+yields 0 in prod; it works from a non-datacenter IP (local). The `['in','us']`
+fallback is kept (harmless, and works off-Cloud-Run) and the comment/docs were
+corrected to state the real cause.
+
+**Decision.** Accept App Store as non-functional from Cloud Run for now — **Play
+Store is the reliable app-review source** (Android; the larger market in India
+anyway). iOS reviews would need a proxy / residential egress / 3rd-party reviews
+API — deferred until iOS coverage is worth that infra.
+
+**Also confirmed this run.** Amazon source reads the `Watch Listings` tab
+correctly in prod (all 8 ASINs fetched) — the earlier "watch list empty" was a
+timing artifact (data added after those runs). Amazon yields ~0 relevant
+(positive `.com` products filtered; `.in` pages CAPTCHA) — the expected
+low-yield, now confirmed in prod.
+
+---
+
+## 2026-06-02 — App Store fix attempt: country-matching store (`in` first)
 
 **What changed.** `loadAppStoreSignals` now tries countries `['in','us']` in
 order instead of `us` only.
