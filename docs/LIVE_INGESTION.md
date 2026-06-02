@@ -60,12 +60,18 @@ happens at ingestion, *before* normalize.
 - `google-play-scraper` v10 `reviews()` for `com.amazon.mShop.android.shopping`,
   newest-first. Returns `{ data: [...] }`; each review has `id` (reviewId),
   `score`, `text`, `version`, `date`. → `source_id = play_store:<id>`.
+- **Substance filter** (`hasSubstance`): drops short / low-detail reviews
+  ("good app", "fix it", emoji-only) before the AI stages — a length floor
+  (25 chars) + word-count floor (5 words), language-agnostic so Hindi/regional
+  reviews still pass. The source **over-fetches** (`limit × 2`, max 300) so it
+  can still return up to `limit` *substantive* reviews after the drop. Live:
+  300 raw → ~229 substantive (~24% dropped) → capped at 150.
 - **Fragile by nature** — it parses Play's private endpoints and can break when
   Google changes them, or be rate-limited/blocked from some IPs. So it **fails
   soft**: any error → returns `[]` and the run continues.
 - (Type wart: the lib types `gplay.sort` as the enum *type*, so `sort.NEWEST`
   needs a small cast. Runtime is fine — `NEWEST = 2`.)
-- Verified live: 50 reviews, 0 malformed, 50 unique IDs.
+- Verified live: 50→150 reviews depending on the cap, 0 malformed, unique IDs.
 
 ### Amazon product reviews — `src/sources/amazon.ts`
 The hard one. Key findings from building it:
@@ -198,10 +204,11 @@ OAuth (the same failure class that killed App Store — unproven until tested);
 usable after filtering. If the IP block bites, Reddit needs a proxy too.
 
 **Honest ROI on the existing sources:**
-- **Play Store** is solid but has diminishing returns: reviews skew short/low-
-  detail ("good app", "fix it"); ~30-40% get dropped by normalize/clean. Raising
-  the cap to 150 yields *more* signal than 50, not 3× — and we sample the newest
-  N, not all reviews.
+- **Play Store** is the one reliable source. The `hasSubstance` filter now
+  removes the short/low-detail noise up front (~24% of raw), and the over-fetch
+  keeps volume at the full 150 substantive reviews — so quality is better than
+  before. Still: we sample the newest reviews, not all, and Play skews toward
+  app-rating-style feedback, so it's a sample, not a census.
 - **Amazon PLP** will not pay off without a paid reviews API — `/dp/` shows only
   positive top-reviews and the critical ones are login-walled. Even problem-prone
   products help only marginally. Kept as an off-by-default behaviour.
@@ -218,7 +225,7 @@ usable after filtering. If the IP block bites, Reddit needs a proxy too.
 | File | Role |
 |---|---|
 | `src/sources/appStore.ts` | iTunes RSS → RawSignal[] |
-| `src/sources/playStore.ts` | google-play-scraper → RawSignal[] |
+| `src/sources/playStore.ts` | google-play-scraper → RawSignal[]; `hasSubstance` filter + over-fetch |
 | `src/sources/amazon.ts` | Jina /dp/ parse + `parseAmazonReviews` + `isPlatformRelevant` |
 | `src/sources/dedupe.ts` | `loadSeenIds` / `filterUnseen` / `commitSeenIds` |
 | `src/pipeline/run.ts` | `USE_MOCK=false` ingest branch + commit-after-write |

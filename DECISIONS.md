@@ -15,6 +15,31 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Play Store substance filter (drop short/low-detail reviews)
+
+**What changed.** `playStore.ts` gained `hasSubstance(text)` — drops reviews
+below a length floor (25 chars) AND word-count floor (5 words): "good app",
+"fix it", "nice", emoji-only, generic praise. Applied at ingestion, before the
+AI stages. The source now **over-fetches** (`limit × 2`, max 300) so it can
+still return up to `limit` *substantive* reviews after the drop.
+
+**PM rationale.** Play is now the only source, and a big chunk of Play reviews
+are low-signal app-rating noise that dilutes the synthesized themes. Filtering
+up front raises theme quality and saves AI tokens. Verified live: 300 raw →
+~229 substantive (~24% dropped) → capped at 150.
+
+**Mechanics.** Language-agnostic (whitespace word count + char length), so
+Hindi/regional reviews pass the substance bar; the clean agent still handles
+language/relevance/dedup downstream. Thresholds are constants in `playStore.ts`
+(tunable).
+
+**Considered & not done.** A semantic "is this specific?" check via an LLM —
+overkill and adds latency/cost; the blunt length+word heuristic catches the
+bulk. Accepts that a rare short-but-specific review ("checkout button broken",
+4 words) gets dropped — fine given the goal.
+
+---
+
 ## 2026-06-02 — Source strategy: Play-only default, PLP/App Store opt-in, raise volume
 
 **What changed.** Default live fan-out is now **Play Store only**. App Store

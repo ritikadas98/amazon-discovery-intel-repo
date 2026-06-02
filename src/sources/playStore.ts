@@ -4,6 +4,20 @@ import type { RawSignal } from '../types.js';
 // Amazon Shopping app on the Google Play Store.
 const AMAZON_PACKAGE = 'com.amazon.mShop.android.shopping';
 
+// Play reviews skew short and generic ("good app", "fix it", emoji-only). A
+// substance bar drops those before they reach the AI stages — they carry no
+// actionable product signal and just dilute the themes. Language-agnostic:
+// a length floor + a word-count floor (so Hindi/regional reviews still pass;
+// the clean agent handles language/relevance downstream).
+const MIN_CHARS = 25;
+const MIN_WORDS = 5;
+
+export function hasSubstance(text: string): boolean {
+  const t = (text ?? '').trim();
+  if (t.length < MIN_CHARS) return false;
+  return t.split(/\s+/).filter(Boolean).length >= MIN_WORDS;
+}
+
 interface PlayReview {
   id?: string;
   date?: string;
@@ -23,6 +37,9 @@ export async function loadPlayStoreSignals(
   opts: { limit?: number; country?: string; lang?: string } = {},
 ): Promise<RawSignal[]> {
   const { limit = 50, country = 'us', lang = 'en' } = opts;
+  // Over-fetch so that after dropping short/low-detail reviews we can still
+  // return up to `limit` substantive ones.
+  const rawNum = Math.min(limit * 2, 300);
   try {
     // v10 returns { data, nextPaginationToken }; older returned a bare array.
     // The lib types gplay.sort as the enum *type*, so member access fails tsc
@@ -31,7 +48,7 @@ export async function loadPlayStoreSignals(
     const result = (await gplay.reviews({
       appId: AMAZON_PACKAGE,
       sort: NEWEST,
-      num: limit,
+      num: rawNum,
       country,
       lang,
     })) as unknown as { data?: PlayReview[] } | PlayReview[];
@@ -58,8 +75,12 @@ export async function loadPlayStoreSignals(
       });
     }
 
-    console.log(`[playStore] collected ${out.length} review(s)`);
-    return out.slice(0, limit);
+    const substantive = out.filter((s) => hasSubstance(s.text));
+    console.log(
+      `[playStore] collected ${out.length} raw, ${substantive.length} with substance ` +
+        `(dropped ${out.length - substantive.length} short/low-detail)`,
+    );
+    return substantive.slice(0, limit);
   } catch (err) {
     console.error(
       '[playStore] fetch failed (continuing without Play Store):',

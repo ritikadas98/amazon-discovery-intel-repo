@@ -955,7 +955,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `lib/email.ts` | `sendEmail({ to, subject, html })` — Nodemailer over SMTP. |
 | `sources/mockSignals.ts` | Loads `data/signals.json`. Used when `USE_MOCK=true`. |
 | `sources/appStore.ts` | Live: iTunes Customer Reviews RSS (app 297606951) → RawSignal[]. Fails soft. |
-| `sources/playStore.ts` | Live: google-play-scraper reviews for the Amazon app → RawSignal[]. Fails soft. |
+| `sources/playStore.ts` | Live: google-play-scraper reviews for the Amazon app → RawSignal[]. `hasSubstance` filter drops short/low-detail reviews; over-fetches (limit×2) to keep volume. Fails soft. |
 | `sources/amazon.ts` | Live: Jina Reader on /dp/<ASIN> pages from the Watch Listings tab. `parseAmazonReviews()` parses the markdown. Fails soft. |
 | `sources/dedupe.ts` | Cross-run dedup vs the Seen Signal IDs tab (loadSeenIds/filterUnseen/commitSeenIds). |
 | `pipeline/run.ts` | The orchestrator. Wires every stage in order, fires regression email in parallel. |
