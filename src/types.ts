@@ -215,4 +215,8 @@ export interface PipelineResult {
 
 export interface RunOptions {
   recipient_email: string;
+  /** Per-run override of USE_MOCK: true = mock fixture (Sample), false = live
+   *  ingestion. Falls back to env.USE_MOCK when undefined. Lets the dashboard's
+   *  Sample/Live toggle decide what a triggered run ingests. */
+  use_mock?: boolean;
 }

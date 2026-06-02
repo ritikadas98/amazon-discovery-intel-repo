@@ -35,10 +35,13 @@ async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   health: () => jsonFetch<{ status: string; timestamp: string }>('/health'),
 
-  runPipeline: (recipient_email?: string) =>
+  runPipeline: (recipient_email?: string, use_mock?: boolean) =>
     jsonFetch<PipelineResult>('/webhook/run-pipeline', {
       method: 'POST',
-      body: JSON.stringify(recipient_email ? { recipient_email } : {}),
+      body: JSON.stringify({
+        ...(recipient_email ? { recipient_email } : {}),
+        ...(use_mock !== undefined ? { use_mock } : {}),
+      }),
     }),
 
   digests: (limit = 10) =>

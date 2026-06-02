@@ -27,8 +27,11 @@ const runPipelineHandler = async (req: Request, res: Response) => {
     res.status(400).json({ error: 'recipient_email is required (in body or DEFAULT_RECIPIENT env var)' });
     return;
   }
+  // Optional per-run override of mock vs live (else env.USE_MOCK). Lets the UI's
+  // Sample/Live toggle decide what a triggered run ingests.
+  const use_mock = typeof req.body?.use_mock === 'boolean' ? (req.body.use_mock as boolean) : undefined;
   try {
-    const result = await runPipeline({ recipient_email });
+    const result = await runPipeline({ recipient_email, use_mock });
     res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

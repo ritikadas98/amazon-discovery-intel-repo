@@ -23,9 +23,11 @@ import type { GroupSummary, PipelineResult, RawSignal, RunOptions, TopGroupView 
 export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const env = getEnv();
   const recipient = opts.recipient_email;
+  // Per-run override (from the UI Sample/Live toggle) wins over the env default.
+  const useMock = opts.use_mock ?? env.USE_MOCK;
   const log = (msg: string) => console.log(`[pipeline] ${msg}`);
 
-  log(`Starting run — recipient=${recipient}, mock=${env.USE_MOCK}`);
+  log(`Starting run — recipient=${recipient}, mock=${useMock}`);
 
   // 1. Ingest
   // seenToCommit holds the source_ids we ingested this run; committed to the
@@ -33,7 +35,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   // a mid-run failure re-ingests next time instead of silently dropping reviews.
   let rawSignals: RawSignal[];
   let seenToCommit: RawSignal[] = [];
-  if (env.USE_MOCK) {
+  if (useMock) {
     rawSignals = await loadMockSignals();
     log(`Loaded ${rawSignals.length} mock signals`);
   } else {
@@ -65,7 +67,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
 
   // 2. Normalize → compute meta
   const { signals: normalizedSignals, meta } = normalize(rawSignals);
-  meta.dataSource = env.USE_MOCK ? 'Sample' : 'Live';
+  meta.dataSource = useMock ? 'Sample' : 'Live';
   log(`Normalized ${normalizedSignals.length} signals; weekId=${meta.weekId}; source=${meta.dataSource}`);
 
   // 3. Agent 1: clean (dedup + irrelevance + severity + version_flagged)

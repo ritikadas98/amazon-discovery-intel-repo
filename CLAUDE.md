@@ -303,8 +303,12 @@ Base URL in prod: `https://amazon-discovery-34n34tq6za-el.a.run.app`
 **Response 200:** `{ "status": "ok", "timestamp": "2026-06-01T12:34:56.789Z" }`
 
 ### `POST /run-pipeline` and `POST /webhook/run-pipeline` (aliases)
-**Request body:** `{ "recipient_email": "you@example.com" }` (optional;
-falls back to `DEFAULT_RECIPIENT` env var)
+**Request body:** `{ "recipient_email": "you@example.com", "use_mock": true }`
+- `recipient_email` optional; falls back to `DEFAULT_RECIPIENT` env var.
+- `use_mock` optional boolean — per-run override of `USE_MOCK` (true = Sample
+  fixture, false = live ingestion). Falls back to `env.USE_MOCK` when omitted.
+  The dashboard's Sample/Live toggle sends this so a triggered run ingests the
+  mode you're viewing, and the resulting digest is tagged to match.
 **Response 200:** `PipelineResult` (see `src/types.ts`)
 ```json
 {

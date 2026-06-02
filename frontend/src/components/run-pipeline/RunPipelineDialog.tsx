@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { PipelineStepper } from './PipelineStepper';
 import { api } from '@/lib/api';
 import { featureGroupName } from '@/lib/parsers';
+import { useActiveSource } from '@/lib/url-state';
 import type { PipelineResult } from '@/types';
 
 export function RunPipelineDialog() {
@@ -24,8 +25,14 @@ export function RunPipelineDialog() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
+  // The run follows the active Sample/Live toggle: Sample → mock fixture,
+  // Live → real ingestion. The resulting digest is tagged + shows under that toggle.
+  const activeSource = useActiveSource();
+  const useMock = activeSource === 'sample';
+  const sourceLabel = useMock ? 'Sample' : 'Live';
+
   const mutation = useMutation({
-    mutationFn: (recipient_email: string | undefined) => api.runPipeline(recipient_email),
+    mutationFn: (recipient_email: string | undefined) => api.runPipeline(recipient_email, useMock),
     onSuccess: (result: PipelineResult) => {
       queryClient.invalidateQueries({ queryKey: ['runs', 'latest'] });
       queryClient.invalidateQueries({ queryKey: ['digests'] });
@@ -76,10 +83,13 @@ export function RunPipelineDialog() {
         {!startedAt ? (
           <>
             <DialogHeader>
-              <DialogTitle>Run pipeline now?</DialogTitle>
+              <DialogTitle>Run pipeline on {sourceLabel} data?</DialogTitle>
               <DialogDescription>
-                Triggers the full pipeline: ingest signals, 3 Vertex AI calls, write to Google Sheets,
-                send digest + regression emails. Takes ~30 seconds.
+                {useMock
+                  ? 'Ingests the curated Sample fixture, then runs the full pipeline'
+                  : 'Ingests live reviews (Play Store + App Store + Amazon), then runs the full pipeline'}
+                : 3 Vertex AI calls, write to Google Sheets, send digest + regression emails. ~30s.
+                The result is tagged <strong>{sourceLabel}</strong> and appears under this toggle.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
@@ -103,7 +113,7 @@ export function RunPipelineDialog() {
               </Button>
               <Button onClick={handleStart}>
                 <Play className="h-3.5 w-3.5" />
-                Start pipeline
+                Run on {sourceLabel} data
               </Button>
             </DialogFooter>
           </>

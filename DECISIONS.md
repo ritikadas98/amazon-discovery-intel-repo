@@ -15,6 +15,26 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — "Run pipeline" follows the Sample/Live toggle
+
+**What changed.** The Run dialog now triggers a run in the *currently-viewed*
+mode: on Sample → mock fixture, on Live → live ingestion. Implemented as an
+optional `use_mock` boolean on `POST /run-pipeline` (overrides `env.USE_MOCK`
+for that run); `run.ts` uses `opts.use_mock ?? env.USE_MOCK` for both ingestion
+and the `Data Source` tag. The dialog title + button read "Run on Sample/Live
+data".
+
+**PM rationale.** Without this, the toggle (a view filter) and the run were
+decoupled — clicking Run on the Sample view would still run Live (the env
+default) and produce a Live digest that didn't even appear on the Sample view.
+Coupling them makes the user's mental model real: pick a mode, run it, see it.
+
+**Considered & not done.** A separate mode picker inside the dialog — redundant;
+the toggle already expresses intent. The env `USE_MOCK` still sets the default
+for the cron/untoggled runs.
+
+---
+
 ## 2026-06-02 — Explicit Sample/Live data-source toggle
 
 **What changed.** Each run is tagged `Sample` (USE_MOCK) or `Live` via a new
