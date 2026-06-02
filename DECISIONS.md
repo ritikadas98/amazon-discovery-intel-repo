@@ -15,6 +15,27 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — App Store fix: country-matching store (`in` first)
+
+**What changed.** `loadAppStoreSignals` now tries countries `['in','us']` in
+order instead of `us` only.
+
+**Root cause (diagnosed via the new logging).** Apple's Customer Reviews RSS
+returns reviews ONLY to a requesting IP whose country matches the store path.
+From the India Cloud Run IP, `/us/` returned `HTTP 200, 0 entries` (looked like
+a throttle); from a US/residential IP, `/in/` returns 0 while `/us/` returns 50.
+Verified both directions locally. So it was never a throttle or a header issue —
+just a country/IP mismatch.
+
+**Mechanics.** Try `/in/` first (Cloud Run is asia-south1 → India reviews), fall
+back to `/us/`. India Amazon-app reviews are on-market and relevant. Pending
+prod confirmation on the next redeploy.
+
+**Considered & not done.** Forcing a single country — rejected; the fallback
+works in both prod (India IP) and local (non-India IP) without per-env config.
+
+---
+
 ## 2026-06-02 — Went live + App Store hardening + deploy default
 
 **What changed.** Flipped `USE_MOCK=false` in prod — the pipeline now ingests

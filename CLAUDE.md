@@ -820,9 +820,11 @@ as TODOs or placeholders. Don't be surprised when:
   - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native
     entry id → `source_id`. Retry-on-empty + logs HTTP status/entry count.
     **Do NOT add a custom User-Agent/Accept header** — Apple returns an empty
-    feed (HTTP 200, 0 entries) for those; plain fetch works. KNOWN ISSUE:
-    returns 0 from Cloud Run (asia-south1) — Apple throttles the datacenter IP;
-    local gets 50. Diagnosing via the new logging.
+    feed (HTTP 200, 0 entries) for those; plain fetch works. Apple's RSS only
+    serves reviews to an IP whose country matches the store path, so the source
+    tries `['in','us']` in order (Cloud Run is in India → `/in/` returns data,
+    `/us/` is empty from that IP; reverse holds locally). Verified both
+    directions.
   - `playStore.ts` — `google-play-scraper` for
     `com.amazon.mShop.android.shopping`. reviewId → `source_id`.
   - `amazon.ts` — Jina Reader on `/dp/<ASIN>` pages (the `/product-reviews/`

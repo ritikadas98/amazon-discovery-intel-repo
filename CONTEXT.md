@@ -264,10 +264,10 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   `USE_MOCK=false`. First live run pulled 50 Play Store reviews → 32 analyzed →
   digest emailed; dedup committed; WoW compared vs the mock baseline. The
   `Seen Signal IDs` + `Watch Listings` tabs exist.
-  - **Known issue:** App Store returns 0 from Cloud Run (Apple IP/region
-    throttle on the asia-south1 IP) — feed is alive, local gets 50. Hardened
-    with retry + status/entry logging to diagnose next run; Play Store is the
-    reliable app-review source meanwhile.
+  - **App Store fix (pending prod confirm):** Apple's reviews RSS only serves
+    a country-matching IP, so `/us/` was empty from the India Cloud Run IP.
+    Source now tries `['in','us']` → from Cloud Run `/in/` returns India app
+    reviews. Verified locally both directions; redeploy to confirm in prod.
   - Amazon source is best-effort/low-yield (positive top-reviews, CAPTCHAs).
 
 ### In flight / pending user action

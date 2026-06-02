@@ -41,8 +41,11 @@ happens at ingestion, *before* normalize.
 - Retry-on-empty (3 attempts) + logs HTTP status / entry count per attempt.
   **Gotcha: do NOT send a custom `User-Agent`/`Accept` header** — Apple returns
   an empty feed (HTTP 200, 0 entries) for those; plain `fetch` works.
-- Reliable locally (50 reviews). **Known issue:** returns 0 from Cloud Run
-  (asia-south1) — Apple throttles the datacenter IP. See §8.
+- **Country-IP match:** Apple's reviews RSS only serves reviews to an IP whose
+  country matches the store path. `/us/` returns 50 from a US/residential IP but
+  EMPTY from the India Cloud Run IP; `/in/` is the reverse. So the source tries
+  `['in','us']` in order — Cloud Run (asia-south1) gets India app reviews from
+  `/in/`. Verified both directions locally.
 
 ### Play Store — `src/sources/playStore.ts`
 - `google-play-scraper` v10 `reviews()` for `com.amazon.mShop.android.shopping`,
@@ -145,12 +148,10 @@ week-1 baseline.
 
 ## 8. Reliability & honest limitations
 
-- **Play Store** is the reliable app-review signal right now (50/run from Cloud
-  Run). **App Store** works locally but returns 0 from Cloud Run — Apple
-  throttles the asia-south1 datacenter IP (the feed is alive; the new logging
-  will confirm the exact response). Candidate fixes if it persists: request the
-  `in` store, or treat App Store as best-effort. Both are reviews *of the Amazon
-  app* — squarely on-use-case when they flow.
+- **Play Store** is reliable (50/run from Cloud Run). **App Store** needs the
+  country-matching store: from the India Cloud Run IP, `/us/` returns empty and
+  `/in/` returns reviews — handled by the `['in','us']` fallback (see §3).
+  Both are reviews *of the Amazon app* — on-use-case.
 - **Amazon product reviews are best-effort and low-yield:**
   - The `/dp/` "top reviews" skew positive/helpful; the problem reviews (1-2★)
     that we actually want are behind the sign-in wall Jina can't pass.
