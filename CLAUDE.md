@@ -450,7 +450,7 @@ frontend/src/
 │   │   ├── TopBar.tsx            Page title + 3 page tabs (Digest/Signals/Report) + SourceToggle + active group pill + theme toggle + Run pipeline button. (Chat is the floating FAB, not a tab.)
 │   │   └── SourceToggle.tsx      Sample data / Live data segmented toggle → ?source= ; filters the whole dashboard
 │   ├── chat/
-│   │   └── ChatMessage.tsx         Renders a bubble; turns [signal <ID>] into badges with a tooltip showing the signal text
+│   │   └── ChatMessage.tsx         Renders a bubble; turns [signal <ID>] into footnote-numbered [1][2]… badges that open a popover with the full signal text + "Open in Signals" link
 │   ├── digest/
 │   │   ├── OpportunityHero.tsx       Hero card (group color border, top theme, severity/trend/delta)
 │   │   ├── RankingTable.tsx          Cross-group ranking (only used in All Groups view)

@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import type { SignalRow } from '@/types';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useScopedLinkBuilder } from '@/lib/url-state';
 
 export interface ChatMessageData {
   role: 'user' | 'assistant';
@@ -17,47 +19,71 @@ interface ChatMessageProps {
 }
 
 // Match a signal ID (weekId-index, e.g. 2026-W23-80), optionally wrapped in the
-// model's preferred "[signal <ID>]" form. The model isn't perfectly consistent —
-// it sometimes writes a bare ID or "signal <ID>" — so we badge any ID-shaped token
-// and absorb the optional "[signal "/"signal " prefix and trailing "]".
+// model's "[signal <ID>]" / "signal <ID>" form.
 const CITATION_RE = /(?:\[\s*signal\s+|signal\s+)?(\d{4}-W\d{1,2}-\d+)\]?/gi;
 
-function Citation({ id, signal, accentHex }: { id: string; signal?: SignalRow; accentHex: string }) {
+type BuildLink = ReturnType<typeof useScopedLinkBuilder>;
+
+/** A footnote-style citation: a compact [n] badge that opens a popover with the
+ *  full signal text + a link into the Signals browser. */
+function Citation({
+  id,
+  num,
+  signal,
+  accentHex,
+  buildLink,
+}: {
+  id: string;
+  num: number;
+  signal?: SignalRow;
+  accentHex: string;
+  buildLink: BuildLink;
+}) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <button
           type="button"
-          className="mx-0.5 inline-flex items-center rounded px-1 py-0 align-baseline font-mono text-[11px] font-medium leading-none cursor-default"
-          style={{ backgroundColor: `${accentHex}1f`, color: accentHex }}
+          className="mx-0.5 inline-flex items-center rounded px-1 align-baseline text-[10px] font-semibold leading-none cursor-pointer"
+          style={{ backgroundColor: `${accentHex}22`, color: accentHex }}
+          aria-label={`Citation ${num}: signal ${id}`}
         >
-          {id}
+          {num}
         </button>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-sm whitespace-normal text-left">
+      </PopoverTrigger>
+      <PopoverContent align="start" className="space-y-2 text-left text-xs">
         {signal ? (
-          <span>
-            <span className="font-mono opacity-70">{id}</span> · sev {signal['Severity Score']} ·{' '}
-            {signal.Source}
-            <br />
-            {signal.Text.length > 240 ? signal.Text.slice(0, 240) + '…' : signal.Text}
-          </span>
+          <>
+            <div className="font-mono text-[11px] text-muted-foreground">
+              {id} · sev {signal['Severity Score']} · {signal.Source}
+            </div>
+            <p className="leading-snug whitespace-pre-wrap">{signal.Text}</p>
+            <Link
+              to={buildLink('/signals', { group: signal['Feature Group ID'] || undefined })}
+              className="inline-block text-[11px] font-medium text-primary underline underline-offset-2"
+            >
+              Open in Signals →
+            </Link>
+          </>
         ) : (
-          <span>
-            Signal <span className="font-mono">{id}</span> is not in the current group/week view.
-          </span>
+          <p>
+            Signal <span className="font-mono">{id}</span> isn't in the current view.
+          </p>
         )}
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-/** Split assistant text on [signal <ID>] citations, rendering each as a badge. */
+/** Replace [signal <ID>] / bare IDs with footnote-numbered citations ([1], [2]…)
+ *  in order of first appearance. */
 function renderWithCitations(
   content: string,
   signalsById: Map<string, SignalRow>,
   accentHex: string,
+  buildLink: BuildLink,
 ): React.ReactNode[] {
+  const order = new Map<string, number>();
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
   let key = 0;
@@ -68,7 +94,17 @@ function renderWithCitations(
       nodes.push(<span key={key++}>{content.slice(lastIndex, m.index)}</span>);
     }
     const id = m[1].trim();
-    nodes.push(<Citation key={key++} id={id} signal={signalsById.get(id)} accentHex={accentHex} />);
+    if (!order.has(id)) order.set(id, order.size + 1);
+    nodes.push(
+      <Citation
+        key={key++}
+        id={id}
+        num={order.get(id)!}
+        signal={signalsById.get(id)}
+        accentHex={accentHex}
+        buildLink={buildLink}
+      />,
+    );
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < content.length) {
@@ -79,6 +115,7 @@ function renderWithCitations(
 
 export function ChatMessage({ message, signalsById, accentHex, streaming }: ChatMessageProps) {
   const isUser = message.role === 'user';
+  const buildLink = useScopedLinkBuilder();
   return (
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
@@ -87,7 +124,9 @@ export function ChatMessage({ message, signalsById, accentHex, streaming }: Chat
           isUser ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-foreground',
         )}
       >
-        {isUser ? message.content : renderWithCitations(message.content, signalsById, accentHex)}
+        {isUser
+          ? message.content
+          : renderWithCitations(message.content, signalsById, accentHex, buildLink)}
         {streaming && (
           <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-foreground/60" aria-hidden />
         )}

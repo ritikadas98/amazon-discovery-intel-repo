@@ -125,6 +125,11 @@ cancellation (silent on abort).
   `2026-W23-80` interchangeably. The badge regex absorbs all three forms so
   every citation becomes interactive. (Verification caught this: the strict
   bracket-only version badged only 12 of ~18 IDs; the loose version badges all.)
+- **Citations are footnote-numbered.** Raw IDs (`2026-W23-80`) read as noise in
+  prose, so each unique cited ID is mapped to `[1]`, `[2]`, … in order of first
+  appearance. The badge is a click-to-open **Popover** (`ui/popover.tsx`) showing
+  the full signal text + an "Open in Signals" link (deep-links to that signal's
+  group); the full ID lives in the popover + the `aria-label`.
 
 ## 6. How to use it
 

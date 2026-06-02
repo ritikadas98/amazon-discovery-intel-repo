@@ -58,6 +58,29 @@ batches. Compacting the clean prompt's JSON output — the token bump is simpler
 
 ---
 
+## 2026-06-02 — Chat citations: footnote numbers + click-to-read popover
+
+**What changed.** Chat citations now render as compact footnote numbers
+(`[1][2]…`, by order of first appearance) instead of the raw `2026-W23-99`, and
+clicking a number opens a **popover** with the full signal text + an "Open in
+Signals →" link (to that signal's group). New `ui/popover.tsx` primitive.
+
+**PM rationale.** Two readability problems with the old inline raw IDs: (1)
+`2026-W23-99, 2026-W23-76, …` is visually noisy in prose; (2) the hover tooltip
+truncated the signal and vanished on mouse-move, so you couldn't actually *read*
+a cited review. Numbered footnotes are scannable; a click-popover lets you read
+the full signal and jump to it in the Signals browser.
+
+**Mechanics.** `ChatMessage` builds an ID→number map during the citation regex
+walk; repeats reuse the same number. Popover (Radix) replaces the hover Tooltip;
+"Open in Signals" uses `useScopedLinkBuilder` to preserve week/source and set the
+signal's group. Verified: badges render 1,2,3…; click → full-text popover + link.
+
+**Considered & not done.** Deep-link to the exact paginated Signals row
+(auto-expand/scroll) — deferred; linking to the signal's group is enough for now.
+
+---
+
 ## 2026-06-02 — Chat respects the Sample/Live source
 
 **What changed.** The RAG chat now scopes to the active source. `POST
