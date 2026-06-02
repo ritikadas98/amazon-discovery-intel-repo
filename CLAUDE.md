@@ -220,8 +220,11 @@ Theme-level badges keep the original three labels.
 
 ### WoW deltas
 
-After RICE, `src/pipeline/wow.ts` reads last week's Weekly Digests row
-(if any), then for each group computes:
+After RICE, `run.ts` reads prior Weekly Digests rows **filtered to the current
+run's `Data Source`** (Live compares only to prior Live, Sample only to Sample —
+never crosses sources, so a thin live run isn't measured against the rich
+fixture), and `src/pipeline/wow.ts` builds the per-group lookup. For each group
+it computes:
 
 | Field | Meaning |
 |---|---|

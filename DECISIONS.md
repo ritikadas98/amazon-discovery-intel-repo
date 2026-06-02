@@ -15,6 +15,24 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — WoW is source-aware (Live vs Live, Sample vs Sample)
+
+**What changed.** `run.ts` now filters prior Weekly Digests rows to the current
+run's `Data Source` before building the WoW lookup. So a Live run's deltas
+compare only to prior **Live** digests, Sample only to **Sample**.
+
+**PM rationale.** The last surface that crossed sources: `buildLastWeekLookup`
+read *all* digests, so a (thin) first Live run would be measured against the
+(rich) Sample fixture → meaningless, volume-skewed deltas. Now the first run of
+each source shows **no deltas (clean baseline)** and subsequent same-source runs
+compare like-to-like. Completes the "nothing blends across sources" principle.
+
+**Mechanics.** One filter in run.ts step 8:
+`allPriorDigests.filter(r => (r['Data Source']||'Live') === meta.dataSource)`
+(case-insensitive; untagged/legacy → Live). `wow.ts` unchanged.
+
+---
+
 ## 2026-06-02 — Fix clean/synthesize truncation (invalid JSON) + readable toast
 
 **What changed.** clean + synthesize now call `callGeminiJson()` with

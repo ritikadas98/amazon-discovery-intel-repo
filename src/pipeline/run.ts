@@ -113,9 +113,15 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   }
 
   // 8. Read last week's digests for WoW deltas
-  const lastWeekData = await readRows(env.SHEETS_DIGESTS_TAB);
+  const allPriorDigests = await readRows(env.SHEETS_DIGESTS_TAB);
+  // WoW must not cross data sources — a Live run compares only to prior Live
+  // digests, Sample only to Sample (else a thin live run gets skewed deltas vs
+  // the rich fixture). Untagged/legacy rows read as Live.
+  const lastWeekData = allPriorDigests.filter(
+    (r) => (r['Data Source'] || 'Live').toLowerCase() === meta.dataSource.toLowerCase(),
+  );
   const lastWeekLookup = buildLastWeekLookup(lastWeekData);
-  log(`Loaded ${lastWeekData.length} prior digest row(s) for WoW comparison`);
+  log(`Loaded ${lastWeekData.length} prior ${meta.dataSource} digest row(s) for WoW comparison`);
 
   // 9. Aggregate → RICE → MoSCoW → WoW deltas
   const { byGroup, themesPerGroup } = aggregateByGroup(tagged);
