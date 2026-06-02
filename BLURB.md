@@ -13,14 +13,17 @@ product-listing reviews, which are about the product, not Amazon. So the source
 you reach for matters as much as the analysis.
 
 **What I built / decided.** A deployed pipeline: ingest (live Play Store reviews
-plus a curated fixture) to two Gemini stages (clean, then cluster into themes) to
-RICE scoring, percentile MoSCoW, and a discovery-readiness rubric, written to a
-Google Sheet and surfaced as an email digest, a React dashboard, and a RAG chat
-with citations. The hard tradeoff: I kept the curated "Sample" data and real
-"Live" data strictly separate behind a toggle, and refused to pad thin live data
-with the fixture, because blending would have masked the real week-over-week
-movement the tool exists to surface. A richer-looking demo was not worth a lying
-trend line.
+plus a curated fixture) into two Gemini stages (clean, then cluster into themes),
+then RICE scoring, percentile MoSCoW, and a discovery-readiness rubric, written
+to a Google Sheet and surfaced three ways: an email digest, a React dashboard,
+and a RAG chat that answers only from cited signals (footnoted, click to read).
+The defining design choice is a first-class **Sample / Live toggle**: it scopes
+the entire product (digest, signals, chat, week-over-week trends, and even what a
+triggered run ingests), so the curated fixture and real data never blend. The
+hard tradeoff behind it: I refused to pad thin live data with the fixture, even
+though it would make the demo look fuller, because blending would mask the real
+week-over-week movement the tool exists to surface. A richer-looking demo was not
+worth a lying trend line.
 
 **Status.** Working end to end and deployed (backend on Cloud Run, monthly cron;
 frontend runs locally, Vercel/Netlify-ready). Live ingestion is Play-Store-strong
