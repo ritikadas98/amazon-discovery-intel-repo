@@ -8,7 +8,6 @@ import { FEATURE_GROUP_NAMES, featureGroupName, formatWeekLabel } from '@/lib/pa
 import { useActiveGroup, useActiveWeek, useScopedLinkBuilder, useSetParam } from '@/lib/url-state';
 import { api } from '@/lib/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 const NAV_BASE = '/digest';
 
@@ -150,12 +149,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t px-4 py-3 text-[11px] text-sidebar-foreground/60 flex items-center justify-between gap-2">
-        <span>
-          <span className="block text-[10px] uppercase tracking-wider opacity-70">Pipeline last run</span>
-          <span className="text-sidebar-foreground/80">{formatLastRun(lastRunIso ?? '')}</span>
-        </span>
-        <ThemeToggle />
+      <div className="border-t px-4 py-3 text-[11px] text-sidebar-foreground/60">
+        <span className="block text-[10px] uppercase tracking-wider opacity-70">Pipeline last run</span>
+        <span className="text-sidebar-foreground/80">{formatLastRun(lastRunIso ?? '')}</span>
       </div>
     </aside>
   );

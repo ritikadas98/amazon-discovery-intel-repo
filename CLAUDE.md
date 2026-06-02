@@ -432,9 +432,9 @@ frontend/src/
 │   └── ChatPage.tsx             RAG chat: streams POST /webhook/chat (SSE), resolves [signal <ID>] citations to in-scope signals
 ├── components/
 │   ├── layout/
-│   │   ├── AppLayout.tsx         Sidebar + TopBar + Outlet
+│   │   ├── AppLayout.tsx         Sidebar + TopBar + Outlet + persistent ChatFab (floating launcher → /chat). Fixed h-svh; only main scrolls
 │   │   ├── Sidebar.tsx           Week selector + 7 group nav items + "All Groups" + last-run footer
-│   │   └── TopBar.tsx            Page title + 4 page tabs (Digest/Signals/Report/Chat) + active group pill + Run pipeline button
+│   │   └── TopBar.tsx            Page title + 3 page tabs (Digest/Signals/Report) + active group pill + theme toggle + Run pipeline button. (Chat is the floating FAB, not a tab.)
 │   ├── chat/
 │   │   └── ChatMessage.tsx         Renders a bubble; turns [signal <ID>] into badges with a tooltip showing the signal text
 │   ├── digest/
