@@ -273,6 +273,12 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   - **Amazon source confirmed reading all 8 ASINs in prod**, but yields ~0:
     `.com` products are all-praise (relevance filter drops them), `.in` pages
     return CAPTCHAs. Mechanism works; these products just lack visible problems.
+  - **Strategy pivot (2026-06-02):** platform-quality issues live in app-store
+    reviews + Reddit, NOT in PLP/product reviews. So **default live fan-out is
+    now Play Store only**; App Store + Amazon PLP are opt-in flags
+    (`ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP`, default off). Play cap raised to
+    150. **Reddit** is the planned next source (see docs/LIVE_INGESTION.md §9;
+    carries the same datacenter-IP-block risk as App Store).
   - Amazon source is best-effort/low-yield (positive top-reviews, CAPTCHAs).
 
 ### In flight / pending user action

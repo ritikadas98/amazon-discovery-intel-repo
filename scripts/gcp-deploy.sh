@@ -29,9 +29,13 @@ export CORS_ORIGIN="${CORS_ORIGIN:-*}"
 # Live ingestion (Track 2). USE_MOCK defaults to FALSE now that we're live —
 # redeploys keep live mode. Override with: USE_MOCK=true bash scripts/gcp-deploy.sh
 export USE_MOCK="${USE_MOCK:-false}"
-export INGEST_MAX_PER_SOURCE="${INGEST_MAX_PER_SOURCE:-50}"
+export INGEST_MAX_PER_SOURCE="${INGEST_MAX_PER_SOURCE:-150}"
 export SHEETS_SEEN_SIGNALS_TAB="${SHEETS_SEEN_SIGNALS_TAB:-Seen Signal IDs}"
 export SHEETS_WATCH_TAB="${SHEETS_WATCH_TAB:-Watch Listings}"
+# Source toggles — Play Store always on; App Store (Cloud Run IP-blocked by
+# Apple) and Amazon PLP (product-opinion, not platform signal) default OFF.
+export ENABLE_APP_STORE="${ENABLE_APP_STORE:-false}"
+export ENABLE_AMAZON_PLP="${ENABLE_AMAZON_PLP:-false}"
 
 # Vertex AI (defaults to same project as Cloud Run; override to use a different one)
 export VERTEX_PROJECT_ID="${VERTEX_PROJECT_ID:-${PROJECT_ID}}"
@@ -55,7 +59,7 @@ gcloud run deploy "${SERVICE}" \
   --min-instances=0 --max-instances=2 \
   --timeout=120 \
   --allow-unauthenticated \
-  --set-env-vars="^|^USE_MOCK=${USE_MOCK}|INGEST_MAX_PER_SOURCE=${INGEST_MAX_PER_SOURCE}|VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}|VERTEX_REGION=${VERTEX_REGION}|VERTEX_MODEL=${VERTEX_MODEL}|SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID}|SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB}|SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB}|SHEETS_EFFORT_TAB=${SHEETS_EFFORT_TAB}|SHEETS_FEEDBACK_TAB=${SHEETS_FEEDBACK_TAB}|SHEETS_SEEN_SIGNALS_TAB=${SHEETS_SEEN_SIGNALS_TAB}|SHEETS_WATCH_TAB=${SHEETS_WATCH_TAB}|SMTP_HOST=smtp.gmail.com|SMTP_PORT=465|SMTP_USER=${SMTP_USER}|EMAIL_FROM=${EMAIL_FROM}|DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT}|CORS_ORIGIN=${CORS_ORIGIN}" \
+  --set-env-vars="^|^USE_MOCK=${USE_MOCK}|INGEST_MAX_PER_SOURCE=${INGEST_MAX_PER_SOURCE}|VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}|VERTEX_REGION=${VERTEX_REGION}|VERTEX_MODEL=${VERTEX_MODEL}|SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID}|SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB}|SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB}|SHEETS_EFFORT_TAB=${SHEETS_EFFORT_TAB}|SHEETS_FEEDBACK_TAB=${SHEETS_FEEDBACK_TAB}|SHEETS_SEEN_SIGNALS_TAB=${SHEETS_SEEN_SIGNALS_TAB}|SHEETS_WATCH_TAB=${SHEETS_WATCH_TAB}|ENABLE_APP_STORE=${ENABLE_APP_STORE}|ENABLE_AMAZON_PLP=${ENABLE_AMAZON_PLP}|SMTP_HOST=smtp.gmail.com|SMTP_PORT=465|SMTP_USER=${SMTP_USER}|EMAIL_FROM=${EMAIL_FROM}|DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT}|CORS_ORIGIN=${CORS_ORIGIN}" \
   --set-secrets="SMTP_PASS=smtp-pass:latest"
 
 # ─── 3. Get URL ───────────────────────────────────────────────────────────────

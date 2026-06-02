@@ -15,6 +15,36 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Source strategy: Play-only default, PLP/App Store opt-in, raise volume
+
+**What changed.** Default live fan-out is now **Play Store only**. App Store
+and Amazon PLP are gated behind `ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` (both
+default off, code kept). `INGEST_MAX_PER_SOURCE` raised 50 → 150.
+
+**PM rationale (the honest reframe).** "Amazon as a platform/product" issues —
+app UX, search, checkout, delivery, returns, account — show up in **app-store
+reviews and Reddit**, not in product-listing-page reviews (which are about the
+*product*). So PLP ingestion was deprioritized to an opt-in behaviour rather
+than removed. App Store stays opt-in because it's IP-blocked from Cloud Run.
+Play Store is the one reliable source today, hence the volume bump.
+
+**Honest ROI (recorded because the user asked for candor on payoff):**
+- Play Store: solid but diminishing returns — short/low-detail reviews, ~30-40%
+  dropped by normalize/clean; 150 ≈ 2× useful signal over 50, not 3×.
+- Amazon PLP: won't pay off without a paid reviews API (positive top-reviews +
+  login wall). Off by default.
+- App Store: 0 in prod without a non-datacenter egress.
+- Reddit (next): high potential but real risk it gets datacenter-IP-blocked like
+  Apple/Amazon, plus heavy content noise — payoff unproven until tested.
+
+**Ceiling.** clean/synthesize stuff every signal into one Gemini call (~8192
+output tokens), so ~200 signals/run is the max before batching the AI calls.
+
+**Considered & not done.** Removing PLP/App Store code — kept as flags so they
+self-heal if a proxy/API lands. Pushing volume past 200 — needs AI-call batching.
+
+---
+
 ## 2026-06-02 — App Store: blocked from Cloud Run (prod disproved the `in` fix)
 
 **What changed (finding, not code).** Prod logs after deploying the `['in','us']`

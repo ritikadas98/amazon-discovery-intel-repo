@@ -38,15 +38,20 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     log(`Loaded ${rawSignals.length} mock signals`);
   } else {
     // Live sources fan out in parallel; each fails soft (returns []), so one
-    // dead source never aborts the run.
-    const collected = (
-      await Promise.all([
-        loadAppStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
-        loadPlayStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
-        loadAmazonSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
-      ])
-    ).flat();
-    log(`Live ingest collected ${collected.length} signal(s) across sources`);
+    // dead source never aborts the run. Play Store is the reliable app-review
+    // source and is always on; App Store (0 from Cloud Run — Apple IP block)
+    // and Amazon PLP (product-opinion, not platform signal) are opt-in flags.
+    const sources: Array<Promise<RawSignal[]>> = [
+      loadPlayStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }),
+    ];
+    if (env.ENABLE_APP_STORE) sources.push(loadAppStoreSignals({ limit: env.INGEST_MAX_PER_SOURCE }));
+    if (env.ENABLE_AMAZON_PLP) sources.push(loadAmazonSignals({ limit: env.INGEST_MAX_PER_SOURCE }));
+
+    const collected = (await Promise.all(sources)).flat();
+    log(
+      `Live ingest collected ${collected.length} signal(s) across ${sources.length} source(s) ` +
+        `(appStore=${env.ENABLE_APP_STORE}, amazonPLP=${env.ENABLE_AMAZON_PLP})`,
+    );
 
     const seen = await loadSeenIds();
     rawSignals = filterUnseen(collected, seen);

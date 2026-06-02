@@ -580,7 +580,9 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SHEETS_FEEDBACK_TAB` | optional | `Feedback` | |
 | `SHEETS_SEEN_SIGNALS_TAB` | optional | `Seen Signal IDs` | Live-ingestion dedup tab |
 | `SHEETS_WATCH_TAB` | optional | `Watch Listings` | Amazon ASIN watch list |
-| `INGEST_MAX_PER_SOURCE` | optional | `50` | Cap on newest reviews per live source per run |
+| `INGEST_MAX_PER_SOURCE` | optional | `150` | Cap on newest reviews per live source per run (~200 ceiling before AI-call batching needed) |
+| `ENABLE_APP_STORE` | optional | `false` | Opt-in App Store source (0 from Cloud Run — Apple IP block) |
+| `ENABLE_AMAZON_PLP` | optional | `false` | Opt-in Amazon PLP/Jina source (product-opinion, low yield) |
 | `PUBLIC_BASE_URL` | optional | — | Used to render feedback links in digest email. Auto-set to the service URL by `scripts/gcp-deploy.sh` after deploy |
 | `SMTP_HOST` | optional | `smtp.gmail.com` | |
 | `SMTP_PORT` | optional | `465` | |
@@ -810,12 +812,16 @@ as TODOs or placeholders. Don't be surprised when:
 
 ### Live ingestion — BUILT (2026-06-02)
 > Deep-dive: **`docs/LIVE_INGESTION.md`** (build & working narrative).
-- `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`: the three
-  sources fan out in parallel (each fails soft → `[]`), results are deduped
-  against the `Seen Signal IDs` tab, and `source_id`s are committed there
-  ONLY after the Signals rows are written (so a mid-run failure re-ingests
-  rather than dropping reviews). Per-source cap = `INGEST_MAX_PER_SOURCE`
-  (default 50). Throws if 0 new signals survive dedup.
+- `USE_MOCK=false` runs live ingestion in `src/pipeline/run.ts`. **Default
+  fan-out = Play Store only** (the reliable source). App Store and Amazon PLP
+  are opt-in via `ENABLE_APP_STORE` / `ENABLE_AMAZON_PLP` (both default off —
+  App Store is IP-blocked from Cloud Run, PLP is product-opinion not platform
+  signal). Sources fan out in parallel (each fails soft → `[]`), results are
+  deduped against the `Seen Signal IDs` tab, and `source_id`s are committed
+  ONLY after the Signals rows are written. Per-source cap =
+  `INGEST_MAX_PER_SOURCE` (default 150; ~200 ceiling before AI-call batching).
+  Throws if 0 new signals survive dedup. (Reddit is the planned next source —
+  see `docs/LIVE_INGESTION.md` §9.)
 - Source modules under `src/sources/`:
   - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native
     entry id → `source_id`. Retry-on-empty + logs HTTP status/entry count.

@@ -8,16 +8,24 @@ terse reference see `CLAUDE.md` §9/§10/§15/§17; for rationale see `DECISIONS
 
 ## 1. What it is
 
-Replaces the mock fixture with **real customer reviews** from three sources,
-pulled on each pipeline run when `USE_MOCK=false`:
+Replaces the mock fixture with **real customer reviews** when `USE_MOCK=false`.
 
-1. **App Store** — reviews of the Amazon Shopping app (iTunes RSS).
-2. **Play Store** — reviews of the Amazon Shopping app (google-play-scraper).
-3. **Amazon product reviews** — reviews on individual product listings, via
-   Jina Reader, for a curated ASIN watch list.
+**Strategic framing (2026-06-02):** "Amazon as a platform/product" issues —
+app UX, search, checkout, delivery, returns, account — live in **app-store
+reviews** (people reviewing the *experience*) and **Reddit/forums**, NOT in
+product-listing-page (PLP) reviews (which are about the *product*). So:
 
-Everything downstream (clean → regression → synthesize → RICE → digest) is
-unchanged; live ingestion only swaps what `Step 1` of `run.ts` produces.
+| Source | State | Why |
+|---|---|---|
+| **Play Store** (Android) | **ON** — the reliable signal | Reviews of the Amazon app; works from Cloud Run |
+| **App Store** (iOS) | OFF by default (`ENABLE_APP_STORE`) | Apple blocks the Cloud Run datacenter IP → 0 in prod. Needs a proxy/API |
+| **Amazon PLP** (Jina) | OFF by default (`ENABLE_AMAZON_PLP`) | Product-opinion, not platform signal; low yield (see §6/§8) |
+| **Reddit** | Planned | Where platform complaints actually live (see §9) |
+
+Default live fan-out is therefore **Play Store only** today, with App Store /
+PLP as opt-in behaviours, and Reddit as the planned addition. Everything
+downstream (clean → regression → synthesize → RICE → digest) is unchanged;
+live ingestion only swaps what `Step 1` of `run.ts` produces.
 
 ## 2. The contract every source satisfies
 
@@ -102,17 +110,22 @@ re-ingested next time — rather than being silently lost, never analyzed.
 Step 1 branches on `USE_MOCK`:
 ```
 USE_MOCK=true   → loadMockSignals()  (the fixture, unchanged)
-USE_MOCK=false  → Promise.all([appStore, playStore, amazon]) .flat()
+USE_MOCK=false  → sources = [playStore]                       (always on)
+                  + appStore  if ENABLE_APP_STORE              (default off)
+                  + amazon    if ENABLE_AMAZON_PLP             (default off)
+                  → Promise.all(sources).flat()
                   → loadSeenIds() → filterUnseen()
                   → throw if 0 new signals survive
                   → (later, after Signals write) commitSeenIds()
 ```
 - Sources fan out **in parallel**; each fails soft, so one dead source never
-  aborts the run.
-- A **per-source cap** (`INGEST_MAX_PER_SOURCE`, default 50) keeps total volume
-  ~150/run. This matters because `cleanSignals` stuffs *every* signal into one
-  Gemini prompt — uncapped live volume would blow the token limit and the 120s
-  Cloud Run timeout.
+  aborts the run. Default = Play Store only (see §1).
+- **`INGEST_MAX_PER_SOURCE` (default 150)** caps newest-N per source. We raised
+  it from 50 because Play Store is now the primary source. Ceiling note: the
+  clean/synthesize Gemini calls process *every* signal in one prompt with an
+  ~8192-token output budget — ~200 signals is the practical max before the
+  clean-stage JSON risks truncation, and the 120s Cloud Run timeout also bounds
+  it. Beyond ~200 we'd need to **batch the AI calls** (a pipeline change).
 
 ## 6. Why product reviews are filtered — `isPlatformRelevant()`
 
@@ -145,7 +158,9 @@ compares the first live week against the last mock week, so mock serves as the
 week-1 baseline.
 
 **Relevant env vars** (`CLAUDE.md` §10): `USE_MOCK`, `INGEST_MAX_PER_SOURCE`,
-`SHEETS_SEEN_SIGNALS_TAB`, `SHEETS_WATCH_TAB`.
+`SHEETS_SEEN_SIGNALS_TAB`, `SHEETS_WATCH_TAB`, `ENABLE_APP_STORE`,
+`ENABLE_AMAZON_PLP`. To experiment with the off-by-default sources, set the
+flag (e.g. `ENABLE_AMAZON_PLP=true`) — but see the honest ROI in §8.
 
 ## 8. Reliability & honest limitations
 
@@ -170,15 +185,34 @@ week-1 baseline.
 - Low total volume still surfaces via the existing `dataQualityWarning`
   (`<40` signals, or a source at 0).
 
-## 9. Future work
-- A path to Amazon's critical (1-2★) reviews: authenticated fetch, or a paid
-  reviews API. This is the main lever for making the Amazon source genuinely
-  useful.
-- Use the reserved **`Jina Cache`** tab to cache Jina responses (avoid re-fetch
-  / rate limits).
-- Per-source country/locale config (App/Play are hardcoded `us`).
-- Pipeline split (ingest job + analyse job) **only if** a live run exceeds the
-  120s Cloud Run timeout — deferred until measured.
+## 9. Future work & honest ROI
+
+**Reddit (planned, highest-value next source).** Platform complaints live on
+`r/amazon` / `r/amazonprime`, etc. Plan: a `reddit.ts` source via the Reddit
+OAuth API (registered script app; creds in Secret Manager), search recent posts,
+map → RawSignal with a new `'reddit'` source type, relevance-filter, wire behind
+`ENABLE_REDDIT`. **Honest ROI:** high *potential*, but two real risks — (1)
+Reddit, like Apple/Amazon, may rate-limit/block Google datacenter IPs even with
+OAuth (the same failure class that killed App Store — unproven until tested);
+(2) Reddit content is noisy (questions, memes, deleted), so expect only ~20-40%
+usable after filtering. If the IP block bites, Reddit needs a proxy too.
+
+**Honest ROI on the existing sources:**
+- **Play Store** is solid but has diminishing returns: reviews skew short/low-
+  detail ("good app", "fix it"); ~30-40% get dropped by normalize/clean. Raising
+  the cap to 150 yields *more* signal than 50, not 3× — and we sample the newest
+  N, not all reviews.
+- **Amazon PLP** will not pay off without a paid reviews API — `/dp/` shows only
+  positive top-reviews and the critical ones are login-walled. Even problem-prone
+  products help only marginally. Kept as an off-by-default behaviour.
+- **App Store** = 0 in prod, period, until a non-datacenter egress exists.
+
+**Other future levers:**
+- Amazon critical reviews / iOS App Store: a **paid reviews API** (Rainforest,
+  Oxylabs, etc.) or a residential **proxy** solves both in one move.
+- The reserved **`Jina Cache`** tab — cache Jina responses (re-fetch / rate limit).
+- **Batch the Gemini clean/synthesize calls** if we ever ingest >~200/run.
+- Pipeline split (ingest + analyse jobs) **only if** a run exceeds 120s.
 
 ## 10. File index
 | File | Role |
@@ -189,5 +223,5 @@ week-1 baseline.
 | `src/sources/dedupe.ts` | `loadSeenIds` / `filterUnseen` / `commitSeenIds` |
 | `src/pipeline/run.ts` | `USE_MOCK=false` ingest branch + commit-after-write |
 | `src/types.ts` | `RawSignal.source_id` |
-| `src/config/env.ts` | `INGEST_MAX_PER_SOURCE`, `SHEETS_SEEN_SIGNALS_TAB`, `SHEETS_WATCH_TAB` |
+| `src/config/env.ts` | `INGEST_MAX_PER_SOURCE` (150), `ENABLE_APP_STORE`, `ENABLE_AMAZON_PLP`, `SHEETS_SEEN_SIGNALS_TAB`, `SHEETS_WATCH_TAB` |
 | Sheet: `Seen Signal IDs`, `Watch Listings` | dedup state + ASIN watch list |

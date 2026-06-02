@@ -17,7 +17,19 @@ const schema = z.object({
   // Live ingestion (Track 2)
   SHEETS_SEEN_SIGNALS_TAB: z.string().default('Seen Signal IDs'),
   SHEETS_WATCH_TAB: z.string().default('Watch Listings'),
-  INGEST_MAX_PER_SOURCE: z.coerce.number().default(50),
+  INGEST_MAX_PER_SOURCE: z.coerce.number().default(150),
+  // Source toggles. Play Store is always on (the reliable app-review source).
+  // App Store yields 0 from Cloud Run (Apple blocks the datacenter IP) and
+  // Amazon PLP reviews are product-opinion, not platform signal — both default
+  // OFF and are opt-in "behaviours".
+  ENABLE_APP_STORE: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
+  ENABLE_AMAZON_PLP: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
 
   // Public-facing base URL of this service (used to bake links into the digest email).
   // Required for the 👍/👎 feedback anchors to work; locally, falls back to localhost:PORT.
