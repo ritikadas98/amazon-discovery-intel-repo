@@ -5,8 +5,7 @@ RICE-prioritized **product-discovery digest** for PMs: themes ranked by RICE,
 MoSCoW priorities, discovery-readiness, week-over-week trends, regression
 alerts, and a grounded RAG chat over the signals.
 
-**[Live demo](https://YOUR-APP.vercel.app)** · [Backend API](https://amazon-discovery-34n34tq6za-el.a.run.app/health) · [Short pitch](BLURB.md) · [Checklist & runbook](docs/CHECKLIST.md)
-
+**[Live demo](https://amazon-discovery-intel-repo.vercel.app/)** · [Backend API](https://amazon-discovery-34n34tq6za-el.a.run.app/health) ·
 ![Dashboard](docs/screenshot-dashboard.png)
 
 ---
