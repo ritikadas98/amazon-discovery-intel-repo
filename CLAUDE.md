@@ -593,7 +593,7 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `PORT` | optional | `3000` | |
 | `USE_MOCK` | optional | `true` | When `false`, runs live ingestion (App Store + Play Store + Amazon/Jina), deduped via the Seen Signal IDs tab |
 | `CRON_SCHEDULE` | optional | `0 9 1 * *` | Cron string (used only if running an in-process scheduler; Cloud Run uses Cloud Scheduler) |
-| `CORS_ORIGIN` | optional | `*` | Frontend origin. Switch to specific URL once Firebase is deployed |
+| `CORS_ORIGIN` | optional | `*` | Frontend origin. Switch to the Vercel/Netlify URL once the SPA is hosted |
 
 Frontend env (only one var):
 | Var | Default | Notes |
@@ -870,10 +870,14 @@ as TODOs or placeholders. Don't be surprised when:
 - Plan if needed: a `feature_group_id → PM email` map (env or sheet tab),
   fan out one email per affected group's PM.
 
-### Frontend Firebase Hosting deploy
-- Local dev only at the moment.
-- Plan: `cd frontend && npx firebase init hosting && npx firebase deploy`.
-  After URL is known, redeploy backend with that origin as `CORS_ORIGIN`.
+### Frontend hosting (Vercel / Netlify)
+- Static Vite SPA hosted on **Vercel or Netlify** (chosen over Firebase —
+  user is fluent in them; better DX for a Vite SPA). Connect the GitHub repo,
+  root dir `frontend`, build `npm run build`, output `dist`.
+- `frontend/.env.production` points the prod build at the Cloud Run backend;
+  `frontend/vercel.json` + `frontend/public/_redirects` handle SPA routing.
+- CORS defaults to `*` (works out of the box); lock to the hosted origin via
+  `CORS_ORIGIN=… bash scripts/gcp-deploy.sh` once the URL is known.
 
 ---
 
@@ -979,7 +983,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 - Code on `master`: includes per-group DigestPage rebuild, schema-aware Effort/Feedback writes, CONTEXT.md + DECISIONS.md + CLAUDE.md.
 - Cloud Run revision: may be older than `master` — verify before assuming a new endpoint exists in prod.
 - Sheet headers: should now include `Trend Direction JSON` + `Theme Breakdown JSON` on Weekly Digests; verify with the user before running.
-- Frontend: local dev only; not yet on Firebase Hosting.
+- Frontend: static Vite build, hosted on Vercel/Netlify (config in repo; connect the repo to deploy). Was local-dev-only before 2026-06-02.
 - RAG chat: decided, not built.
 - Live ingestion: decided (scope = Amazon platform quality, all 3 sources), not built.
 

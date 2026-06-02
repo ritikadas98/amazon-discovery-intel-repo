@@ -173,7 +173,7 @@ Feedback header so writes line up.
 ┌──────────────────────────────────────────────┐
 │  Frontend (React + Vite + shadcn)            │
 │  Routes: /digest /signals /report /chat
-│  Hosting: local dev now; Firebase Hosting later
+│  Hosting: Vercel/Netlify (static Vite build; config in repo)
 └──────────────────────────┬───────────────────┘
                            │ HTTPS + CORS
                            ▼
@@ -297,8 +297,9 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
 
 ### Decided but not built
 
-- **Firebase Hosting deploy of the frontend** — local dev only at the
-  moment.
+- **Frontend hosting (Vercel/Netlify)** — deploy config is in the repo
+  (`frontend/.env.production`, `vercel.json`, `public/_redirects`); just needs
+  the repo connected on Vercel or Netlify to go live.
 
 ---
 
@@ -344,7 +345,7 @@ create the `Seen Signal IDs` + `Watch Listings` tabs, do the first live run.**
 
 ### Track 3 — Future / not committed
 
-- **Firebase Hosting deploy** of the frontend
+- **Frontend hosting on Vercel/Netlify** (config in repo; connect to deploy)
 - **Authentication** in front of the API (currently `CORS_ORIGIN=*`,
   publicly invokable)
 - **Vector RAG** (replacing context-stuffing) — only when the corpus
@@ -363,7 +364,7 @@ create the `Seen Signal IDs` + `Watch Listings` tabs, do the first live run.**
 | **Where to put the chat — own page or slide-out panel?** | Defaulting to `/chat` as a new page; can revisit if PM workflow shows they want it as a panel from any page. |
 | **Persistent chat history?** | Session-only for v1. If PMs want to revisit prior conversations, add a `Chat History` sheet tab later. |
 | **Authentication?** | API is publicly invokable. Fine for internal dev; needs an answer (Firebase Auth? API key middleware? IAP?) before the frontend is on a real domain. |
-| **Frontend hosting** | Firebase Hosting is the planned target but not deployed yet. Need to pick a domain (`amazon-discovery-xxx.web.app` or custom). |
+| **Frontend hosting** | _Resolved 2026-06-02:_ Vercel/Netlify (over Firebase — user is fluent in them, better Vite DX). Config is in the repo; connect the repo to deploy. |
 | **Pipeline split timing** | We've deferred split until live ingestion proves it's needed. Worth re-evaluating after first live run. |
 | **Notification volume from feedback loop** | The 👍/👎 anchors will produce one row per click. At low PM volume that's fine. If the corpus grows and feedback is encouraged, we may need aggregation/summary. |
 

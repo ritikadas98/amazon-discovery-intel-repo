@@ -120,20 +120,24 @@ By default the frontend talks to the production Cloud Run URL. To point it at a 
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
-### Build & deploy (Firebase Hosting)
+### Build & deploy (Vercel or Netlify)
 
+The SPA is a static Vite build hosted on **Vercel or Netlify** (connect the
+GitHub repo, no separate deploy command needed). Settings:
+- **Root directory:** `frontend`
+- **Build command:** `npm run build`  →  **Output directory:** `dist`
+- **API URL:** `frontend/.env.production` already points the build at the prod
+  Cloud Run backend, so no dashboard env var is required (override with
+  `VITE_API_BASE_URL` if needed).
+- **SPA routing:** `frontend/vercel.json` (Vercel) and `frontend/public/_redirects`
+  (Netlify) both rewrite all routes to `index.html` — already in the repo.
+
+Local one-off build: `cd frontend && npm run build` → `frontend/dist/`.
+
+CORS: the backend defaults to `CORS_ORIGIN=*`, so the hosted origin works
+out of the box. To lock it down after you know the URL:
 ```bash
-cd frontend
-npm run build         # → frontend/dist/
-
-npx firebase login
-npx firebase init hosting   # public dir: dist, single-page-app: yes, no GitHub auto-deploys
-npx firebase deploy --only hosting
-```
-
-After the first deploy, **tighten CORS on the backend** to the new origin:
-```bash
-CORS_ORIGIN=https://amazon-discovery-<hash>.web.app bash scripts/gcp-deploy.sh
+CORS_ORIGIN=https://your-app.vercel.app bash scripts/gcp-deploy.sh
 ```
 
 ### Stack

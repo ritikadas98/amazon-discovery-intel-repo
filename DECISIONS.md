@@ -15,6 +15,34 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Frontend hosting: Vercel/Netlify (not Firebase)
+
+**What changed.** Frontend hosting target switched from Firebase (the old plan
+in the docs) to **Vercel/Netlify**. Added `frontend/.env.production` (points the
+prod build at the Cloud Run backend), `frontend/vercel.json` (Vercel SPA
+rewrite), and `frontend/public/_redirects` (Netlify SPA rewrite). Removed the
+Firebase config.
+
+**PM rationale.** The user is already fluent in Vercel/Netlify, and they're
+better DX for a static Vite SPA (connect the repo → auto-build/deploy on push,
+no separate deploy command). Firebase was only ever chosen for GCP-ecosystem
+continuity — a weak reason against using the tool you know. (User also flagged a
+concern that Firebase Hosting might be sunset; not confirmed as of the Jan-2026
+knowledge cutoff, but moot given the DX argument.)
+
+**Mechanics.** Build is prod-pointed automatically: `vite build` loads
+`.env.production` (prod URL) over the gitignored localhost `.env`, so dev stays
+local and the hosted build hits prod. Verified: the built bundle contains the
+prod URL and no `localhost`. CORS stays `*` so the hosted origin works without a
+backend change; lock it to the URL later if desired.
+
+**Considered & not done.** Serving the SPA from the existing Cloud Run backend
+(one URL, no CORS) — rejected for a demo because it bakes the frontend into the
+backend image and Cloud Run's cold start would delay first paint. Firebase
+Hosting — dropped per the rationale above.
+
+---
+
 ## 2026-06-02 — Play Store substance filter (drop short/low-detail reviews)
 
 **What changed.** `playStore.ts` gained `hasSubstance(text)` — drops reviews
