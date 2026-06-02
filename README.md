@@ -1,205 +1,103 @@
 # Amazon Discovery Intelligence
 
-Customer-signal analysis pipeline ported from an n8n workflow into a TypeScript codebase.
+Turn raw customer reviews of the Amazon Shopping app into a weekly,
+RICE-prioritized **product-discovery digest** for PMs: themes ranked by RICE,
+MoSCoW priorities, discovery-readiness, week-over-week trends, regression
+alerts, and a grounded RAG chat over the signals.
 
-The pipeline ingests customer reviews, runs 3 Gemini calls (clean → synthesize → readiness), writes results to Google Sheets, and emails a styled HTML digest. It can be triggered via HTTP webhook or a monthly cron.
+**[Live demo](https://YOUR-APP.vercel.app)** · [Backend API](https://amazon-discovery-34n34tq6za-el.a.run.app/health) · [Short pitch](BLURB.md) · [Checklist & runbook](docs/CHECKLIST.md)
 
-## Project layout
+![Dashboard](docs/screenshot-dashboard.png)
+
+---
+
+## What it does
+
+A monthly pipeline ingests customer reviews, uses Gemini to clean and cluster
+them into specific themes, scores everything, and publishes to a Google Sheet,
+an email digest, a dashboard, and a chat.
+
+- **Prioritization that's defensible** — RICE per theme `(reach x impact x
+  confidence x version) / effort x trend`, percentile-based MoSCoW, and a
+  discovery-readiness rubric (READY / NEEDS MORE EVIDENCE / BLOCKED).
+- **Live ingestion** — Play Store (reliable), App Store, and Amazon product
+  reviews (Jina), each with a substance filter and cross-run dedup. Falls back
+  to a curated fixture.
+- **Sample / Live toggle** — the defining design choice. A first-class switch
+  scopes the *entire* product (digest, signals, chat, week-over-week, and even
+  what a triggered run ingests), so the curated fixture and real data **never
+  blend** — real week-over-week movement is never masked.
+- **RAG chat with citations** — ask "what's hot in Returns this week?"; answers
+  cite signals as footnotes you click to read the source review.
+- **Closed loop** — styled email digest with thumbs-up/down feedback buttons,
+  urgent regression alerts, and a Discovery Report where a PM edits effort and
+  RICE recomputes live.
+
+## The non-obvious bit
+
+PMs don't lack customer signal, they drown in it. The hard part is knowing what
+to prioritize and whether there's enough evidence to act. And: platform-quality
+complaints live in app-store reviews and forums, **not** in product-listing
+reviews (those are about the product, not Amazon) — so the source you reach for
+matters as much as the analysis. See [BLURB.md](BLURB.md) and
+[DECISIONS.md](DECISIONS.md).
+
+## Chat, grounded in cited signals
+
+![Chat](docs/screenshot-chat.png)
+
+## Architecture
 
 ```
-src/
-  server.ts            # Express + node-cron entrypoint
-  cli.ts               # one-off run (npm run run:once)
-  pipeline/
-    run.ts             # orchestrator
-    normalize.ts       # schema validation + weekId + dataQualityWarning
-    regression.ts      # version-cluster regression detection
-    aggregate.ts       # bucketize signals by feature group + theme
-    rice.ts            # RICE scoring + percentile MoSCoW
-    wow.ts             # week-over-week deltas
-    format.ts          # column shaping for sheets
-  agents/
-    clean.ts           # Gemini call #1
-    synthesize.ts      # Gemini call #2
-    readiness.ts       # Gemini call #3
-  lib/
-    gemini.ts          # REST client for Gemini
-    sheets.ts          # googleapis Sheets wrapper
-    email.ts           # Nodemailer SMTP wrapper
-  templates/
-    digestEmail.ts     # weekly digest HTML
-    regressionEmail.ts # urgent regression alert HTML
-  config/
-    env.ts             # zod-validated env loader
-    featureGroups.ts   # the 7 feature-group taxonomy
-  sources/
-    mockSignals.ts     # loads data/signals.json
-data/
-  signals.json         # 20-row fixture (extracted from n8n's Mock Signals node)
+Frontend (React + Vite, Vercel)                Backend (Express, Cloud Run)
+  /digest /signals /report /chat   ── HTTPS ──►  POST /run-pipeline (monthly cron + on-demand)
+  Sample/Live toggle, RAG chat                   GET  /digests /signals /runs/latest
+                                                 POST /webhook/chat (SSE)
+                                                      │
+                  ┌───────────────────────────────────┼─────────────────────┐
+                  ▼                  ▼                 ▼            ▼
+            Vertex AI         Google Sheets        Gmail SMTP    (live sources:
+        (clean, synthesize,   (system of record)   (digest +     Play / App / Amazon)
+         readiness, chat)                           regression)
 ```
 
-## Setup
+Pipeline stages: ingest -> normalize -> Gemini clean -> regression detect ->
+Gemini synthesize -> aggregate -> RICE -> MoSCoW -> week-over-week -> readiness
+-> write to Sheets -> email. Full detail in [CLAUDE.md](CLAUDE.md);
+narrative in [CONTEXT.md](CONTEXT.md); deep-dives in
+[docs/RAG_CHAT.md](docs/RAG_CHAT.md) and [docs/LIVE_INGESTION.md](docs/LIVE_INGESTION.md).
 
-1. `npm install`
-2. Copy `.env.example` → `.env` and fill in:
-   - `GEMINI_API_KEY` — from Google AI Studio
-   - `GOOGLE_APPLICATION_CREDENTIALS` — path to a service-account JSON file with access to the Google Sheet
-   - `SMTP_PASS` — Gmail app password (no spaces)
-3. Place your service-account JSON at the path you set in `GOOGLE_APPLICATION_CREDENTIALS` (default: `./gcp-service-account.json`). Make sure the service-account email has edit access to the sheet (`SHEETS_DOCUMENT_ID`).
-4. The Google Sheet must already have two tabs with headers:
-   - **Signals**: `ID, Text, Source, Date, Rating, Severity Score, Feature Group ID, Theme ID, Theme Label, Week ID, App Version, Version Flagged, Created At`
-   - **Weekly Digests**: `Week ID, Feature Group ID, Top Theme, Signal Count, Avg Severity, Trend Direction, Top RICE Score, Top MoSCoW, RICE Scores JSON, MoSCoW JSON, Discovery Readiness JSON, Overall Group Readiness, Themes Ready Count, Themes Blocked Count, Data Quality Warning, WoW Delta JSON, Created At`
+## Tech stack
 
-## Running
-
-```bash
-# Dev mode (auto-reloads, runs server + cron)
-npm run dev
-
-# Production
-npm run build && npm start
-
-# One-off run from CLI (no server, no cron)
-npm run run:once -- you@example.com
-
-# Type-check only
-npm run typecheck
-```
-
-## Triggering manually
-
-```bash
-curl -X POST http://localhost:3000/run-pipeline \
-  -H 'Content-Type: application/json' \
-  -d '{"recipient_email":"you@example.com"}'
-```
-
-If `recipient_email` is omitted, the pipeline uses `DEFAULT_RECIPIENT` from `.env`.
-
-## Cron
-
-`CRON_SCHEDULE` is a standard 5-field cron string. Default `0 9 1 * *` = 09:00 on the 1st of each month. Uses `node-cron` (server-time, not UTC unless your server is UTC). Set `DEFAULT_RECIPIENT` for the cron job to know who to send to.
-
-## How the pipeline thinks (1-paragraph version)
-
-20 mock reviews → strip too-short / invalid rows + compute weekId + flag low-volume runs → Gemini dedups and assigns each signal a severity score 1–5 and a `version_flagged` boolean → if ≥5 version-flagged signals share an app-version string, fire a regression alert email → Gemini clusters signals into themes and tags each with one of 7 feature groups → signals are appended to the Signals sheet → last week's digest row is read for WoW comparison → each feature group gets a RICE score `(reach × severity × confidence × version-mult) / effort × trend-mult` → percentile-based MoSCoW → Gemini judges the top group's themes against 4 evidence-quality criteria → digest row is appended to Weekly Digests sheet → HTML email is sent.
-
-## Mock-only ingestion
-
-`USE_MOCK=true` (the default) loads `data/signals.json`. The live App Store / Play Store / Amazon scraping path is not implemented — when you have a real dataset, drop it into `data/signals.json` matching the same shape (`text, source, date, rating, severity_raw, app_version`).
-
-## Migrating credentials from n8n
-
-| n8n credential | What you need in `.env` |
+| Area | Choice |
 |---|---|
-| "Gemini API" (header auth) | `GEMINI_API_KEY` — get a fresh one from https://aistudio.google.com/apikey |
-| "Ritika Das Google Service Account account" | A service-account JSON file; place at `GOOGLE_APPLICATION_CREDENTIALS` path. The service-account email must have edit access to the Sheet. |
-| "Gmail account" (OAuth2) | Skipped — use a Gmail app password instead (`SMTP_PASS`). Generate one at https://myaccount.google.com/apppasswords after enabling 2FA. |
-| "RSMTP account" | Same as above — use `SMTP_PASS`. |
+| Backend | TypeScript, Express, deployed to Cloud Run (monthly Cloud Scheduler) |
+| AI | Vertex AI (Gemini 2.5 Flash) via ADC — no API keys |
+| Store | Google Sheets (system of record) |
+| Frontend | React 19, Vite, shadcn/ui on Tailwind v4, TanStack Query, Recharts |
+| Email | Nodemailer (Gmail SMTP) |
 
-## Frontend
-
-A React + Vite + shadcn dashboard lives in `frontend/`. It consumes the Cloud Run API and renders three pages:
-- **Dashboard** (`/`) — latest pipeline run: KPI strip, feature-group RICE rankings chart, discovery readiness assessment
-- **History** (`/history`) — table of past weekly runs
-- **Week detail** (`/week/:weekId`) — overview tab (same as dashboard) + Signals tab with client-side filters
-
-The top bar has a **Run pipeline** button that opens a confirm dialog → simulated-progress stepper while the backend works (~30s) → toast + automatic data refresh on completion.
-
-### Dev
+## Run locally
 
 ```bash
-cd frontend
-npm install
-npm run dev   # http://localhost:5173
+# Backend (needs a service-account JSON + .env; see CLAUDE.md §10)
+npm install && npm run dev          # http://localhost:3000
+
+# Frontend
+cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
+The frontend defaults to the production backend; set `VITE_API_BASE_URL=http://localhost:3000`
+in `frontend/.env` to point at a local backend.
 
-By default the frontend talks to the production Cloud Run URL. To point it at a local backend during development, create `frontend/.env`:
+Deploy: backend `bash scripts/gcp-deploy.sh` (Cloud Shell); frontend on
+Vercel/Netlify (root dir `frontend`, build `npm run build`, output `dist` —
+config is in the repo). Details in [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
-```
-VITE_API_BASE_URL=http://localhost:3000
-```
+## Status
 
-### Build & deploy (Vercel or Netlify)
-
-The SPA is a static Vite build hosted on **Vercel or Netlify** (connect the
-GitHub repo, no separate deploy command needed). Settings:
-- **Root directory:** `frontend`
-- **Build command:** `npm run build`  →  **Output directory:** `dist`
-- **API URL:** `frontend/.env.production` already points the build at the prod
-  Cloud Run backend, so no dashboard env var is required (override with
-  `VITE_API_BASE_URL` if needed).
-- **SPA routing:** `frontend/vercel.json` (Vercel) and `frontend/public/_redirects`
-  (Netlify) both rewrite all routes to `index.html` — already in the repo.
-
-Local one-off build: `cd frontend && npm run build` → `frontend/dist/`.
-
-CORS: the backend defaults to `CORS_ORIGIN=*`, so the hosted origin works
-out of the box. To lock it down after you know the URL:
-```bash
-CORS_ORIGIN=https://your-app.vercel.app bash scripts/gcp-deploy.sh
-```
-
-### Stack
-
-| Layer | Choice |
-|---|---|
-| Build | Vite + TypeScript |
-| UI | shadcn/ui on Tailwind v4 |
-| Routing | React Router v6 |
-| Data | TanStack Query (react-query) |
-| Charts | Recharts (via shadcn's chart wrapper) |
-| Icons | lucide-react |
-| Toasts | Sonner (via shadcn) |
-
-## Deploying to GCP (Cloud Run)
-
-Two scripts in `scripts/` do the whole setup. Run order:
-
-**1. Push your code somewhere Cloud Shell can reach it.** Either:
-- `git init && git remote add origin <your-github> && git push -u origin main` (then `git clone` it inside Cloud Shell), OR
-- Click "Upload File" in Cloud Shell and upload the project as a `.zip`
-
-**2. In Cloud Shell, from the project root:**
-```bash
-# One-time infra setup: decommissions n8n stack, enables APIs, creates secrets
-bash scripts/gcp-infra.sh
-
-# Build + deploy + create the monthly scheduler job
-bash scripts/gcp-deploy.sh
-```
-
-**3. Share the Google Sheet with `n8n-sa@<your-project>.iam.gserviceaccount.com` as Editor.** (One-time, from the Sheets UI.)
-
-**4. Test:**
-```bash
-curl $SERVICE_URL/health
-curl -X POST $SERVICE_URL/run-pipeline -H 'Content-Type: application/json' \
-  -d '{"recipient_email":"ritikadas98@gmail.com"}'
-```
-
-**Re-deploying after code changes:** just re-run `bash scripts/gcp-deploy.sh` — Cloud Build rebuilds the image and Cloud Run rolls out a new revision.
-
-### API endpoints (for the future frontend)
-
-| Method | Path | What |
-|---|---|---|
-| GET  | `/health` | liveness check |
-| POST | `/run-pipeline` | trigger the full pipeline; body `{recipient_email}` (optional, falls back to env) |
-| GET  | `/digests?limit=N` | last N rows from "Weekly Digests" (most recent first) |
-| GET  | `/signals?week=YYYY-WNN&limit=N` | signals filtered by Week ID |
-| GET  | `/runs/latest` | most recent digest row as JSON |
-
-CORS is controlled by `CORS_ORIGIN` env var on the Cloud Run service. Default `*` — once you have a frontend origin, set it to that specific URL.
-
-### Cost (steady state)
-
-~₹40/mo (Cloud Run free-tier covers ≤200 invocations of ~30s each; Cloud Scheduler 3 jobs free; minimal Secret Manager + Artifact Registry storage). $300 credits = ~50 years.
-
-## Troubleshooting
-
-- **`Zero signals survived cleaning`** — Gemini marked everything as duplicate/irrelevant. Inspect the prompt in `src/agents/clean.ts` and the raw fixture.
-- **`Gemini API error (429)`** — rate limit. Add a delay or switch model.
-- **`Sheet tab "..." has no header row`** — manually add the headers listed in the Setup section.
-- **`Authentication failed` (SMTP)** — Gmail app passwords don't accept the spaces shown in the UI; paste it without spaces. Make sure 2FA is on for the sending account.
-- **Sheet writes silently appending to wrong tab** — double-check `SHEETS_SIGNALS_TAB` / `SHEETS_DIGESTS_TAB` env values match the tab names exactly (case-sensitive).
+Working end to end and deployed. Live ingestion is Play-Store-strong; App Store
+is blocked from datacenter IPs and Amazon listing reviews are thin (both
+documented honestly in [docs/LIVE_INGESTION.md](docs/LIVE_INGESTION.md)).
+Roadmap: a Reddit source, a paid reviews API for iOS + critical reviews, and
+auth. Project docs (`CLAUDE.md` / `CONTEXT.md` / `DECISIONS.md`) are kept in
+sync with the code.
