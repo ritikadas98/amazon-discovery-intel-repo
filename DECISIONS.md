@@ -15,6 +15,41 @@ overwrite history).
 
 ---
 
+## 2026-06-02 — Went live + App Store hardening + deploy default
+
+**What changed.** Flipped `USE_MOCK=false` in prod — the pipeline now ingests
+real reviews. First live run: Play Store 50 → normalize 45 → clean 32 → digest
+emailed; 50 source_ids committed to `Seen Signal IDs`; WoW compared against the
+15 prior mock digest rows (mock = week-1 baseline, as planned). Also:
+- **App Store hardening** (`src/sources/appStore.ts`): retry-on-empty (3
+  attempts, backoff) + per-attempt logging of HTTP status and raw entry count.
+- **Header finding:** sending a browser `User-Agent` / `Accept: application/json`
+  makes Apple's RSS return an EMPTY feed (HTTP 200, 0 entries) — verified
+  locally. So the source uses **plain fetch (default headers)**; a comment warns
+  against re-adding headers.
+- **`scripts/gcp-deploy.sh`**: `USE_MOCK` now defaults to **false** (was
+  hardcoded `true`, which silently reverted live on every redeploy). Override
+  with `USE_MOCK=true bash scripts/gcp-deploy.sh`. The new ingestion env vars
+  (`INGEST_MAX_PER_SOURCE`, `SHEETS_SEEN_SIGNALS_TAB`, `SHEETS_WATCH_TAB`) are
+  now set explicitly by the deploy.
+
+**PM rationale.** Live data is the whole point; mock served as the week-1
+reference. The deploy-default flip removes a footgun (every prior redeploy would
+have quietly switched prod back to mock).
+
+**Known issue (open).** App Store returned **0 from Cloud Run** (asia-south1 /
+Mumbai datacenter IP) while the feed is alive and local gets 50 — an Apple
+IP/region throttle, not a header/code bug. The new logging will reveal exactly
+what Apple returns in prod next run. Candidate fixes if it persists: request the
+`in` store from the India IP, or accept App Store as best-effort. Play Store is
+the reliable app-review source meanwhile.
+
+**Considered & not done.** Custom UA / headers (made it worse). A heavier
+retry/proxy for App Store — deferred until the prod logs confirm the throttle's
+nature.
+
+---
+
 ## 2026-06-02 — Amazon source: relevance filter (and its honest limits)
 
 **What changed.** Added `isPlatformRelevant()` to `src/sources/amazon.ts`:

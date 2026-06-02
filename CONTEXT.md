@@ -260,11 +260,15 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   `/chat` route + `POST /webhook/chat` (SSE), streams a Gemini reply with
   clickable `[signal <ID>]` citations. Merged to master + **deployed to prod
   Cloud Run** (verified streaming live).
-- **Live ingestion (Track 2) built + verified per-source (2026-06-02)** —
-  `USE_MOCK=false` ingests App Store RSS + Play Store + Amazon-via-Jina,
-  deduped via the `Seen Signal IDs` tab. On the `feat/live-ingestion`
-  branch; not yet merged/deployed. Needs the `Seen Signal IDs` + `Watch
-  Listings` tabs created before the first live run.
+- **Live ingestion (Track 2) — LIVE in prod (2026-06-02).** Merged, deployed,
+  `USE_MOCK=false`. First live run pulled 50 Play Store reviews → 32 analyzed →
+  digest emailed; dedup committed; WoW compared vs the mock baseline. The
+  `Seen Signal IDs` + `Watch Listings` tabs exist.
+  - **Known issue:** App Store returns 0 from Cloud Run (Apple IP/region
+    throttle on the asia-south1 IP) — feed is alive, local gets 50. Hardened
+    with retry + status/entry logging to diagnose next run; Play Store is the
+    reliable app-review source meanwhile.
+  - Amazon source is best-effort/low-yield (positive top-reviews, CAPTCHAs).
 
 ### In flight / pending user action
 

@@ -38,7 +38,11 @@ happens at ingestion, *before* normalize.
 - Each entry has a native `id` → `source_id = app_store:<id>`. Maps `im:rating`
   → rating, `im:version` → app_version, `updated` → date, `title + content` →
   text. The first feed entry is app metadata (no rating) and is skipped.
-- **Reliable.** Verified live: 50 reviews, 0 malformed, 50 unique IDs.
+- Retry-on-empty (3 attempts) + logs HTTP status / entry count per attempt.
+  **Gotcha: do NOT send a custom `User-Agent`/`Accept` header** — Apple returns
+  an empty feed (HTTP 200, 0 entries) for those; plain `fetch` works.
+- Reliable locally (50 reviews). **Known issue:** returns 0 from Cloud Run
+  (asia-south1) — Apple throttles the datacenter IP. See §8.
 
 ### Play Store — `src/sources/playStore.ts`
 - `google-play-scraper` v10 `reviews()` for `com.amazon.mShop.android.shopping`,
@@ -141,8 +145,12 @@ week-1 baseline.
 
 ## 8. Reliability & honest limitations
 
-- **App Store / Play Store** are the reliable signal — they're reviews *of the
-  Amazon app*, squarely on-use-case (UX, performance, delivery, checkout).
+- **Play Store** is the reliable app-review signal right now (50/run from Cloud
+  Run). **App Store** works locally but returns 0 from Cloud Run — Apple
+  throttles the asia-south1 datacenter IP (the feed is alive; the new logging
+  will confirm the exact response). Candidate fixes if it persists: request the
+  `in` store, or treat App Store as best-effort. Both are reviews *of the Amazon
+  app* — squarely on-use-case when they flow.
 - **Amazon product reviews are best-effort and low-yield:**
   - The `/dp/` "top reviews" skew positive/helpful; the problem reviews (1-2★)
     that we actually want are behind the sign-in wall Jina can't pass.

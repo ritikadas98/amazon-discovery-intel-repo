@@ -99,10 +99,12 @@ the docs index it.
 8. **The Cloud Run service runs an older revision unless freshly deployed.**
    A 404 on a recently-added endpoint means "redeploy needed." Don't
    debug application code for HTTP 404s on `/webhook/...` paths.
-9. **`USE_MOCK=true`** is the default. As of 2026-06-02, `false` runs LIVE
-   ingestion (App Store RSS + Play Store + Amazon-via-Jina), deduped against
-   the `Seen Signal IDs` tab. Live runs need the `Seen Signal IDs` and
-   `Watch Listings` tabs to exist (see §9). See §15.
+9. **`USE_MOCK`** — the env/zod default is `true`, but **prod runs live**:
+   `scripts/gcp-deploy.sh` now sets `USE_MOCK=false` by default (was hardcoded
+   `true`), so redeploys keep live mode. `false` runs App Store RSS + Play Store
+   + Amazon-via-Jina, deduped against the `Seen Signal IDs` tab; needs the
+   `Seen Signal IDs` and `Watch Listings` tabs (see §9). Force mock with
+   `USE_MOCK=true bash scripts/gcp-deploy.sh`. See §15.
 
 ---
 
@@ -816,7 +818,11 @@ as TODOs or placeholders. Don't be surprised when:
   (default 50). Throws if 0 new signals survive dedup.
 - Source modules under `src/sources/`:
   - `appStore.ts` — iTunes Customer Reviews RSS, app `297606951`. Native
-    entry id → `source_id`.
+    entry id → `source_id`. Retry-on-empty + logs HTTP status/entry count.
+    **Do NOT add a custom User-Agent/Accept header** — Apple returns an empty
+    feed (HTTP 200, 0 entries) for those; plain fetch works. KNOWN ISSUE:
+    returns 0 from Cloud Run (asia-south1) — Apple throttles the datacenter IP;
+    local gets 50. Diagnosing via the new logging.
   - `playStore.ts` — `google-play-scraper` for
     `com.amazon.mShop.android.shopping`. reviewId → `source_id`.
   - `amazon.ts` — Jina Reader on `/dp/<ASIN>` pages (the `/product-reviews/`
