@@ -13,3 +13,11 @@ gcp-service-account.json
 implementation_plan rag chat.md
 implementation_plan_live_ingestion.md
 BLURB.md
+
+# Local Claude Code settings (machine-specific; has held secrets) — never commit
+.claude/settings.local.json
+
+# Legacy n8n workflow exports (abandoned approach, kept local for reference)
+Amazon Discovery Intelligence v2.json
+Amazon Discovery Intelligence(4).json
+n8n-gcp-hosting-guide.md
