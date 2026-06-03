@@ -302,12 +302,19 @@ on Discovery Report mount.
 Base URL in prod: `https://amazon-discovery-34n34tq6za-el.a.run.app`
 (reflected as `VITE_API_BASE_URL` in `frontend/.env` if overridden).
 
+**Rate limits** (per client IP via `express-rate-limit`; `429` + JSON error when
+exceeded): 120 req/min globally, **6/min** on `/run-pipeline` +
+`/webhook/run-pipeline`, **30/min** on `/webhook/chat`. The service trusts one
+proxy hop (`trust proxy = 1`) so limits key on the real client IP behind Cloud Run.
+
 ### `GET /health`
 **Response 200:** `{ "status": "ok", "timestamp": "2026-06-01T12:34:56.789Z" }`
 
 ### `POST /run-pipeline` and `POST /webhook/run-pipeline` (aliases)
 **Request body:** `{ "recipient_email": "you@example.com", "use_mock": true }`
-- `recipient_email` optional; falls back to `DEFAULT_RECIPIENT` env var.
+- `recipient_email` optional; falls back to `DEFAULT_RECIPIENT` env var. Must be
+  a single, well-formed address (CRLF + list separators rejected) **and** in the
+  recipient allowlist (`ALLOWED_RECIPIENTS`, else `[DEFAULT_RECIPIENT]`).
 - `use_mock` optional boolean — per-run override of `USE_MOCK` (true = Sample
   fixture, false = live ingestion). Falls back to `env.USE_MOCK` when omitted.
   The dashboard's Sample/Live toggle sends this so a triggered run ingests the
@@ -326,7 +333,10 @@ Base URL in prod: `https://amazon-discovery-34n34tq6za-el.a.run.app`
   "completedAt": "2026-06-01T12:34:56.789Z"
 }
 ```
-**Response 400:** `{ "error": "recipient_email is required..." }`
+**Response 400:** `{ "error": "recipient_email is required..." }` — also returned
+when `recipient_email` is malformed (not a single valid address).
+**Response 403:** `{ "error": "recipient_email is not in the allowed recipients list." }`
+**Response 429:** rate-limited (max 6 runs/min/IP).
 **Response 500:** `{ "error": "<failure message>" }`
 **Latency:** ~25–50s. Set client timeout to 60s+.
 
@@ -607,6 +617,7 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SMTP_PASS` | required | — | **Secret Manager: `smtp-pass`** (Gmail app password, no spaces) |
 | `EMAIL_FROM` | required | — | `From:` header |
 | `DEFAULT_RECIPIENT` | optional | — | Fallback for `/run-pipeline` and the cron job |
+| `ALLOWED_RECIPIENTS` | optional | — | Comma-separated allowlist of addresses `/run-pipeline` may email; falls back to `[DEFAULT_RECIPIENT]`. Empty + no `DEFAULT_RECIPIENT` = no allowlist (format check still applies) |
 | `PORT` | optional | `3000` | |
 | `USE_MOCK` | optional | `true` | When `false`, runs live ingestion (App Store + Play Store + Amazon/Jina), deduped via the Seen Signal IDs tab |
 | `CRON_SCHEDULE` | optional | `0 9 1 * *` | Cron string (used only if running an in-process scheduler; Cloud Run uses Cloud Scheduler) |
@@ -681,9 +692,9 @@ gcloud run services logs read amazon-discovery --region=asia-south1 --limit=50
 ### Dependencies (load-bearing)
 **Backend:**
 - `express` — HTTP server
+- `express-rate-limit` — per-IP rate limiting on all endpoints (abuse/cost guard)
 - `googleapis` — Sheets v4 + GoogleAuth (transitively pulls `google-auth-library`)
-- `nodemailer` — SMTP send
-- `node-cron` — currently UNUSED on Cloud Run (Cloud Scheduler replaces in-process cron)
+- `nodemailer` — SMTP send (v8+; v6 had SMTP-injection CVEs)
 - `zod` — env validation
 - `dotenv` — local `.env` loading
 - `tsx` — dev runtime
@@ -881,10 +892,20 @@ as TODOs or placeholders. Don't be surprised when:
     Weekly Digests + sends emails.
 - Until that's a measured problem, single-job stays.
 
-### Authentication
-- All endpoints are publicly invokable (`--allow-unauthenticated`).
-- Plan options: Firebase Auth on the frontend + ID-token verification on
-  the backend, OR a simple API key middleware, OR IAP. Not decided.
+### Authentication — partially hardened (2026-06-03)
+- All endpoints are still publicly invokable (`--allow-unauthenticated`) — there
+  is **no login/auth yet**.
+- **In place now** (the cheap, demo-safe guards): per-IP rate limiting
+  (`express-rate-limit`: 120/min global, 6/min run-pipeline, 30/min chat) and a
+  recipient **allowlist** + email-format validation on `/run-pipeline`
+  (`ALLOWED_RECIPIENTS`, falls back to `[DEFAULT_RECIPIENT]`), so the run trigger
+  can't be used as an open mail relay. Pair with a GCP **billing budget alert**
+  as the cost backstop (set in the console — not code).
+- **Still open / not decided:** real auth. Options: Firebase Auth + ID-token
+  verification, a shared API-key middleware (caveat: a key shipped in the public
+  SPA is extractable from the JS — keeps honest bots out, not real security), or
+  Cloud IAP (would force every demo visitor to log in — kills the open-demo
+  value). Deferred for a portfolio demo.
 
 ### Multi-PM regression routing
 - Regression alert email goes to a single recipient.

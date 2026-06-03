@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
 import { getEnv } from './config/env.js';
 import { runPipeline } from './pipeline/run.js';
 import { appendRows, readRows } from './lib/sheets.js';
@@ -8,6 +9,10 @@ import { handleChatStream, type ChatTurn } from './agents/chat.js';
 
 const env = getEnv();
 const app = express();
+// Behind Cloud Run's single proxy hop: trust it so rate-limiting and req.ip key
+// on the real client IP. Use `1` (one hop), not `true` — the latter trips
+// express-rate-limit's permissive-trust-proxy guard.
+app.set('trust proxy', 1);
 
 const corsOrigin =
   env.CORS_ORIGIN === '*'
@@ -16,15 +21,68 @@ const corsOrigin =
 app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '1mb' }));
 
+// Rate limiting. The service is public + unauthenticated, so this is the primary
+// abuse/cost guard: a generous global cap, plus tighter caps on the endpoints
+// that spend money (paid Vertex calls / outbound email). Keyed per client IP.
+const generalLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const pipelineLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 6,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many pipeline runs — please wait a minute and retry.' },
+});
+const chatLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many chat requests — please slow down.' },
+});
+app.use(generalLimiter);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ─── Pipeline trigger ────────────────────────────────────────────────────────
+// Validate + allowlist the recipient before it reaches nodemailer. On a public
+// endpoint this blocks email header/command injection (reject CRLF + list
+// separators) and stops the endpoint being used to mail arbitrary addresses.
+const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
+function isValidEmail(s: string): boolean {
+  return s.length <= 254 && !/[\r\n]/.test(s) && EMAIL_RE.test(s);
+}
+// Addresses /run-pipeline may email. Explicit ALLOWED_RECIPIENTS wins; otherwise
+// fall back to [DEFAULT_RECIPIENT]. Empty (neither set) => no allowlist enforced
+// (local dev), but the format check above still applies.
+function allowedRecipients(): string[] {
+  const explicit = (env.ALLOWED_RECIPIENTS ?? '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (explicit.length) return explicit;
+  return env.DEFAULT_RECIPIENT ? [env.DEFAULT_RECIPIENT.toLowerCase()] : [];
+}
+
 const runPipelineHandler = async (req: Request, res: Response) => {
   const recipient_email = (req.body?.recipient_email as string | undefined) || env.DEFAULT_RECIPIENT;
   if (!recipient_email) {
     res.status(400).json({ error: 'recipient_email is required (in body or DEFAULT_RECIPIENT env var)' });
+    return;
+  }
+  if (!isValidEmail(recipient_email)) {
+    res.status(400).json({ error: 'recipient_email is not a valid email address.' });
+    return;
+  }
+  const allowed = allowedRecipients();
+  if (allowed.length && !allowed.includes(recipient_email.toLowerCase())) {
+    res.status(403).json({ error: 'recipient_email is not in the allowed recipients list.' });
     return;
   }
   // Optional per-run override of mock vs live (else env.USE_MOCK). Lets the UI's
@@ -41,8 +99,8 @@ const runPipelineHandler = async (req: Request, res: Response) => {
   }
 };
 
-app.post('/run-pipeline', runPipelineHandler);
-app.post('/webhook/run-pipeline', runPipelineHandler);
+app.post('/run-pipeline', pipelineLimiter, runPipelineHandler);
+app.post('/webhook/run-pipeline', pipelineLimiter, runPipelineHandler);
 
 // ─── Sheets read endpoints ───────────────────────────────────────────────────
 app.get('/digests', async (req: Request, res: Response) => {
@@ -238,7 +296,7 @@ function sanitizeHistory(raw: unknown): ChatTurn[] {
   return out;
 }
 
-app.post('/webhook/chat', async (req: Request, res: Response) => {
+app.post('/webhook/chat', chatLimiter, async (req: Request, res: Response) => {
   const message = String(req.body?.message ?? '').trim();
   if (!message) {
     res.status(400).json({ error: 'message is required.' });

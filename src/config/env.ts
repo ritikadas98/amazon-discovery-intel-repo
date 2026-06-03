@@ -42,6 +42,11 @@ const schema = z.object({
   EMAIL_FROM: z.string().email(),
 
   DEFAULT_RECIPIENT: z.string().email().optional(),
+  // Comma-separated allowlist of addresses /run-pipeline may email. When unset,
+  // it falls back to [DEFAULT_RECIPIENT] — so on prod (which sets DEFAULT_RECIPIENT)
+  // anonymous runs can only ever email that one address. Empty + no DEFAULT_RECIPIENT
+  // => no allowlist enforced (local dev), but the format check still applies.
+  ALLOWED_RECIPIENTS: z.string().optional(),
   PORT: z.coerce.number().default(3000),
   USE_MOCK: z
     .string()

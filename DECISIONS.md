@@ -15,6 +15,36 @@ overwrite history).
 
 ---
 
+## 2026-06-03 — Security hardening: rate limits + recipient allowlist (real auth deferred)
+
+**What changed.** After a repo audit (revoked an exposed Gemini key, untracked
+`.claude/settings.local.json` + legacy n8n exports), the public API got a first
+layer of hardening: `nodemailer` 6 → `^8.0.10` (clears SMTP-injection CVEs),
+per-IP rate limiting via `express-rate-limit` (120/min global, 6/min on
+run-pipeline, 30/min on chat), and email-format validation + a recipient
+**allowlist** on `/run-pipeline` (`ALLOWED_RECIPIENTS`, falls back to
+`[DEFAULT_RECIPIENT]`). Dropped the unused `node-cron` dependency.
+
+**PM rationale.** The README now advertises a live URL, so the open,
+unauthenticated endpoints became a real cost/abuse surface — someone could burn
+Vertex/Gmail quota or use the run trigger as a mail relay. These changes
+neutralize the two harms that actually matter (runaway cost, arbitrary email)
+while keeping the demo fully clickable — no login wall on a portfolio piece.
+
+**Mechanics.** `src/server.ts`: `app.set('trust proxy', 1)` (Cloud Run hop),
+`generalLimiter`/`pipelineLimiter`/`chatLimiter`, and `isValidEmail()` +
+`allowedRecipients()` gating the resolved recipient (400 on malformed, 403 when
+not allowed, 429 when rate-limited). `ALLOWED_RECIPIENTS` added to
+`src/config/env.ts` + `.env.example`. Prod auto-locks to `DEFAULT_RECIPIENT`
+via the fallback, so no deploy-script change is required.
+
+**Considered & not done.** Real auth (Firebase ID tokens / shared API key / Cloud
+IAP) — deferred: a key shipped in the public SPA is extractable, and IAP would
+force every demo visitor to log in, defeating the portfolio purpose. The 4
+remaining moderate `uuid`-via-`googleapis` advisories — left as-is: the fix is a
+breaking `googleapis` major and the path isn't attacker-reachable here. A git
+history rewrite to purge the dead key — skipped: once revoked, the key is inert.
+
 ## 2026-06-02 — WoW is source-aware (Live vs Live, Sample vs Sample)
 
 **What changed.** `run.ts` now filters prior Weekly Digests rows to the current

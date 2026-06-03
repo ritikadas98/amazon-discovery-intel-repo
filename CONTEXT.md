@@ -165,6 +165,24 @@ Adapted backend code to write the existing schema rather than asking the
 user to migrate. Preserved the existing "Recieved At" misspelling on the
 Feedback header so writes line up.
 
+### Jun 3 — Repo security audit + hardening
+
+Audited the public GitHub repo. Findings + actions:
+- **Critical:** a live Gemini API key was committed in
+  `.claude/settings.local.json` (slipped past `.gitignore` — `*.local` doesn't
+  match `settings.local.json`). Key was revoked in AI Studio; the file +
+  the legacy n8n exports were untracked and gitignored (the n8n files had been
+  reintroduced by an earlier reset-to-origin).
+- **High → fixed:** `nodemailer` 6 had SMTP-injection / mail-to-unintended-domain
+  CVEs, and `/run-pipeline` took `recipient_email` from the public body with no
+  format check. Upgraded to `nodemailer@^8.0.10`, added email-format validation
+  + a recipient **allowlist** (`ALLOWED_RECIPIENTS`, falls back to
+  `[DEFAULT_RECIPIENT]`), and added per-IP rate limiting (`express-rate-limit`).
+  Removed the unused `node-cron` dep (cleared one vuln chain).
+- **Deferred:** real auth (still `--allow-unauthenticated`); the remaining 4
+  moderate `uuid`-via-googleapis advisories (need a breaking `googleapis` major;
+  not attacker-reachable here). Cost backstop = a GCP billing budget alert (user).
+
 ---
 
 ## 4. Architecture today (high level)
