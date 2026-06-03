@@ -5,7 +5,8 @@ RICE-prioritized **product-discovery digest** for PMs: themes ranked by RICE,
 MoSCoW priorities, discovery-readiness, week-over-week trends, regression
 alerts, and a grounded RAG chat over the signals.
 
-**[Live demo](https://amazon-discovery-intel-repo.vercel.app/)** · [Backend API](https://amazon-discovery-34n34tq6za-el.a.run.app/health) ·
+**[Live demo](https://amazon-discovery-intel-repo.vercel.app/)** · [Backend API](https://amazon-discovery-34n34tq6za-el.a.run.app/health)
+
 ![Dashboard](docs/screenshot-dashboard.png)
 
 ---
@@ -38,8 +39,7 @@ PMs don't lack customer signal, they drown in it. The hard part is knowing what
 to prioritize and whether there's enough evidence to act. And: platform-quality
 complaints live in app-store reviews and forums, **not** in product-listing
 reviews (those are about the product, not Amazon) — so the source you reach for
-matters as much as the analysis. See [BLURB.md](BLURB.md) and
-[DECISIONS.md](DECISIONS.md).
+matters as much as the analysis. See [DECISIONS.md](DECISIONS.md).
 
 ## Chat, grounded in cited signals
 
