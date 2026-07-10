@@ -71,8 +71,9 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   log(`Normalized ${normalizedSignals.length} signals; weekId=${meta.weekId}; source=${meta.dataSource}`);
 
   // 3. Agent 1: clean (dedup + irrelevance + severity + version_flagged)
-  const cleaned = await cleanSignals(normalizedSignals);
-  log(`Cleaned: ${cleaned.length} signals survived`);
+  const { signals: cleaned, droppedDuplicate, droppedIrrelevant } = await cleanSignals(normalizedSignals);
+  meta.cleaning = { droppedDuplicate, droppedIrrelevant };
+  log(`Cleaned: ${cleaned.length} survived (${droppedDuplicate} dup, ${droppedIrrelevant} irrelevant)`);
 
   // 4. Regression detection
   meta.regressions = detectRegressions(cleaned);
@@ -215,6 +216,8 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     topMoscow: topGroup.top_moscow,
     overallReadiness: readiness.overall_readiness,
     regressionCount: meta.regressions.length,
+    droppedDuplicate,
+    droppedIrrelevant,
     completedAt: new Date().toISOString(),
   };
   log(`Pipeline complete: ${JSON.stringify(result)}`);

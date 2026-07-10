@@ -15,6 +15,10 @@ export interface PipelineResult {
   topMoscow: MoSCoW;
   overallReadiness: Readiness | undefined;
   regressionCount: number;
+  /** Signals Agent 1 dropped as near-duplicates this run (A7). */
+  droppedDuplicate: number;
+  /** Signals Agent 1 dropped as irrelevant/spam this run (A7). */
+  droppedIrrelevant: number;
   completedAt: string;
 }
 
@@ -41,6 +45,8 @@ export interface DigestRow {
   'Themes Ready Count': string;
   'Themes Blocked Count': string;
   'Data Source'?: 'Sample' | 'Live' | string;
+  'Dropped Duplicate'?: string;
+  'Dropped Irrelevant'?: string;
 }
 
 /** A row from the "Signals" sheet. */

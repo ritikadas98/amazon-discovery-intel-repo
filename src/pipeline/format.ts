@@ -102,5 +102,7 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     'Themes Ready Count': themesReady,
     'Themes Blocked Count': themesBlocked,
     'Data Source': meta.dataSource,
+    'Dropped Duplicate': meta.cleaning?.droppedDuplicate ?? 0,
+    'Dropped Irrelevant': meta.cleaning?.droppedIrrelevant ?? 0,
   };
 }

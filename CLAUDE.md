@@ -543,6 +543,8 @@ has Editor access.
 | `Data Source` | `Sample`\|`Live` | Run provenance; drives the Sample/Live UI toggle. **Add this header to row 1.** |
 | `Trend Direction JSON` | `[{id, trend}]` | Per-group trend |
 | `Theme Breakdown JSON` | array of `ThemeBreakdownEntry` | All themes across all groups with R/I/C/E |
+| `Dropped Duplicate` | `2` | Signals Agent 1 dropped as near-duplicates this run (A7). **Add this header to row 1.** |
+| `Dropped Irrelevant` | `1` | Signals Agent 1 dropped as irrelevant/spam this run (A7). **Add this header to row 1.** |
 
 ### Tab: `Effort Estimates` (PM-set overrides, append-only)
 | Column | Example |
@@ -834,8 +836,15 @@ as TODOs or placeholders. Don't be surprised when:
   `buildChatContext()` in `src/agents/chat.ts`; UI in
   `frontend/src/routes/ChatPage.tsx` + `components/chat/ChatMessage.tsx`.
 - Citations: model emits `[signal <ID>]` with real `Signals.ID` values;
-  the frontend badges any ID-shaped token (`YYYY-WNN-index`) — bracketed,
-  `signal <ID>`, or bare — and resolves it to the signal text on hover.
+  the frontend matches any ID-shaped token (`YYYY-WNN-index`) — bracketed,
+  `signal <ID>`, or bare — then **verifies it against the scoped `signalsById`
+  map** (A5, 2026-07-10). Resolved IDs become numbered footnotes with the signal
+  text on hover; **unresolved IDs render as an amber "⚠ unverified" chip, not a
+  footnote** (a shape-match alone is not a citation — guards against fabricated
+  IDs). Per turn, `citation_resolution_rate = resolved / total` is
+  `console.debug`-logged and a "N/M cited signals verified" footer shows under the
+  reply. This is the repo's first online eval metric. All in
+  `components/chat/ChatMessage.tsx`.
 - Session-only (no persisted history). Vertex calls are now 3 per pipeline
   run + 1 per chat turn.
 - Still TODO: not yet on prod Cloud Run until this branch is deployed;
@@ -1035,4 +1044,5 @@ The code is the truth; the docs are best-effort.
 
 ---
 
-*Last updated: 2026-06-01 (when this rewrite landed).*
+*Last updated: 2026-07-10 (trust-boundary quick fixes: A5 citation verification,
+A1 injection-defense at the raw-text agents, A7 drop accounting).*

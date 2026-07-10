@@ -305,6 +305,15 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   show the curated analysis (Sample) and real data (Live) as two clear,
   navigable states without blending. Needs the `Data Source` header added to
   both sheet tabs before live runs populate it.
+- **Trust-boundary quick fixes (2026-07-10).** Three small hardenings (see
+  DECISIONS.md): chat now **verifies each citation** against the scoped signals
+  (unresolved IDs show an amber "⚠ unverified" chip instead of a fake footnote,
+  and a per-turn `citation_resolution_rate` is logged — the repo's first online
+  eval metric); the **prompt-injection defense line** now sits in the three raw-
+  text agents (`clean`/`synthesize`/`readiness`), not just `chat`; and Agent 1's
+  **dropped duplicate/irrelevant signals are now counted** and surfaced in the
+  digest row, run toast, and log. Needs the `Dropped Duplicate` + `Dropped
+  Irrelevant` headers added to the Weekly Digests tab.
 
 ### In flight / pending user action
 

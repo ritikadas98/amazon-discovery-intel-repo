@@ -39,8 +39,13 @@ export function RunPipelineDialog() {
       queryClient.invalidateQueries({ queryKey: ['signals'] });
       queryClient.invalidateQueries({ queryKey: ['effort'] });
       const groupName = featureGroupName(result.topGroup);
+      const dropped = (result.droppedDuplicate ?? 0) + (result.droppedIrrelevant ?? 0);
+      const droppedStr =
+        dropped > 0
+          ? ` · ${dropped} dropped (${result.droppedDuplicate} dup, ${result.droppedIrrelevant} irrelevant)`
+          : '';
       toast.success('Pipeline complete', {
-        description: `${result.weekId} · ${groupName} · RICE ${result.topRiceScore.toFixed(1)} · ${result.signalCount} signals${result.regressionCount > 0 ? ` · ${result.regressionCount} regression alert${result.regressionCount === 1 ? '' : 's'}` : ''}`,
+        description: `${result.weekId} · ${groupName} · RICE ${result.topRiceScore.toFixed(1)} · ${result.signalCount} signals${result.regressionCount > 0 ? ` · ${result.regressionCount} regression alert${result.regressionCount === 1 ? '' : 's'}` : ''}${droppedStr}`,
       });
       window.setTimeout(() => {
         setOpen(false);

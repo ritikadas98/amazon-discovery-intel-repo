@@ -45,6 +45,13 @@ export interface Meta {
   /** Provenance of this run's data, persisted to the sheet so the UI can
    *  separate the curated fixture from real ingestion. Set in run.ts. */
   dataSource: 'Sample' | 'Live';
+  /** Counts of signals Agent 1 dropped (dedup + irrelevance). Set in run.ts
+   *  after the clean stage; surfaced in the digest row + run toast so silent
+   *  drops become auditable (A7). */
+  cleaning?: {
+    droppedDuplicate: number;
+    droppedIrrelevant: number;
+  };
 }
 
 export interface FeatureGroup {
@@ -210,6 +217,10 @@ export interface PipelineResult {
   topMoscow: MoSCoW;
   overallReadiness: Readiness | undefined;
   regressionCount: number;
+  /** Signals Agent 1 dropped as near-duplicates this run (A7). */
+  droppedDuplicate: number;
+  /** Signals Agent 1 dropped as irrelevant/spam this run (A7). */
+  droppedIrrelevant: number;
   completedAt: string;
 }
 
