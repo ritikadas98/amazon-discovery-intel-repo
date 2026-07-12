@@ -419,6 +419,19 @@ the stream ends with `event: done`; failures emit `event: error` with
 **Response 400 (before stream opens):** `{ "error": "message is required." }`
 **Note:** session-only — no chat history persisted to the sheet.
 
+### `POST /webhook/chat-eval` (A5 online eval trail)
+Logs a chat turn's citation-resolution metric to the `Chat Evals` tab. Fired by
+the frontend on turn completion, only when the reply cited ≥1 signal.
+**Request body:**
+```json
+{ "total": 4, "resolved": 3, "week": "2026-W22", "group": "returns_refunds", "source": "sample", "message": "reply text (truncated to 200 chars)" }
+```
+`total` (positive int) and `resolved` (0..total) are required; the rest optional.
+The `Resolution Rate` is **derived server-side** (`resolved / total`), not trusted
+from the client. Best-effort from the caller's side — a failure never blocks chat.
+**Response 200:** `{ "ok": true, "total": 4, "resolved": 3, "rate": 0.75 }`
+**Response 400:** `{ "error": "total (positive int) and resolved (0..total) are required." }`
+
 ---
 
 ## §7. Frontend route map
@@ -568,6 +581,20 @@ by row_number when read by `/effort-overrides`.
 | `Rating` | `useful`\|`not_useful` | |
 | `Recieved At` | ISO timestamp | **Misspelling is intentional** — matches existing header |
 
+### Tab: `Chat Evals` (per-turn citation-resolution eval, append-only)
+One row per chat turn that cited ≥1 signal. Written by `POST /webhook/chat-eval`
+(A5 online eval). **Create this tab (with all 8 headers) before it can log.**
+| Column | Example | Notes |
+|---|---|---|
+| `Week ID` | `2026-W22` | Scope the turn ran in (may be empty) |
+| `Feature Group ID` | `returns_refunds` | Active group, or `all` |
+| `Source` | `sample`\|`live` | Active data-source toggle |
+| `Total Citations` | `4` | Distinct signal IDs the model emitted |
+| `Resolved Citations` | `3` | Distinct IDs that resolved against scoped signals |
+| `Resolution Rate` | `0.75` | `resolved / total`, derived server-side |
+| `Message Preview` | "The top complaints are…" | First 200 chars of the reply |
+| `Created At` | ISO timestamp | |
+
 ### Tab: `Seen Signal IDs` (live-ingestion dedup, append-only)
 | Column | Example | Notes |
 |---|---|---|
@@ -607,6 +634,7 @@ Validated via `src/config/env.ts` (zod). Local: `.env`. Prod: Cloud Run env vars
 | `SHEETS_DIGESTS_TAB` | optional | `Weekly Digests` | |
 | `SHEETS_EFFORT_TAB` | optional | `Effort Estimates` | |
 | `SHEETS_FEEDBACK_TAB` | optional | `Feedback` | |
+| `SHEETS_CHAT_EVALS_TAB` | optional | `Chat Evals` | Per-turn chat citation-resolution eval log |
 | `SHEETS_SEEN_SIGNALS_TAB` | optional | `Seen Signal IDs` | Live-ingestion dedup tab |
 | `SHEETS_WATCH_TAB` | optional | `Watch Listings` | Amazon ASIN watch list |
 | `INGEST_MAX_PER_SOURCE` | optional | `150` | Cap on newest reviews per live source per run (clean/synthesize use a 32768-token budget, so the default totals fit comfortably) |
@@ -845,6 +873,10 @@ as TODOs or placeholders. Don't be surprised when:
   `console.debug`-logged and a "N/M cited signals verified" footer shows under the
   reply. This is the repo's first online eval metric. All in
   `components/chat/ChatMessage.tsx`.
+- Citation eval is **persisted** (2026-07-12): each turn that cites ≥1 signal
+  POSTs `{total, resolved, …}` to `/webhook/chat-eval`, which appends a row to the
+  `Chat Evals` tab (rate derived server-side). Fired from `ChatPage`'s `onDone`
+  via the exported `countCitations()` helper. See §6 (endpoint) + §9 (tab).
 - Session-only (no persisted history). Vertex calls are now 3 per pipeline
   run + 1 per chat turn.
 - Still TODO: not yet on prod Cloud Run until this branch is deployed;
@@ -1044,5 +1076,5 @@ The code is the truth; the docs are best-effort.
 
 ---
 
-*Last updated: 2026-07-10 (trust-boundary quick fixes: A5 citation verification,
-A1 injection-defense at the raw-text agents, A7 drop accounting).*
+*Last updated: 2026-07-12 (A5 citation eval persisted → `Chat Evals` tab +
+`/webhook/chat-eval`). Prior: 2026-07-10 trust-boundary quick fixes (A5/A1/A7).*

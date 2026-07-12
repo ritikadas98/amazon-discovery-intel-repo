@@ -314,6 +314,11 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   **dropped duplicate/irrelevant signals are now counted** and surfaced in the
   digest row, run toast, and log. Needs the `Dropped Duplicate` + `Dropped
   Irrelevant` headers added to the Weekly Digests tab.
+- **Chat eval persisted (2026-07-12).** The citation-resolution rate is no longer
+  console-only: each citing turn POSTs to `/webhook/chat-eval` → a new `Chat
+  Evals` sheet tab (rate per week/group/source + message preview). Turns the
+  eval metric into a readable time series. Needs the `Chat Evals` tab created
+  (8 headers — see DECISIONS.md / CLAUDE.md §9).
 
 ### In flight / pending user action
 

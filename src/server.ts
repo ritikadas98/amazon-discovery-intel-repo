@@ -329,13 +329,56 @@ app.post('/webhook/chat', chatLimiter, async (req: Request, res: Response) => {
   }
 });
 
+// ─── Chat citation eval (A5 follow-up) ───────────────────────────────────────
+// Durable trail for the online eval metric: one row per chat turn that cited at
+// least one signal. The client computes resolved/total against the same scoped
+// signals it renders, and posts it here. "Chat Evals" sheet columns:
+//   Week ID | Feature Group ID | Source | Total Citations | Resolved Citations
+//   | Resolution Rate | Message Preview | Created At
+app.post('/webhook/chat-eval', async (req: Request, res: Response) => {
+  try {
+    const total = Number(req.body?.total);
+    const resolved = Number(req.body?.resolved);
+    if (!Number.isInteger(total) || total <= 0 || !Number.isInteger(resolved) || resolved < 0 || resolved > total) {
+      res.status(400).json({
+        error: 'total (positive int) and resolved (0..total) are required.',
+      });
+      return;
+    }
+    const week_id = String(req.body?.week ?? '').trim();
+    const feature_group_id = String(req.body?.group ?? 'all').trim();
+    const source = String(req.body?.source ?? '').trim();
+    // Rate is derived here, not trusted from the client, so the column is consistent.
+    const rate = Math.round((resolved / total) * 100) / 100;
+    const preview = String(req.body?.message ?? '').replace(/\s+/g, ' ').trim().slice(0, 200);
+
+    await appendRows(env.SHEETS_CHAT_EVALS_TAB, [
+      {
+        'Week ID': week_id,
+        'Feature Group ID': feature_group_id,
+        Source: source,
+        'Total Citations': total,
+        'Resolved Citations': resolved,
+        'Resolution Rate': rate,
+        'Message Preview': preview,
+        'Created At': new Date().toISOString(),
+      },
+    ]);
+    res.json({ ok: true, total, resolved, rate });
+  } catch (err) {
+    console.error('[server] chat-eval failed:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
 // ─── Boot ────────────────────────────────────────────────────────────────────
 const server = app.listen(env.PORT, () => {
   console.log(`[server] Listening on http://localhost:${env.PORT}`);
   console.log(
     `[server] Endpoints: GET /health, GET /digests, GET /signals, GET /runs/latest, ` +
       `GET /effort-overrides, GET /webhook/digest-feedback, POST /run-pipeline, ` +
-      `POST /webhook/run-pipeline, POST /webhook/set-effort, POST /webhook/chat`,
+      `POST /webhook/run-pipeline, POST /webhook/set-effort, POST /webhook/chat, ` +
+      `POST /webhook/chat-eval`,
   );
 });
 

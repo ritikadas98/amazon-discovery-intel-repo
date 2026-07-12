@@ -43,6 +43,23 @@ function tokenize(content: string): Token[] {
   return tokens;
 }
 
+/** Count distinct citation IDs an assistant reply emitted, and how many resolve
+ *  against the scoped signals. Shared by the in-bubble rendering and the online
+ *  eval POST so both report the same numbers. */
+export function countCitations(
+  content: string,
+  signalsById: Map<string, SignalRow>,
+): { total: number; resolved: number } {
+  const seen = new Set<string>();
+  const resolved = new Set<string>();
+  for (const t of tokenize(content)) {
+    if (t.type !== 'cite') continue;
+    seen.add(t.value);
+    if (signalsById.has(t.value)) resolved.add(t.value);
+  }
+  return { total: seen.size, resolved: resolved.size };
+}
+
 /** A resolved citation: a compact [n] badge that opens a popover with the full
  *  signal text + a link into the Signals browser. Only rendered when the ID
  *  actually exists in the scoped corpus. */

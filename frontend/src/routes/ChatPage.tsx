@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ChatMessage } from '@/components/chat/ChatMessage';
+import { ChatMessage, countCitations } from '@/components/chat/ChatMessage';
 import type { ChatMessageData } from '@/components/chat/ChatMessage';
 import { api, chatStream } from '@/lib/api';
 import type { ChatTurn } from '@/lib/api';
@@ -86,7 +86,11 @@ export function ChatPage() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const appendToAssistant = (delta: string) =>
+    // Track the full reply locally so we can score its citations on completion
+    // without racing the async setMessages state.
+    let assistantText = '';
+    const appendToAssistant = (delta: string) => {
+      assistantText += delta;
       setMessages((prev) => {
         const next = [...prev];
         const last = next[next.length - 1];
@@ -95,6 +99,7 @@ export function ChatPage() {
         }
         return next;
       });
+    };
 
     void chatStream(
       {
@@ -111,7 +116,26 @@ export function ChatPage() {
           appendToAssistant(`\n\n_(error: ${msg})_`);
           setStreaming(false);
         },
-        onDone: () => setStreaming(false),
+        onDone: () => {
+          setStreaming(false);
+          // A5 online eval: persist the citation-resolution rate for turns that
+          // cited at least one signal. Best-effort — never surfaces to the user.
+          const { total, resolved } = countCitations(assistantText, signalsById);
+          if (total > 0) {
+            void api
+              .logChatEval({
+                total,
+                resolved,
+                week: weekId ?? undefined,
+                group,
+                source: activeSource,
+                message: assistantText,
+              })
+              .catch(() => {
+                /* eval logging is non-critical; swallow */
+              });
+          }
+        },
         signal: controller.signal,
       },
     );

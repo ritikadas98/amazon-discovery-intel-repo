@@ -14,6 +14,7 @@ const schema = z.object({
   SHEETS_DIGESTS_TAB: z.string().default('Weekly Digests'),
   SHEETS_EFFORT_TAB: z.string().default('Effort Estimates'),
   SHEETS_FEEDBACK_TAB: z.string().default('Feedback'),
+  SHEETS_CHAT_EVALS_TAB: z.string().default('Chat Evals'),
   // Live ingestion (Track 2)
   SHEETS_SEEN_SIGNALS_TAB: z.string().default('Seen Signal IDs'),
   SHEETS_WATCH_TAB: z.string().default('Watch Listings'),

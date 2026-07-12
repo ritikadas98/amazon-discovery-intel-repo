@@ -15,6 +15,39 @@ overwrite history).
 
 ---
 
+## 2026-07-12 — Citation-resolution rate is now persisted (A5 follow-up)
+
+**What changed.** The per-turn `citation_resolution_rate` from the 2026-07-10 A5
+fix was console + in-UI only — a metric nobody reads back. Added a durable trail:
+a new `Chat Evals` sheet tab + `POST /webhook/chat-eval` endpoint. On each chat
+turn that cites at least one signal, the client posts `{total, resolved, week,
+group, source, message}`; the server derives the rate and appends a row.
+
+**PM rationale.** An eval metric you don't store isn't an eval — it's a log line.
+Persisting it turns "my online eval is citation-resolution rate" into an actual
+time series a reviewer can open: rate per week/group/source, with a message
+preview to eyeball the misses. Same lesson as the FitCheck `readEvents()`-never-
+called finding — instrument *and* read back.
+
+**Mechanics.** `SHEETS_CHAT_EVALS_TAB` (default `Chat Evals`) in
+`src/config/env.ts`; `POST /webhook/chat-eval` in `src/server.ts` (validates
+`total`/`resolved`, derives the rate server-side rather than trusting the client,
+truncates the preview to 200 chars); `api.logChatEval()` in
+`frontend/src/lib/api.ts`; fired from `ChatPage`'s `onDone` using the exported
+`countCitations()` helper from `ChatMessage.tsx` (same numbers the bubble shows).
+Only turns with `total > 0` are logged; the POST is best-effort (failures
+swallowed — never blocks the chat).
+- **Manual step:** create a `Chat Evals` tab with headers: `Week ID`,
+  `Feature Group ID`, `Source`, `Total Citations`, `Resolved Citations`,
+  `Resolution Rate`, `Message Preview`, `Created At`.
+
+**Considered & not done.** Computing the metric server-side from the streamed
+reply (Path B) — rejected for now: it needs citation parsing threaded through the
+SSE generator, and client-computed is honest enough for a self-eval trail (the
+rate is *re-derived* server-side from the posted counts, so the stored rate is at
+least internally consistent). No rate limiter beyond the global 120/min — the
+endpoint is a single cheap append, same as `set-effort`/`digest-feedback`.
+
 ## 2026-07-10 — Trust-boundary quick fixes: citation verification, prompt-injection defense, drop accounting
 
 **What changed.** Three small, high-leverage hardenings at the points where the

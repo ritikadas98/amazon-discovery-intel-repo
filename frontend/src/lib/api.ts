@@ -77,6 +77,20 @@ export const api = {
 
   effortOverrides: (weekId: string) =>
     jsonFetch<EffortOverridesResponse>(`/effort-overrides?week=${encodeURIComponent(weekId)}`),
+
+  /** Persist a chat turn's citation-resolution metric (A5 online eval). Best-effort. */
+  logChatEval: (body: {
+    total: number;
+    resolved: number;
+    week?: string;
+    group?: string;
+    source?: string;
+    message?: string;
+  }) =>
+    jsonFetch<{ ok: boolean; total: number; resolved: number; rate: number }>('/webhook/chat-eval', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 // ─── RAG chat (Track 1) ────────────────────────────────────────────────────
