@@ -11,16 +11,24 @@ hours.
 
 ---
 
-## §0. Three-doc system at the repo root
+## §0. Four-doc system at the repo root
 
 | File | Audience | Role | Length |
 |---|---|---|---|
 | **`CLAUDE.md`** (this file) | AI assistants | Reference: commands, schemas, conventions, gotchas, how-to recipes | Long, scannable |
 | **`CONTEXT.md`** | Humans | Narrative: chronological story, current state, what's next, open dilemmas | Long, narrative |
 | **`DECISIONS.md`** | Humans | Per-decision log with PM rationale | Append-only at top |
+| **`ARCHITECTURE.md`** | Engineers (human or AI) | Structural view: layers, contracts, invariants, ordering guarantees, failure-mode matrix, known gaps | Long, reference |
 
-All three are kept in sync with reality. **Every material change updates
-all three in the same commit.** "Material" = new component, new endpoint,
+`ARCHITECTURE.md` is the *why is it shaped this way, structurally* doc — read it
+before any change that crosses a layer boundary (new source, new stage, new
+persistence, auth). It also carries the honest list of architectural gaps
+(`ARCHITECTURE.md` §15), including three where implementation and intent diverge:
+the unreachable regression effort discount, sparse WoW baselines, and PM effort
+overrides never feeding back into scoring.
+
+All four are kept in sync with reality. **Every material change updates
+them in the same commit.** "Material" = new component, new endpoint,
 schema change, scope shift, decision to not do something, dilemma resolved.
 Skip the doc updates only for typo fixes, dep bumps, or throwaway
 exploration — and tell the user when you do.

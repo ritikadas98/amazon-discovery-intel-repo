@@ -1,7 +1,7 @@
 # Project context — Amazon Discovery Intelligence
 
 A master narrative for understanding *what this project is, why it's shaped
-the way it is, and where it's going*. One of three project-level docs:
+the way it is, and where it's going*. One of four project-level docs:
 
 - **`CONTEXT.md`** (this file) — narrative + state + what's next. For humans.
 - **`DECISIONS.md`** — per-decision log with PM rationale. For humans.
@@ -10,6 +10,10 @@ the way it is, and where it's going*. One of three project-level docs:
   API reference, sheet schema, env vars, gotchas, how-to recipes, and a
   file-by-file map — designed to make a brand-new Claude instance
   productive without conversation context.
+- **`ARCHITECTURE.md`** — the structural view: layer model, module contracts,
+  invariants, pipeline ordering guarantees, trust boundaries, failure-mode
+  matrix, extension points, and the honest list of architectural gaps. Read it
+  before any change that crosses a layer boundary.
 
 If you're new to the codebase, read this top-to-bottom. If you're picking
 up after time away, jump to **§5 — Current state** and **§6 — What's next**.
@@ -186,6 +190,10 @@ Audited the public GitHub repo. Findings + actions:
 ---
 
 ## 4. Architecture today (high level)
+
+> The diagram below is the orientation view. For the full structural
+> treatment — layer model, module contracts, ordering guarantees, trust
+> boundaries, failure modes, known gaps — see **`ARCHITECTURE.md`**.
 
 ```
 ┌──────────────────────────────────────────────┐

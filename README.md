@@ -62,8 +62,10 @@ Frontend (React + Vite, Vercel)                Backend (Express, Cloud Run)
 
 Pipeline stages: ingest -> normalize -> Gemini clean -> regression detect ->
 Gemini synthesize -> aggregate -> RICE -> MoSCoW -> week-over-week -> readiness
--> write to Sheets -> email. Full detail in [CLAUDE.md](CLAUDE.md);
-narrative in [CONTEXT.md](CONTEXT.md); deep-dives in
+-> write to Sheets -> email. Structural deep-dive (layers, contracts,
+invariants, failure modes, known gaps) in [ARCHITECTURE.md](ARCHITECTURE.md);
+working reference in [CLAUDE.md](CLAUDE.md); narrative in
+[CONTEXT.md](CONTEXT.md); feature deep-dives in
 [docs/RAG_CHAT.md](docs/RAG_CHAT.md) and [docs/LIVE_INGESTION.md](docs/LIVE_INGESTION.md).
 
 ## Tech stack

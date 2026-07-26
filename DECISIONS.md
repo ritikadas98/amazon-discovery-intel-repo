@@ -15,6 +15,86 @@ overwrite history).
 
 ---
 
+## 2026-07-26 — `ARCHITECTURE.md` as a fourth project doc
+
+**What changed.** Added `ARCHITECTURE.md` at the repo root — a structural
+reference derived from a full read of the codebase, not a rewrite of existing
+docs. It covers: the system context + three trust boundaries; seven named
+architectural principles (sheet-as-system-of-record, append-only,
+deterministic-scoring/AI-judgment, sources-fail-soft/runs-fail-hard,
+provenance-as-first-class, URL-as-state, monolith-until-measured); the deployment
+topology and its runtime consequences; a five-layer backend module model with
+per-layer contracts; the pipeline's five **ordering guarantees** (notably the
+durability barrier that commits dedup IDs only after the Signals write, and the
+parallel regression alert); the type progression `RawSignal → CleanedSignal →
+TaggedSignal → Theme → ScoredTheme → ScoredGroup` with its invariants; the AI
+layer (four call sites, JSON-discipline layers, streaming, injection posture);
+the scoring architecture including readiness's dual deterministic/LLM path; the
+persistence model that falls out of a two-function Sheets adapter; the ingestion
+source contract; the API layer; the frontend state model and citation-verification
+loop; a failure-mode matrix; extension points; and a file-by-file map.
+
+The doc set is now four files, with `CLAUDE.md` §0 and `CONTEXT.md`'s preamble
+updated to say so.
+
+**PM rationale.** The three existing docs answer *how do I work here*
+(`CLAUDE.md`), *how did it get here* (`CONTEXT.md`), and *why this choice*
+(`DECISIONS.md`). None answers *what is the shape of the system* in one place —
+so that understanding had to be reassembled by reading code every time someone
+new (or a fresh AI session) needed to reason about a cross-cutting change. That
+reassembly is exactly where mistakes enter: it's how you miss that dedup commits
+must follow the Signals write, or that a new sheet column silently drops data
+without a manual header add.
+
+The higher-value output was the **gap list** (§15). Writing the structural view
+surfaced three places where the code doesn't do what the docs imply, all found by
+reading rather than by a bug report:
+
+1. **The regression → effort discount is unreachable.** `detectRegressions()`
+   always sets `feature_groups_affected: []`, and `getEffort()` tests
+   `includes(groupId)` against it — so `effort` is always 1.0 and the documented
+   0.8 regression discount never applies. The regression *email* is fine; only
+   the RICE discount is dead. The cause is structural, not a typo: detection runs
+   *before* synthesize precisely so urgent alerts fire early, which means group
+   tags don't exist yet.
+2. **WoW baselines are sparse and not strictly chronological.** Each digest row
+   records only the run's *top* group in `Feature Group ID`, and
+   `buildLastWeekLookup` keys on that column and keeps the highest-RICE prior row
+   — so a group that has never topped a run reports `delta: null`, and "last
+   week" really means "best prior run". Full per-group history is already sitting
+   in `RICE Scores JSON`, unread.
+3. **PM effort overrides never feed back into scoring.** `Effort Estimates` is
+   written by `/webhook/set-effort` and read by `/effort-overrides`, but
+   `run.ts` never reads it — so a PM's sizing is an annotation plus a client-side
+   recompute, not an input to the next run.
+
+Naming these in a doc a PM can read is worth more than a silent fix would be:
+each one is a *product* decision (does the discount matter? should effort
+persist across weeks given unstable theme IDs?), not just a code change.
+
+**Mechanics.** `ARCHITECTURE.md`, ~17 sections, cross-referenced to
+`CLAUDE.md` (operational detail), `CONTEXT.md` (narrative), `DECISIONS.md`
+(rationale), and the two feature deep-dives in `docs/`. Statements the code
+depends on are marked **INVARIANT** — e.g. `source_id` exists only between
+ingestion and normalize (so dedup *must* precede normalization), the `Recieved At`
+misspelling, no custom `User-Agent` on the App Store fetch, group colors only in
+`colors.ts`. No code changed in this commit; the gaps are documented, not fixed.
+
+**Considered & not done.**
+- *Fold it into `CLAUDE.md`.* That file is already 1.5k lines and optimized for
+  lookup ("how do I add a column"), not for structural reasoning. Mixing the two
+  makes both worse.
+- *Fix the three gaps in this commit.* Each needs a decision, not just a patch —
+  the regression discount needs detection moved after tagging (delaying urgent
+  alerts) or a second pass; effort feedback needs stable theme IDs to be
+  meaningful across weeks. Documented now, decided separately.
+- *Generate it from code.* A structural doc's value is in the reasoning and
+  trade-offs, which is exactly the part no generator produces.
+- *Diagrams as images.* ASCII stays diffable, greppable, and reviewable in a
+  pull request.
+
+---
+
 ## 2026-07-12 — Citation-resolution rate is now persisted (A5 follow-up)
 
 **What changed.** The per-turn `citation_resolution_rate` from the 2026-07-10 A5
