@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { groupColor, GROUP_READINESS_CLASS, GROUP_READINESS_LABEL } from '@/lib/colors';
+import { READINESS_LABEL } from '@/lib/vocabulary';
 import { featureGroupName, formatWeekLabel } from '@/lib/parsers';
 import type { Readiness } from '@/types';
 
@@ -39,15 +40,15 @@ export function GroupReadinessSummary({
     <Card style={{ borderLeftWidth: 4, borderLeftColor: color }}>
       <CardContent className="py-4 px-5">
         <div className="flex items-baseline justify-between gap-3 mb-1.5">
-          <h2 className="text-lg font-semibold">{groupName} — Discovery Readiness Report</h2>
+          <h2 className="text-lg font-semibold">{groupName}</h2>
           <span className="text-xs text-muted-foreground font-mono">{formatWeekLabel(weekId)}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <span className="text-sm text-muted-foreground">Overall Readiness</span>
+          <span className="text-sm text-muted-foreground">Evidence</span>
           <Badge variant="outline" className={cn('font-semibold gap-1', GROUP_READINESS_CLASS[label])}>
             {readinessIcon(label)}
-            {label.replace(/_/g, ' ')}
+            {overallReadiness ? READINESS_LABEL[overallReadiness] : READINESS_LABEL.BLOCKED}
           </Badge>
         </div>
 

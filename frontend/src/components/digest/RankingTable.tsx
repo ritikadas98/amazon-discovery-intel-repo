@@ -1,23 +1,27 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { groupColor, MOSCOW_CLASS, TREND_ARROW, TREND_CLASS, severityTier } from '@/lib/colors';
+import { groupColor, TREND_ARROW, TREND_CLASS, severityTier } from '@/lib/colors';
+import { MoscowBadge } from '@/components/common/StatusBadges';
+import { TREND_LABEL } from '@/lib/vocabulary';
 import { featureGroupName } from '@/lib/parsers';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ParsedDigest } from '@/lib/parsers';
-import type { MoSCoW } from '@/types';
+import type { MoSCoW, TrendDirection } from '@/types';
 
 interface Props {
   digest: ParsedDigest;
 }
 
+/**
+ * The change against last week, shown beside the count it belongs to.
+ *
+ * This used to be its own column headed "Δ" — a symbol with no legend, next to five
+ * other unexplained numbers. Attached to the signal count it needs no explaining.
+ */
 function signalDeltaCell(delta: number | null): React.ReactNode {
-  if (delta === null || delta === undefined) {
-    return <span className="text-xs text-muted-foreground">—</span>;
-  }
-  if (delta === 0) return <span className="text-xs text-muted-foreground">0</span>;
+  if (delta === null || delta === undefined || delta === 0) return null;
   const isUp = delta > 0;
   return (
     <span className={cn('text-xs font-medium tabular-nums', isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
@@ -35,7 +39,7 @@ export function RankingTable({ digest }: Props) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Feature Group Ranking</CardTitle>
+          <CardTitle>Where the complaints are</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">No RICE scores in this digest.</p>
@@ -69,7 +73,7 @@ export function RankingTable({ digest }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>Feature Group Ranking</CardTitle>
-        <CardDescription>Ordered by top theme's RICE score. Click a row to drill into that group.</CardDescription>
+        <CardDescription>Highest priority first. Click a row to open that group.</CardDescription>
       </CardHeader>
       <CardContent className="px-0">
         <Table>
@@ -78,11 +82,10 @@ export function RankingTable({ digest }: Props) {
               <TableHead className="w-[40px] pl-6">#</TableHead>
               <TableHead>Group</TableHead>
               <TableHead className="hidden lg:table-cell">Top Theme</TableHead>
-              <TableHead className="text-right">Signals</TableHead>
-              <TableHead className="text-right">Δ</TableHead>
+              <TableHead className="text-right">People</TableHead>
               <TableHead className="text-right">Severity</TableHead>
-              <TableHead>MoSCoW</TableHead>
-              <TableHead className="text-right">RICE</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead className="text-right">Score</TableHead>
               <TableHead>Trend</TableHead>
             </TableRow>
           </TableHeader>
@@ -107,17 +110,17 @@ export function RankingTable({ digest }: Props) {
                   <TableCell className="hidden lg:table-cell text-xs text-muted-foreground max-w-[280px] truncate">
                     {topThemeByGroup.get(r.id) || '—'}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{signals}</TableCell>
-                  <TableCell className="text-right">{signalDeltaCell(wow?.signal_delta ?? null)}</TableCell>
+                  <TableCell className="text-right tabular-nums whitespace-nowrap">
+                    {signals}
+                    {signalDeltaCell(wow?.signal_delta ?? null)}
+                  </TableCell>
                   <TableCell className={cn('text-right tabular-nums', severityTier(sev).className.split(' ').filter((c) => c.startsWith('text-')).join(' '))}>
                     {sev.toFixed(1)}
                   </TableCell>
                   <TableCell>
                     {moscow ? (
                       <span className="inline-flex items-center gap-1.5">
-                        <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 h-5', MOSCOW_CLASS[moscow])}>
-                          {moscow}
-                        </Badge>
+                        <MoscowBadge value={moscow} />
                         {wow?.moscow_escalated && wow.moscow_prev && (
                           <span className="text-[10px] text-orange-600 dark:text-orange-400">
                             ↑ was {wow.moscow_prev}
@@ -132,7 +135,7 @@ export function RankingTable({ digest }: Props) {
                   <TableCell>
                     {trend ? (
                       <span className={cn('text-xs font-medium', TREND_CLASS[trend] ?? '')}>
-                        {TREND_ARROW[trend] ?? '·'} {trend}
+                        {TREND_ARROW[trend] ?? '·'} {TREND_LABEL[trend as TrendDirection] ?? trend}
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>

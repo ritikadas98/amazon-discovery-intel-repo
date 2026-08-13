@@ -64,15 +64,27 @@ function computeThemeComponents(theme: Theme, groupId: string, meta: Meta): Them
     return { reach: 0, impact: 0, confidence: 0.6, versionMultiplier: 1, effort: 1, trendMultiplier: 1, systemRice: 0 };
   }
   const reach = signals.length;
-  const impact = signals.reduce((sum, s) => sum + (s.severity_score || 3.0), 0) / signals.length;
   const sources = new Set(signals.map((s) => s.source)).size;
   const confidence = SOURCE_CONFIDENCE[Math.min(sources, 3)] || 0.6;
-  const versionMultiplier = getVersionRatioMultiplier(signals);
   const trendMultiplier = TREND_MULTIPLIER[theme.trend_direction] || 1.0;
   const effort = getEffort(groupId, meta);
-  const systemRice = ((reach * impact * confidence * versionMultiplier) / effort) * trendMultiplier;
+
+  // Round the components BEFORE scoring, not after.
+  //
+  // These are the numbers the UI publishes next to the score, and it used to round
+  // them for storage while computing the score from the full-precision values. A
+  // reader multiplying what they saw landed ~0.2 away from what they were shown —
+  // small, but it makes a page that claims every figure is checkable into one that
+  // isn't. Scoring from the rounded values means the published identity holds exactly.
+  const impact = round1(signals.reduce((sum, s) => sum + (s.severity_score || 3.0), 0) / signals.length);
+  const versionMultiplier = round2(getVersionRatioMultiplier(signals));
+
+  const systemRice = round1(((reach * impact * confidence * versionMultiplier) / effort) * trendMultiplier);
   return { reach, impact, confidence, versionMultiplier, effort, trendMultiplier, systemRice };
 }
+
+const round1 = (n: number): number => Math.round(n * 10) / 10;
+const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 function percentile(arr: number[], p: number): number {
   if (arr.length === 0) return 0;
@@ -80,11 +92,39 @@ function percentile(arr: number[], p: number): number {
   return arr[Math.max(0, idx)];
 }
 
+interface MoSCoWCuts {
+  p75: number;
+  p50: number;
+  p25: number;
+}
+
+/**
+ * MoSCoW is a forced ranking, not an absolute judgement: the cuts are drawn from
+ * whatever is in this run, so something is always "Must Have" even in a quiet week.
+ * That is a deliberate trade — it keeps the list decision-shaped — and the UI says
+ * so in its "How this is scored" panel rather than letting a reader assume otherwise.
+ */
+function percentileCuts(scores: number[]): MoSCoWCuts {
+  const sorted = [...scores].sort((a, b) => a - b);
+  return {
+    p75: percentile(sorted, 75),
+    p50: percentile(sorted, 50),
+    p25: percentile(sorted, 25),
+  };
+}
+
+function moscowFor(score: number, cuts: MoSCoWCuts): MoSCoW {
+  if (score >= cuts.p75) return 'Must Have';
+  if (score >= cuts.p50) return 'Should Have';
+  if (score >= cuts.p25) return 'Could Have';
+  return "Won't Have";
+}
+
 /**
  * Mirrors "Calculate RICE Scores":
  *   RICE = (reach × severity × confidence × version_multiplier) / effort × trend_multiplier
- *   MoSCoW assigned by percentile cutoffs (p75/p50/p25) across all groups this run.
- *   Per-theme MoSCoW inherits the parent group's value after the cuts are applied.
+ *   MoSCoW assigned by percentile cutoffs (p75/p50/p25), drawn separately for
+ *   groups (across group scores) and themes (across theme scores).
  */
 export function calculateRice(
   byGroup: Record<string, TaggedSignal[]>,
@@ -98,8 +138,10 @@ export function calculateRice(
     const themes = themesPerGroup[groupId] || [];
 
     const scoredThemes: ScoredTheme[] = themes.map((t) => {
+      // Already rounded inside computeThemeComponents, so the stored components and
+      // the stored score are the same numbers the UI prints. Do not re-round here.
       const c = computeThemeComponents(t, groupId, meta);
-      const systemRice = Math.round(c.systemRice * 10) / 10;
+      const systemRice = c.systemRice;
       return {
         theme_id: t.theme_id,
         theme_label: t.theme_label,
@@ -107,13 +149,13 @@ export function calculateRice(
         trend_direction: t.trend_direction,
         signal_count: (t.signals || []).length,
         reach: c.reach,
-        impact: Math.round(c.impact * 10) / 10,
+        impact: c.impact,
         confidence: c.confidence,
-        version_multiplier: Math.round(c.versionMultiplier * 100) / 100,
+        version_multiplier: c.versionMultiplier,
         effort: c.effort,
         trend_multiplier: c.trendMultiplier,
         system_rice: systemRice,
-        // Placeholder — overwritten below once the group's MoSCoW is known.
+        // Placeholder — overwritten below once every theme's score is known.
         moscow: 'Could Have',
         readiness: computeThemeReadiness(t),
         theme_score: systemRice,
@@ -158,24 +200,22 @@ export function calculateRice(
 
   scoredGroups.sort((a, b) => b.top_rice_score - a.top_rice_score);
 
-  const sortedScores = scoredGroups.map((g) => g.top_rice_score).sort((a, b) => a - b);
-  const p75 = percentile(sortedScores, 75);
-  const p50 = percentile(sortedScores, 50);
-  const p25 = percentile(sortedScores, 25);
-
-  const getMoSCoW = (score: number): MoSCoW => {
-    if (score >= p75) return 'Must Have';
-    if (score >= p50) return 'Should Have';
-    if (score >= p25) return 'Could Have';
-    return "Won't Have";
-  };
-
+  // Two separate percentile ladders, because a group's priority and a theme's
+  // priority are different claims.
+  //
+  // Themes used to inherit their group's MoSCoW wholesale. That put "Must Have"
+  // on a theme scoring 2.4 sitting next to one scoring 85.6 — a 35x gap wearing
+  // the same label — so at theme level the badge carried no information at all.
+  // Themes are now cut against the spread of themes.
+  const groupCuts = percentileCuts(scoredGroups.map((g) => g.top_rice_score));
   for (const g of scoredGroups) {
-    g.top_moscow = getMoSCoW(g.top_rice_score);
-    // Propagate the group's MoSCoW down to every theme inside it.
-    for (const t of g.scored_themes) {
-      t.moscow = g.top_moscow;
-    }
+    g.top_moscow = moscowFor(g.top_rice_score, groupCuts);
+  }
+
+  const allThemes = scoredGroups.flatMap((g) => g.scored_themes);
+  const themeCuts = percentileCuts(allThemes.map((t) => t.system_rice));
+  for (const t of allThemes) {
+    t.moscow = moscowFor(t.system_rice, themeCuts);
   }
 
   return scoredGroups;

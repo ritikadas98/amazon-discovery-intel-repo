@@ -5,13 +5,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { OpportunityHero, type OpportunityHeroData } from '@/components/digest/OpportunityHero';
 import { RankingTable } from '@/components/digest/RankingTable';
 import { ReadinessAlert } from '@/components/digest/ReadinessAlert';
-import { DataQualityWarning } from '@/components/digest/DataQualityWarning';
 import { SignalSparkline } from '@/components/digest/SignalSparkline';
 import { ThemeListForGroup } from '@/components/digest/ThemeListForGroup';
 import { TopSignalsForGroup } from '@/components/digest/TopSignalsForGroup';
 import { SourceMixChart } from '@/components/digest/SourceMixChart';
 import { GroupRiceTrend } from '@/components/digest/GroupRiceTrend';
-import { SourceBadge } from '@/components/digest/SourceBadge';
+import { DigestIntro } from '@/components/digest/DigestIntro';
 import { api } from '@/lib/api';
 import { parseDigestRow, rowSource, type ParsedDigest } from '@/lib/parsers';
 import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
@@ -78,7 +77,13 @@ export function DigestPage() {
 
   return (
     <div className="space-y-4">
-      <SourceBadge source={digest.dataSource} pulledAt={digest.createdAt} />
+      <DigestIntro
+        signalCount={signals.length}
+        groupCount={digest.themeBreakdown.length}
+        source={digest.dataSource}
+        pulledAt={digest.createdAt}
+        dataQualityWarning={digest.dataQualityWarning}
+      />
       {activeGroup === 'all' ? (
         <AllGroupsView digest={digest} signals={signals} />
       ) : (
@@ -106,10 +111,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
   return (
     <div className="space-y-4">
       <OpportunityHero data={heroData} />
-      {digest.dataQualityWarning && <DataQualityWarning warning={digest.dataQualityWarning} />}
-      {(digest.readiness?.themes ?? []).length > 0 && (
-        <ReadinessAlert themes={digest.readiness!.themes} />
-      )}
+      <ReadinessAlert themes={digest.themeBreakdown} />
       <RankingTable digest={digest} />
       <SignalSparkline signals={signals} groupId="all" />
     </div>
@@ -143,15 +145,10 @@ function SingleGroupView({
     delta: groupDelta,
   };
 
-  const readinessThemes = (digest.readiness?.themes ?? []).filter((t) =>
-    digest.themeBreakdown.some((tb) => tb.theme_id === t.theme_id && tb.feature_group_id === groupId),
-  );
-
   return (
     <div className="space-y-4">
       <OpportunityHero data={heroData} />
-      {digest.dataQualityWarning && <DataQualityWarning warning={digest.dataQualityWarning} />}
-      {readinessThemes.length > 0 && <ReadinessAlert themes={readinessThemes} />}
+      <ReadinessAlert themes={groupThemes} />
 
       <ThemeListForGroup themes={groupThemes} />
 

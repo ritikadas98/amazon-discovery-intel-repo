@@ -13,7 +13,7 @@ import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state'
 import type { Readiness } from '@/types';
 
 export function ReportPage() {
-  const group = useActiveGroup();
+  const rawGroup = useActiveGroup();
   const activeWeek = useActiveWeek();
   const activeSource = useActiveSource();
 
@@ -39,18 +39,11 @@ export function ReportPage() {
     enabled: !!digest?.weekId,
   });
 
-  if (group === 'all') {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center space-y-2">
-          <p className="text-sm font-medium">Discovery Report needs a specific feature group.</p>
-          <p className="text-xs text-muted-foreground">
-            Pick a group from the sidebar to view its theme RICE breakdown.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // The report is per-group, but every other page defaults to "all" and the top-bar
+  // link carries that scope across — so arriving here from the tabs used to land on an
+  // error message. Falling back to the highest-ranked group shows the report a reader
+  // most likely wanted anyway. An error is never a defensible default state.
+  const group = rawGroup === 'all' ? (digest?.topGroupId ?? 'all') : rawGroup;
 
   if (digestsQuery.isLoading) {
     return (

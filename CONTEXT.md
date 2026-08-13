@@ -187,6 +187,35 @@ Audited the public GitHub repo. Findings + actions:
   moderate `uuid`-via-googleapis advisories (need a breaking `googleapis` major;
   not attacker-reachable here). Cost backstop = a GCP billing budget alert (user).
 
+### 13 Aug 2026 — the dashboard was unreadable, and two of the reasons were real bugs
+
+Ritika opened the live demo and could not read it. That is the only user signal this
+project has ever had, and following it turned up more than clutter.
+
+The theme cards printed `R 26 · I 3.4 · C 0.8 · E 1` next to a score of 85.6. Those
+numbers multiply to 70.7. Two multipliers — version and trend — were applied by the
+pipeline and never shown, and the score was computed at full precision while the parts
+were rounded for display. So the arithmetic on screen did not close, on a project whose
+whole pitch is that every figure is checkable. Separately, MoSCoW was computed per group
+and stamped onto every theme inside it, so a theme scoring 2.4 sat next to one scoring
+85.6 wearing the same "Must Have".
+
+Fixed both, plus: readiness now runs on every group instead of only the top one (the
+other six showed a badge with no reason), one plain-English vocabulary replaced three,
+Report no longer opens on an error, and the six unexplained numbers per card collapsed
+into a plain sentence with the full derivation behind "Show the scoring".
+
+The frameworks stayed. Stripping RICE and MoSCoW out would have been the easiest way to
+make the page readable and would have deleted the thing it is meant to demonstrate.
+
+First tests in the repo (`src/pipeline/rice.test.ts`) pin the reconstruction identity so
+the original defect cannot come back quietly. `scripts/preview-fixture.ts` serves a
+digest built by the real scoring code with no Gemini call, for checking the UI without
+spending credits.
+
+**Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
+scored the old way. Until a run happens, the deployed site shows the old numbers.
+
 ---
 
 ## 4. Architecture today (high level)

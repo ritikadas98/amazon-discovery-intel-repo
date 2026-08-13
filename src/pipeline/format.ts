@@ -1,9 +1,12 @@
 import type {
   Meta,
+  Readiness,
   ReadinessResult,
   ScoredGroup,
+  ScoredTheme,
   TaggedSignal,
   ThemeBreakdownEntry,
+  ThemeReadiness,
 } from '../types.js';
 
 /** Mirrors "Format for Sheets" — column shaping for the "Signals" tab. */
@@ -34,37 +37,79 @@ export interface DigestRowInput {
   topGroupTopTheme: string;
   scoredGroups: ScoredGroup[];
   readiness: ReadinessResult | null;
+  /** Every theme in the run, not just the top group's. See assessReadiness. */
+  allThemeReadiness?: ThemeReadiness[];
   themesReady: number;
   themesBlocked: number;
   meta: Meta;
 }
 
-/** Flatten every group's themes into one array, overlaying AI-assessed readiness + gaps for the top group. */
+/** Flatten every group's themes into one array, overlaying the AI's readiness, gaps and next steps. */
 function buildThemeBreakdown(
   scoredGroups: ScoredGroup[],
-  readiness: ReadinessResult | null,
+  allThemeReadiness: ThemeReadiness[],
 ): ThemeBreakdownEntry[] {
-  const aiByThemeId = new Map(
-    (readiness?.themes ?? []).map((t) => [t.theme_id, t] as const),
-  );
+  const aiByThemeId = new Map(allThemeReadiness.map((t) => [t.theme_id, t] as const));
   const entries: ThemeBreakdownEntry[] = [];
   for (const g of scoredGroups) {
     for (const t of g.scored_themes) {
       const ai = aiByThemeId.get(t.theme_id);
+      const readiness = ai?.readiness ?? t.readiness;
       entries.push({
         ...t,
-        // AI-assessed readiness wins for top-group themes; deterministic value stands elsewhere.
-        readiness: ai?.readiness ?? t.readiness,
-        gap_reasons: ai?.gap_reasons,
-        recommended_next_steps: ai?.recommended_next_steps,
+        readiness,
+        // Never persist an empty explanation. A readiness badge with nothing beside it
+        // is the thing that made this panel unreadable; the model can still return
+        // nothing, so the deterministic reason stands in when it does.
+        gap_reasons: nonEmpty(ai?.gap_reasons) ?? fallbackGapReasons(t, readiness),
+        recommended_next_steps: nonEmpty(ai?.recommended_next_steps) ?? fallbackNextSteps(readiness),
       });
     }
   }
   return entries;
 }
 
+function nonEmpty(list: string[] | undefined): string[] | undefined {
+  const cleaned = (list ?? []).map((s) => s?.trim()).filter((s): s is string => !!s);
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+/**
+ * Written from the numbers we already have, in the same plain register the prompt asks
+ * the model for. Shared by the digest, the report and the email so the three cannot drift.
+ */
+function fallbackGapReasons(theme: ScoredTheme, readiness: Readiness): string[] {
+  const reasons: string[] = [];
+  if (theme.reach < 3) {
+    reasons.push(
+      theme.reach === 1 ? 'Only one person has raised this.' : `Only ${theme.reach} people have raised this.`,
+    );
+  }
+  if (theme.confidence < 1.0) {
+    reasons.push('It has come from one place, so it may not be widespread.');
+  }
+  if (theme.impact < 3.0) {
+    reasons.push('The people who mentioned it were not especially unhappy.');
+  }
+  if (reasons.length === 0) {
+    reasons.push(
+      readiness === 'READY'
+        ? 'Enough people, unhappy enough, from more than one place.'
+        : 'The evidence is thin in more than one way.',
+    );
+  }
+  return reasons;
+}
+
+function fallbackNextSteps(readiness: Readiness): string[] {
+  if (readiness === 'READY') return ['Enough to act on. Take it to the team that owns this area.'];
+  if (readiness === 'NEEDS_MORE_EVIDENCE') return ['Watch it for another week before committing anyone to it.'];
+  return ['Not enough to act on yet. Leave it and see whether it grows.'];
+}
+
 export function formatDigestRow(input: DigestRowInput): Record<string, unknown> {
-  const { weekId, topGroup, topGroupTopTheme, scoredGroups, readiness, themesReady, themesBlocked, meta } = input;
+  const { weekId, topGroup, topGroupTopTheme, scoredGroups, readiness, allThemeReadiness, themesReady, themesBlocked, meta } =
+    input;
 
   return {
     'Week ID': weekId,
@@ -95,7 +140,7 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     'Trend Direction JSON': JSON.stringify(
       scoredGroups.map((g) => ({ id: g.feature_group_id, trend: g.trend_direction })),
     ),
-    'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, readiness)),
+    'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [])),
     'Created At': new Date().toISOString(),
     'Discovery Readiness JSON': JSON.stringify(readiness ?? {}),
     'Overall Group Readiness': readiness?.overall_readiness ?? '',

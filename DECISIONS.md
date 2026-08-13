@@ -15,6 +15,57 @@ overwrite history).
 
 ---
 
+## 2026-08-13 — Make the dashboard readable by someone who has never seen it
+
+**What changed.** Four things, two of them defects rather than presentation:
+
+1. **The published RICE components now reconstruct the published score.** A theme card
+   showed `R 26 · I 3.4 · C 0.8 · E 1` beside 85.6. Those multiply to 70.7. The formula
+   applies a version multiplier and a trend multiplier that the UI never showed, and the
+   score was computed at full precision while the components were rounded for storage —
+   two separate reasons the arithmetic didn't close. Components are now rounded *before*
+   the score is computed from them, and every factor is rendered under "Show the scoring".
+2. **MoSCoW is scored per theme.** It was computed for a group and copied onto every
+   theme inside it, so a theme scoring 2.4 and one scoring 85.6 both read "Must Have".
+3. **Discovery readiness runs on every group**, in one batched Gemini call rather than
+   one call on the top group. Six of seven groups previously rendered a readiness badge
+   with no reason beside it.
+4. **One vocabulary, plain words.** "BLOCKED" → "Not enough to act on"; the same concept
+   no longer renders as `NEEDS_MORE_EVIDENCE` in one place and `PARTIAL` in another.
+   Report no longer opens on an error when the scope is "all".
+
+**PM rationale.** The owner could not read her own dashboard. That is the only user
+signal that matters here, and it pointed at something worse than clutter: the numbers
+did not agree with each other. This project's entire claim is that every figure is
+worked out in code and traceable to the reviews behind it. An interviewer who multiplies
+four visible numbers and gets a fifth concludes the score is decorative — the weakest
+screen was undermining the strongest claim. Showing the full derivation converts that
+from a liability into the demonstration it was always meant to be.
+
+The density was kept. RICE and MoSCoW still appear, because using them is part of what
+this project demonstrates; they moved off the surface into a glossary and an expandable
+derivation instead of being stripped out.
+
+**Mechanics.** `src/pipeline/rice.ts` — `computeThemeComponents` rounds before scoring;
+`percentileCuts`/`moscowFor` draw separate ladders for groups and themes.
+`src/agents/readiness.ts` — batched prompt over all groups, returns `allThemeReadiness`,
+drops any `theme_id` the model invents. `src/pipeline/format.ts` — deterministic
+fallback gaps/next-steps so a badge is never bare. `frontend/src/lib/vocabulary.ts` is
+the single source for wording; `components/common/StatusBadges.tsx` replaces a class
+string duplicated across five files; `ThemeScoreDerivation.tsx` renders the equation.
+First tests in the repo: `src/pipeline/rice.test.ts` (vitest) asserts the reconstruction
+identity exactly, so this cannot regress silently.
+
+**Considered & not done.**
+- *Merging Report into Digest as a drill-down.* Fewer places to get lost, but a large
+  rebuild of both pages for a project that may not get its own launch post. Deferred.
+- *Stripping RICE and MoSCoW from the UI entirely.* Simplest to read, but it deletes the
+  evidence that the author can apply PM frameworks — the opposite of the point.
+- *Seven readiness calls instead of one batched call.* More expensive, and it lets the
+  model judge each group in isolation so "strong evidence" drifts between them.
+
+---
+
 ## 2026-07-26 — `ARCHITECTURE.md` as a fourth project doc
 
 **What changed.** Added `ARCHITECTURE.md` at the repo root — a structural

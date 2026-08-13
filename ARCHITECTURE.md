@@ -707,16 +707,21 @@ interesting shapes in the system:
                         overlay by theme_id — AI value WINS where present
 ```
 
-Rationale: readiness is the judgment a PM most wants nuance on, but Gemini on
-every theme in every group would triple cost and latency for marginal benefit.
-So the top group — the one the PM will actually act on — gets the LLM with
-qualitative gap reasons and next steps; everything else gets the same rubric
-computed deterministically, so no theme is ever unlabeled. The merge is a
-`Map<theme_id, ThemeReadiness>` overlay in `buildThemeBreakdown()`.
+Rationale: readiness is the judgment a PM most wants nuance on. This used to run
+on the top group only, to save cost — but the deterministic fallback assigned a
+label without a reason, so six groups out of seven rendered a badge with nothing
+beside it. A panel whose whole job is explaining, explaining nothing. It is now
+**one batched call covering every group**: cheaper than seven separate calls, and
+it keeps the model's sense of "strong evidence" consistent across groups rather
+than judging each in isolation. Theme IDs the model invents are dropped rather
+than surfaced. The merge is still a `Map<theme_id, ThemeReadiness>` overlay in
+`buildThemeBreakdown()`, which additionally supplies deterministic gap reasons and
+next steps whenever the model returns none — a badge is never bare.
 
-Presentation note: group-level readiness is relabeled for the Discovery Report
-(`READY`→READY, `NEEDS_MORE_EVIDENCE`→PARTIAL, `BLOCKED`→NOT_READY) while
-theme-level badges keep the raw three labels.
+Presentation note: readiness has one vocabulary everywhere, defined in
+`frontend/src/lib/vocabulary.ts` — "Enough evidence" / "Needs more evidence" /
+"Not enough to act on". It previously rendered as the raw enum on theme rows and
+as PARTIAL/NOT_READY on the group summary, which read as two different concepts.
 
 ### 8.4 Week-over-week
 
@@ -1372,7 +1377,7 @@ Two seams that are *not* clean, worth knowing before you plan work:
 | `pipeline/format.ts` | L3 | Row shaping for both tabs; `buildThemeBreakdown` AI/deterministic overlay |
 | `agents/clean.ts` | L3 | Agent 1 — dedup, irrelevance, severity, `version_flagged` + drop accounting |
 | `agents/synthesize.ts` | L3 | Agent 3 — 3–6 themes + one group tag per signal |
-| `agents/readiness.ts` | L3 | Agent 5 — LLM readiness on the top group |
+| `agents/readiness.ts` | L3 | Agent 5 — LLM readiness, one batched call over all groups |
 | `agents/chat.ts` | L4 | `buildChatContext` (scope) + `handleChatStream` (prompt + stream) |
 | `templates/digestEmail.ts` | L3 | Digest HTML: hero, ranking cards, readiness block, 👍/👎 anchors |
 | `templates/regressionEmail.ts` | L3 | Regression alert HTML |

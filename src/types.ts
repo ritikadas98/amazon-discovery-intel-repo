@@ -104,7 +104,7 @@ export interface ScoredTheme {
   trend_multiplier: number;
   /** System-computed RICE = (reach × impact × confidence × version_multiplier) / effort × trend_multiplier. */
   system_rice: number;
-  /** Inherited from the parent group's MoSCoW after percentile cuts. */
+  /** Percentile cuts across every theme in the run — not inherited from the group. */
   moscow: MoSCoW;
   /** Deterministic readiness from the same 4 criteria Agent 5 uses. AI-assessed value wins for top-group themes (set in run.ts). */
   readiness: Readiness;

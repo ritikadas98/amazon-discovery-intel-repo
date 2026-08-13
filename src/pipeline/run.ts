@@ -130,15 +130,18 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const scoredGroups = assignWoWDeltas(scoredGroupsBase, lastWeekLookup);
   log(`Scored ${scoredGroups.length} groups; top=${scoredGroups[0]?.feature_group_id} RICE=${scoredGroups[0]?.top_rice_score}`);
 
-  // 10. Agent 5: discovery readiness on top group
+  // 10. Agent 5: discovery readiness across every group, in one call
   const topGroup = scoredGroups[0];
   if (!topGroup) throw new Error('No scored groups produced — pipeline aborted.');
   const themesOfTopGroup = themesPerGroup[topGroup.feature_group_id] || [];
-  const { readiness, themesReady, themesBlocked } = await assessReadiness({
-    topGroup,
-    themesOfTopGroup,
+  const { readiness, themesReady, themesBlocked, allThemeReadiness } = await assessReadiness({
+    scoredGroups,
+    themesPerGroup,
   });
-  log(`Readiness: ${readiness.overall_readiness} (READY=${themesReady}, BLOCKED=${themesBlocked})`);
+  log(
+    `Readiness: ${readiness.overall_readiness} (READY=${themesReady}, BLOCKED=${themesBlocked})` +
+      ` across ${allThemeReadiness.length} themes in ${scoredGroups.length} groups`,
+  );
 
   // 11. Append the weekly digest row
   const topGroupTopTheme = themesOfTopGroup[0]?.theme_label || topGroup.top_theme || '';
@@ -148,6 +151,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     topGroupTopTheme,
     scoredGroups,
     readiness,
+    allThemeReadiness,
     themesReady,
     themesBlocked,
     meta,

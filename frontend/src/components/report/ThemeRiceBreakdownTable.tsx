@@ -2,10 +2,8 @@ import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { MOSCOW_CLASS, READINESS_CLASS } from '@/lib/colors';
+import { MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { api } from '@/lib/api';
 import { SegmentedEffortSelector } from './SegmentedEffortSelector';
 import type { EffortOverride, ThemeBreakdownEntry } from '@/types';
@@ -16,10 +14,18 @@ interface Props {
   overrides: EffortOverride[];
 }
 
-/** PM-adjusted RICE per spec: (Reach × Impact × Confidence) / chosen_effort */
+/**
+ * PM-adjusted RICE — the same formula the pipeline uses, with the PM's effort swapped in.
+ *
+ * This used to drop version_multiplier and trend_multiplier, so the two columns differed
+ * even when the PM had changed nothing. A reader could only conclude one of them was
+ * wrong. Effort is now the only thing that varies between them, which is the entire
+ * point of letting a PM edit it.
+ */
 function adjustedRice(t: ThemeBreakdownEntry, effort: number): number {
   if (effort <= 0) return 0;
-  return Math.round(((t.reach * t.impact * t.confidence) / effort) * 10) / 10;
+  const raw = ((t.reach * t.impact * t.confidence * t.version_multiplier) / effort) * t.trend_multiplier;
+  return Math.round(raw * 10) / 10;
 }
 
 export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
@@ -68,10 +74,11 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Theme RICE Breakdown</CardTitle>
+        <CardTitle>Themes in this group</CardTitle>
         <CardDescription>
-          Edit the Effort column to recompute PM-adjusted RICE in real time.
-          PM-adjusted RICE = (Reach × Impact × Confidence) / chosen effort.
+          Change the Effort column to see the score move. Both columns use the same
+          formula &mdash; Reach &times; Impact &times; Confidence &times; version &divide; effort
+          &times; trend &mdash; so effort is the only difference between them.
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
@@ -79,14 +86,16 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Theme</TableHead>
-              <TableHead className="text-right">R</TableHead>
-              <TableHead className="text-right">I</TableHead>
-              <TableHead className="text-right">C</TableHead>
+              {/* Single letters were unreadable to anyone who did not already know
+                  RICE. The abbreviation stays in the tooltip for those who do. */}
+              <TableHead className="text-right" title="Reach — how many people mentioned it">People</TableHead>
+              <TableHead className="text-right" title="Impact — how unhappy they were, 1 to 5">Severity</TableHead>
+              <TableHead className="text-right" title="Confidence — how many sources it came from">Sources</TableHead>
               <TableHead>Effort</TableHead>
-              <TableHead className="text-right">RICE (system)</TableHead>
-              <TableHead className="text-right">RICE (PM)</TableHead>
-              <TableHead>MoSCoW</TableHead>
-              <TableHead>Readiness</TableHead>
+              <TableHead className="text-right">Score</TableHead>
+              <TableHead className="text-right">Your score</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Evidence</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -129,14 +138,10 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
                     {pmRice.toFixed(1)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 h-5', MOSCOW_CLASS[t.moscow])}>
-                      {t.moscow}
-                    </Badge>
+                    <MoscowBadge value={t.moscow} />
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 h-5', READINESS_CLASS[t.readiness])}>
-                      {t.readiness.replace(/_/g, ' ')}
-                    </Badge>
+                    <ReadinessBadge value={t.readiness} />
                   </TableCell>
                 </TableRow>
               );

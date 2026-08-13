@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { MOSCOW_CLASS, READINESS_CLASS, TREND_CLASS } from '@/lib/colors';
+import { TREND_CLASS } from '@/lib/colors';
+import { MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
+import { ThemeScoreDerivation } from './ThemeScoreDerivation';
+import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ThemeBreakdownEntry, TrendDirection } from '@/types';
 
@@ -28,7 +30,7 @@ export function ThemeListForGroup({ themes }: Props) {
         <div>
           <CardTitle className="text-sm">Themes in this group</CardTitle>
           <CardDescription>
-            Sorted by system RICE. Click a theme to deep-dive in the Discovery Report.
+            Highest priority first. Open the full report to change effort and re-rank.
           </CardDescription>
         </div>
         <Button asChild variant="ghost" size="sm" className="-mr-2 shrink-0">
@@ -58,27 +60,22 @@ export function ThemeListForGroup({ themes }: Props) {
                     {t.system_rice.toFixed(1)}
                   </span>
                 </div>
+                {/* The plain sentence leads. Someone who does not know what RICE is
+                    should still learn what this theme is and how bad it is getting. */}
+                <p className="text-[12px] text-muted-foreground mb-1.5">
+                  {t.signal_count === 1 ? '1 person raised this' : `${t.signal_count} people raised this`}
+                  {', '}
+                  <span className={TREND_CLASS[t.trend_direction]}>{TREND_LABEL[t.trend_direction]}</span>.
+                </p>
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                  <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 h-5', MOSCOW_CLASS[t.moscow])}>
-                    {t.moscow}
-                  </Badge>
-                  <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 h-5', READINESS_CLASS[t.readiness])}>
-                    {t.readiness.replace(/_/g, ' ')}
-                  </Badge>
+                  <MoscowBadge value={t.moscow} />
+                  <ReadinessBadge value={t.readiness} />
                   <span className={cn('inline-flex items-center gap-0.5 text-[11px]', TREND_CLASS[t.trend_direction])}>
                     {trendIcon(t.trend_direction)}
-                    {t.trend_direction}
-                  </span>
-                  <span className="text-muted-foreground ml-auto tabular-nums">
-                    {t.signal_count} signal{t.signal_count === 1 ? '' : 's'} · sev {t.impact.toFixed(1)}
+                    {TREND_LABEL[t.trend_direction]}
                   </span>
                 </div>
-                <div className="mt-2 pt-2 border-t flex items-center gap-3 text-[11px] text-muted-foreground tabular-nums">
-                  <span>R {t.reach}</span>
-                  <span>I {t.impact.toFixed(1)}</span>
-                  <span>C {t.confidence.toFixed(1)}</span>
-                  <span>E {t.effort}</span>
-                </div>
+                <ThemeScoreDerivation theme={t} />
               </div>
             ))}
           </div>

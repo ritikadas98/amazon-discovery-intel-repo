@@ -56,7 +56,7 @@ export function SignalSparkline({ signals, groupId }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Signal Volume — Last 7 Days</CardTitle>
+        <CardTitle>Complaints per day</CardTitle>
         <CardDescription>
           Daily count of signals for this week{groupId !== 'all' ? ' in the selected group' : ''}.
         </CardDescription>

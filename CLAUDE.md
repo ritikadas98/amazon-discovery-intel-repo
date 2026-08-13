@@ -50,7 +50,7 @@ on-demand via HTTP. Six stages:
 3. **Clean (Gemini)** — dedup, irrelevance filter, severity score 1.0–5.0, version-flagged boolean
 4. **Detect regressions** — group version-flagged signals by version; cluster ≥5 = regression alert email
 5. **Synthesize (Gemini)** — cluster into 3–6 specific themes per run, tag each signal with one of 7 feature groups
-6. **Score** — RICE per theme, percentile-based MoSCoW per group, week-over-week deltas, discovery readiness (Gemini #3 on the top group, deterministic on others)
+6. **Score** — RICE per theme, percentile-based MoSCoW drawn separately for groups and for themes, week-over-week deltas, discovery readiness (Gemini #3, one batched call covering every group)
 
 **Outputs:** rows appended to a Google Sheet (the system of record),
 plus a styled HTML digest email and a styled regression-alert email when
@@ -214,7 +214,7 @@ Strong-count maps to readiness:
 - 2 strong → **NEEDS_MORE_EVIDENCE**
 - 0-1 strong → **BLOCKED**
 
-For the **top group's** themes, Gemini Agent 5 assesses these and may
+For **every group's** themes, Gemini Agent 5 assesses these and may
 override with nuance (it also produces `gap_reasons` + `recommended_next_steps`).
 For **other groups**' themes, the deterministic rubric above runs in
 `rice.ts:computeThemeReadiness`.
@@ -556,7 +556,7 @@ has Editor access.
 | `MoSCoW JSON` | `[{"id":"returns_refunds","moscow":"Must Have"},…]` | All 7 groups |
 | `Discovery Readiness JSON` | full `ReadinessResult` object | Top group only |
 | `Overall Group Readiness` | `READY`\|`NEEDS_MORE_EVIDENCE`\|`BLOCKED` | |
-| `Themes Ready Count` | `1` | Among top group's themes |
+| `Themes Ready Count` | `1` | Among top group's themes (the row is a top-group snapshot) |
 | `Themes Blocked Count` | `0` | |
 | `Data Quality Warning` | `""` or warning text | |
 | `WoW Delta JSON` | `[{id, rice_delta, signal_delta, severity_delta, moscow_escalated, moscow_prev, …}]` | Per-group |
@@ -1064,7 +1064,7 @@ CORS_ORIGIN=https://your-frontend.web.app bash scripts/gcp-deploy.sh
 | `agents/clean.ts` | Agent 1: dedup + irrelevance + severity + version_flagged. Gemini call. |
 | `agents/synthesize.ts` | Agent 3: theme clustering + feature-group tagging. Gemini call. |
 | `agents/chat.ts` | RAG chat (Track 1): `buildChatContext()` scopes 3 digests + 200 signals by group/week; `handleChatStream()` builds the prompt and streams via `streamGemini`. |
-| `agents/readiness.ts` | Agent 5: discovery readiness assessment for top group. Gemini call. |
+| `agents/readiness.ts` | Agent 5: discovery readiness for every group, one batched Gemini call. |
 | `templates/digestEmail.ts` | Full digest HTML with 👍/👎 anchors. Receives `baseUrl` + `recipientEmail`. |
 | `templates/regressionEmail.ts` | Regression alert HTML. |
 
