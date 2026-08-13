@@ -72,7 +72,7 @@ export function RankingTable({ digest }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Feature Group Ranking</CardTitle>
+        <CardTitle>Where the complaints are</CardTitle>
         <CardDescription>Highest priority first. Click a row to open that group.</CardDescription>
       </CardHeader>
       <CardContent className="px-0">

@@ -13,7 +13,9 @@ import type { MoSCoW, Readiness } from '@/types';
  * says the same thing at length, this is the version you get without leaving the row.
  */
 
-const PILL = 'text-[10px] py-0 px-1.5 h-5 font-normal';
+// 10px was unreadable on a phone. These carry the priority and the evidence quality —
+// two of the three things the card is for — so they get real type, not footnote type.
+const PILL = 'text-[12px] py-0.5 px-2 h-[22px] font-medium';
 
 export function ReadinessBadge({ value, className }: { value: Readiness; className?: string }) {
   return (

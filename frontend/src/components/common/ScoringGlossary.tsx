@@ -1,6 +1,6 @@
 import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MOSCOW_CAVEAT, READINESS_HINT, READINESS_LABEL, SCORING_GLOSSARY } from '@/lib/vocabulary';
+import { MOSCOW_CAVEAT, READINESS_HINT, READINESS_LABEL, SCORE_CAVEAT, SCORING_GLOSSARY } from '@/lib/vocabulary';
 import type { Readiness } from '@/types';
 
 const READINESS_ORDER: Readiness[] = ['READY', 'NEEDS_MORE_EVIDENCE', 'BLOCKED'];
@@ -24,8 +24,11 @@ export function ScoringGlossary() {
         <div className="space-y-1">
           <p className="font-medium text-sm">The priority score</p>
           <p className="text-muted-foreground leading-relaxed">
-            Every theme gets one number. Six things go into it, and each theme card can show
-            you its own arithmetic under &ldquo;Show the scoring&rdquo;.
+            Every theme gets one number, so the list can be ordered. {SCORE_CAVEAT}
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            Six things go into it. Each theme card shows its own arithmetic under
+            &ldquo;Show the scoring&rdquo;.
           </p>
         </div>
 

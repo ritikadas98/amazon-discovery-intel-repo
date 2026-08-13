@@ -89,17 +89,20 @@ export function severityTier(score: number): SeverityTier {
 
 import type { MoSCoW, Readiness } from '@/types';
 
+// Light-mode text is a step or two darker than the obvious -700 pairing. On a -100
+// tint, -700 lands around 4.5:1 and gray-500 was closer to 3:1 — legible on a big
+// screen, not on a phone in daylight. Dark mode was already fine and is unchanged.
 export const MOSCOW_CLASS: Record<MoSCoW, string> = {
-  'Must Have': 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
-  'Should Have': 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
-  'Could Have': 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
-  "Won't Have": 'bg-gray-100 text-gray-500 dark:bg-slate-500/15 dark:text-slate-400',
+  'Must Have': 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400',
+  'Should Have': 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-400',
+  'Could Have': 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400',
+  "Won't Have": 'bg-gray-200 text-gray-700 dark:bg-slate-500/15 dark:text-slate-400',
 };
 
 export const READINESS_CLASS: Record<Readiness, string> = {
-  READY: 'bg-green-100 text-green-700 dark:bg-emerald-500/15 dark:text-emerald-400',
-  NEEDS_MORE_EVIDENCE: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
-  BLOCKED: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400',
+  READY: 'bg-green-100 text-green-800 dark:bg-emerald-500/15 dark:text-emerald-400',
+  NEEDS_MORE_EVIDENCE: 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-400',
+  BLOCKED: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400',
 };
 
 /** Group-level readiness summary maps to PARTIAL/NOT_READY labels (per locked decision). */
@@ -118,9 +121,9 @@ export const GROUP_READINESS_CLASS: Record<'READY' | 'PARTIAL' | 'NOT_READY', st
 // ─── Trend (worsening / stable / improving) ──────────────────────────────────
 
 export const TREND_CLASS: Record<string, string> = {
-  worsening: 'text-red-600 dark:text-red-400',
-  stable: 'text-slate-500 dark:text-slate-400',
-  improving: 'text-emerald-600 dark:text-emerald-400',
+  worsening: 'text-red-700 dark:text-red-400',
+  stable: 'text-slate-600 dark:text-slate-400',
+  improving: 'text-emerald-700 dark:text-emerald-400',
 };
 
 export const TREND_ARROW: Record<string, string> = {

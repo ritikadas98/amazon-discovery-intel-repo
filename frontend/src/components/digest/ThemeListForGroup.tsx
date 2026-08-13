@@ -1,28 +1,24 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { TREND_CLASS } from '@/lib/colors';
 import { MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { ThemeScoreDerivation } from './ThemeScoreDerivation';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
-import type { ThemeBreakdownEntry, TrendDirection } from '@/types';
+import type { ThemeBreakdownEntry } from '@/types';
 
 interface Props {
   themes: ThemeBreakdownEntry[];
 }
 
-function trendIcon(d: TrendDirection) {
-  if (d === 'worsening') return <TrendingUp className="h-3 w-3" />;
-  if (d === 'improving') return <TrendingDown className="h-3 w-3" />;
-  return <Minus className="h-3 w-3" />;
-}
-
 export function ThemeListForGroup({ themes }: Props) {
   const buildLink = useScopedLinkBuilder();
   const sorted = [...themes].sort((a, b) => b.system_rice - a.system_rice);
+  // Every score is described against the strongest one in the run, because on its own
+  // the number has no scale — it is a ranking position, not a mark out of a hundred.
+  const topScore = sorted[0]?.system_rice ?? 0;
 
   return (
     <Card>
@@ -54,28 +50,26 @@ export function ThemeListForGroup({ themes }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {sorted.map((t) => (
               <div key={t.theme_id} className="rounded-md border bg-card p-3">
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <p className="text-sm font-medium leading-snug flex-1">{t.theme_label}</p>
-                  <span className="font-mono tabular-nums text-sm font-semibold shrink-0">
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <p className="text-[15px] font-semibold leading-snug flex-1">{t.theme_label}</p>
+                  <span className="font-mono tabular-nums text-base font-semibold shrink-0">
                     {t.system_rice.toFixed(1)}
                   </span>
                 </div>
                 {/* The plain sentence leads. Someone who does not know what RICE is
                     should still learn what this theme is and how bad it is getting. */}
-                <p className="text-[12px] text-muted-foreground mb-1.5">
+                <p className="text-[13.5px] text-muted-foreground mb-2 leading-relaxed">
                   {t.signal_count === 1 ? '1 person raised this' : `${t.signal_count} people raised this`}
                   {', '}
                   <span className={TREND_CLASS[t.trend_direction]}>{TREND_LABEL[t.trend_direction]}</span>.
                 </p>
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                {/* The trend is already in the sentence above; repeating it as a chip
+                    was the same fact three times on one card. */}
+                <div className="flex flex-wrap items-center gap-2">
                   <MoscowBadge value={t.moscow} />
                   <ReadinessBadge value={t.readiness} />
-                  <span className={cn('inline-flex items-center gap-0.5 text-[11px]', TREND_CLASS[t.trend_direction])}>
-                    {trendIcon(t.trend_direction)}
-                    {TREND_LABEL[t.trend_direction]}
-                  </span>
                 </div>
-                <ThemeScoreDerivation theme={t} />
+                <ThemeScoreDerivation theme={t} topScore={topScore} />
               </div>
             ))}
           </div>

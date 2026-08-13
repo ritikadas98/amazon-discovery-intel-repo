@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { TREND_LABEL } from '@/lib/vocabulary';
+import { SCORE_CAVEAT, TREND_LABEL, scoreMeaning } from '@/lib/vocabulary';
 import type { ThemeBreakdownEntry } from '@/types';
 
 /**
@@ -19,13 +18,15 @@ import type { ThemeBreakdownEntry } from '@/types';
 
 interface Props {
   theme: ThemeBreakdownEntry;
+  /** Highest score in this run, so the number can be described relative to something. */
+  topScore: number;
 }
 
 function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(n < 10 ? 2 : 1).replace(/0+$/, '').replace(/\.$/, '');
 }
 
-export function ThemeScoreDerivation({ theme: t }: Props) {
+export function ThemeScoreDerivation({ theme: t, topScore }: Props) {
   const [open, setOpen] = useState(false);
 
   const steps = [
@@ -38,33 +39,36 @@ export function ThemeScoreDerivation({ theme: t }: Props) {
   ];
 
   return (
-    <div className="mt-2 pt-2 border-t">
+    <div className="mt-2.5 pt-2.5 border-t space-y-2">
+      {/* What the number is for, always visible. The arithmetic is optional; knowing
+          whether 34.6 means "do this now" or "ignore it" is not. */}
+      <p className="text-[13px] leading-relaxed">{scoreMeaning(t.system_rice, topScore)}</p>
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-1 text-[12.5px] text-muted-foreground hover:text-foreground transition-colors"
       >
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         {open ? 'Hide the scoring' : 'Show the scoring'}
       </button>
 
       {open && (
-        <div className="mt-2 space-y-1.5">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-[11px] tabular-nums">
+        <div className="space-y-1.5 rounded-md bg-muted/40 p-2.5">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[12.5px] tabular-nums">
             {steps.map((s) => (
               <span key={s.label} className="inline-flex items-baseline gap-1">
-                {s.op && <span className="text-muted-foreground/60">{s.op}</span>}
-                <span className="font-mono font-medium">{s.value}</span>
+                {s.op && <span className="text-muted-foreground/70">{s.op}</span>}
+                <span className="font-mono font-semibold">{s.value}</span>
                 <span className="text-muted-foreground">{s.label}</span>
               </span>
             ))}
-            <span className="text-muted-foreground/60">=</span>
+            <span className="text-muted-foreground/70">=</span>
             <span className="font-mono font-semibold">{t.system_rice.toFixed(1)}</span>
           </div>
-          <p className={cn('text-[10.5px] text-muted-foreground leading-relaxed')}>
-            Multiply it through yourself &mdash; it lands on {t.system_rice.toFixed(1)}. Every figure
-            here comes from the reviews behind this theme.
+          <p className="text-[12px] text-muted-foreground leading-relaxed">
+            Multiply it through &mdash; it lands on {t.system_rice.toFixed(1)} exactly. {SCORE_CAVEAT}
           </p>
         </div>
       )}
