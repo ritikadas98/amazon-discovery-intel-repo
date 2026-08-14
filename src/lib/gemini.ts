@@ -11,7 +11,10 @@ export interface GeminiOptions {
 interface GeminiResponse {
   candidates?: Array<{
     content?: { parts?: Array<{ text?: string }> };
+    finishReason?: string;
   }>;
+  promptFeedback?: { blockReason?: string };
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
 }
 
 let cachedAuthClient: AuthClient | null = null;
@@ -93,7 +96,28 @@ export async function callGemini(prompt: string, opts: GeminiOptions = {}): Prom
   }
 
   const data = (await res.json()) as GeminiResponse;
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const candidate = data.candidates?.[0];
+  const rawText = candidate?.content?.parts?.[0]?.text ?? '';
+
+  // Say why the text is empty rather than handing back "" and letting the caller
+  // report "invalid JSON:" with nothing after the colon. On 2.5 the thinking budget
+  // is spent from maxOutputTokens, so a big prompt with thinking on can burn the whole
+  // allowance and return MAX_TOKENS with no content at all — which is what happened
+  // when readiness went from one group to all of them.
+  if (!rawText.trim()) {
+    const reason = candidate?.finishReason ?? data.promptFeedback?.blockReason ?? 'no candidates returned';
+    const used = data.usageMetadata;
+    const budget = used
+      ? ` (prompt ${used.promptTokenCount ?? '?'} tok, output ${used.candidatesTokenCount ?? 0} tok, cap ${maxOutputTokens})`
+      : '';
+    throw new Error(
+      `Vertex AI returned no text: finishReason=${reason}${budget}. ` +
+        (reason === 'MAX_TOKENS'
+          ? 'Raise maxOutputTokens or lower thinkingLevel — thinking tokens count against the same cap.'
+          : ''),
+    );
+  }
+
   return rawText.replace(/```json|```/g, '').trim();
 }
 

@@ -27,11 +27,16 @@ function buildPrompt(groups: GroupForPrompt[]): string {
       theme_label: t.theme_label,
       trend_direction: t.trend_direction,
       signal_count: t.signals.length,
-      sample_signals: t.signals.slice(0, 3).map((s) => ({
-        text: s.text,
+      // Two samples, truncated. This prompt now covers every group rather than one,
+      // so the same three-full-reviews-per-theme that was fine for a single group
+      // multiplies into a very large request. The model is judging evidence quality
+      // from counts, sources and severity — it does not need the whole review to do it.
+      sources: [...new Set(t.signals.map((s) => s.source))],
+      avg_severity: Math.round((t.signals.reduce((a, s) => a + (s.severity_score || 3), 0) / Math.max(t.signals.length, 1)) * 10) / 10,
+      sample_signals: t.signals.slice(0, 2).map((s) => ({
+        text: s.text.length > 220 ? `${s.text.slice(0, 220)}…` : s.text,
         severity_score: s.severity_score,
         source: s.source,
-        version_flagged: s.version_flagged,
       })),
     })),
   }));
@@ -140,7 +145,15 @@ export async function assessReadiness(input: AssessReadinessInput): Promise<Asse
   }));
 
   const prompt = buildPrompt(groups);
-  const cleaned = await callGemini(prompt, { temperature: 0.1, thinkingLevel: 'medium' });
+  // One response now covers every theme in the run, roughly 20 of them with two text
+  // fields each. The 8192 default was spent before the model finished — and on 2.5 the
+  // thinking budget comes out of the same allowance, so 'medium' was taking half of it
+  // before a single output token. Give it room and stop thinking against the cap.
+  const cleaned = await callGemini(prompt, {
+    temperature: 0.1,
+    thinkingLevel: 'minimal',
+    maxOutputTokens: 32768,
+  });
   const parsed = parseJsonOrThrow<BatchedReadinessResponse>(cleaned, 'assessReadiness');
 
   if (!Array.isArray(parsed.groups) || parsed.groups.length === 0) {

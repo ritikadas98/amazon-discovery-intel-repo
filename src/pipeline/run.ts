@@ -18,7 +18,24 @@ import { appendRows, readRows } from '../lib/sheets.js';
 import { sendEmail } from '../lib/email.js';
 import { renderRegressionEmail } from '../templates/regressionEmail.js';
 import { renderDigestEmail } from '../templates/digestEmail.js';
-import type { GroupSummary, PipelineResult, RawSignal, RunOptions, TopGroupView } from '../types.js';
+import type {
+  GroupSummary,
+  PipelineResult,
+  RawSignal,
+  Readiness,
+  ReadinessResult,
+  RunOptions,
+  ThemeReadiness,
+  TopGroupView,
+} from '../types.js';
+
+/** Worst readiness across a group's themes — the honest group-level summary when the
+ *  LLM assessment is unavailable. BLOCKED beats NEEDS_MORE_EVIDENCE beats READY. */
+function worstReadiness(themes: Array<{ readiness: Readiness }>): Readiness {
+  if (themes.some((t) => t.readiness === 'BLOCKED')) return 'BLOCKED';
+  if (themes.some((t) => t.readiness === 'NEEDS_MORE_EVIDENCE')) return 'NEEDS_MORE_EVIDENCE';
+  return 'READY';
+}
 
 export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const env = getEnv();
@@ -134,14 +151,30 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const topGroup = scoredGroups[0];
   if (!topGroup) throw new Error('No scored groups produced — pipeline aborted.');
   const themesOfTopGroup = themesPerGroup[topGroup.feature_group_id] || [];
-  const { readiness, themesReady, themesBlocked, allThemeReadiness } = await assessReadiness({
-    scoredGroups,
-    themesPerGroup,
-  });
-  log(
-    `Readiness: ${readiness.overall_readiness} (READY=${themesReady}, BLOCKED=${themesBlocked})` +
-      ` across ${allThemeReadiness.length} themes in ${scoredGroups.length} groups`,
-  );
+
+  // Readiness enriches the run; it does not constitute it. Every theme already carries
+  // a deterministic readiness from the same four criteria, and format.ts writes plain
+  // gap reasons and next steps when the model gives none — so if this stage fails the
+  // digest is slightly less nuanced, not absent.
+  //
+  // It used to throw and take the whole pipeline with it: a week of ingestion, cleaning
+  // and scoring discarded because one LLM response came back unparseable. Losing all of
+  // that for the least critical stage is the wrong trade.
+  let readiness: ReadinessResult | null = null;
+  let themesReady = 0;
+  let themesBlocked = 0;
+  let allThemeReadiness: ThemeReadiness[] = [];
+  try {
+    const assessed = await assessReadiness({ scoredGroups, themesPerGroup });
+    ({ readiness, themesReady, themesBlocked, allThemeReadiness } = assessed);
+    log(
+      `Readiness: ${readiness.overall_readiness} (READY=${themesReady}, BLOCKED=${themesBlocked})` +
+        ` across ${allThemeReadiness.length} themes in ${scoredGroups.length} groups`,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log(`Readiness stage FAILED, continuing with deterministic values only: ${message}`);
+  }
 
   // 11. Append the weekly digest row
   const topGroupTopTheme = themesOfTopGroup[0]?.theme_label || topGroup.top_theme || '';
@@ -188,9 +221,11 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     ...topGroup,
     group_id: topGroup.feature_group_id,
     group_name: config.feature_groups.find((fg) => fg.id === topGroup.feature_group_id)?.name,
-    readiness: readiness.overall_readiness,
-    readiness_summary: readiness.readiness_summary,
-    theme_readiness: readiness.themes,
+    // Falls back to the top group's worst deterministic theme readiness when the LLM
+    // stage was skipped, so the digest still states a position rather than nothing.
+    readiness: readiness?.overall_readiness ?? worstReadiness(topGroup.scored_themes),
+    readiness_summary: readiness?.readiness_summary ?? '',
+    theme_readiness: readiness?.themes ?? [],
   };
 
   // 13. Send the digest email
@@ -218,7 +253,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     topGroup: topGroup.feature_group_id,
     topRiceScore: topGroup.top_rice_score,
     topMoscow: topGroup.top_moscow,
-    overallReadiness: readiness.overall_readiness,
+    overallReadiness: readiness?.overall_readiness ?? worstReadiness(topGroup.scored_themes),
     regressionCount: meta.regressions.length,
     droppedDuplicate,
     droppedIrrelevant,
