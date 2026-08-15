@@ -15,6 +15,37 @@ overwrite history).
 
 ---
 
+## 2026-08-16 — The chat can cite an assessment, not just a review
+
+**What changed.** `compactDigest` dropped the `Theme Breakdown JSON` column, so the chat
+saw the week's headline figures but never the per-theme assessment underneath them. A PM
+could ask what the top theme was; they could not ask why it was judged the way it was.
+The digest context now carries each theme's readiness, evidence gaps, suggested next
+steps, severity, trend and score, and a second citation rule lets the model reference
+them inline as `[theme 2026-W33/t3]`.
+
+**PM rationale.** "Why did you say that" is the question a PM actually asks, and it was
+the one question the assistant structurally could not answer — the reasoning existed, in
+a column nobody passed it. Theme ids are only unique inside a run (`t1`, `t3`,
+`unclassified`), so the citable ref is prefixed with the week; without that, a reference
+to `t1` silently means a different theme depending on which digest the model was looking
+at.
+
+**Mechanics.** `src/agents/chat.ts` — new `compactThemes()` parses the breakdown
+defensively (bad JSON yields `[]` rather than throwing a chat turn), caps at
+`MAX_THEMES = 15` as a prompt-size guard, and emits a `ref` field. Adds ~1,860 tokens per
+digest against the ~200 signals already in context. The new ref shape cannot collide with
+the frontend's signal-citation regex, which requires `\d{4}-W\d{1,2}-\d+`.
+
+**Considered & not done.**
+- *A second rule making the model separate what a customer said from what the system
+  concluded.* Deliberately held back — one rule at a time, so it is possible to tell which
+  one changed behaviour.
+- *Rendering `[theme …]` as a styled chip in `ChatMessage.tsx`.* Not yet. Until it lands
+  the ref renders as plain text in the reply, which is legible but unstyled.
+
+---
+
 ## 2026-08-13 — Make the dashboard readable by someone who has never seen it
 
 **What changed.** Four things, two of them defects rather than presentation:

@@ -187,6 +187,22 @@ Audited the public GitHub repo. Findings + actions:
   moderate `uuid`-via-googleapis advisories (need a breaking `googleapis` major;
   not attacker-reachable here). Cost backstop = a GCP billing budget alert (user).
 
+### 16 Aug 2026 — the chat can be asked "why did you say that"
+
+`compactDigest` dropped the Theme Breakdown column, so the assistant saw the week's
+headline numbers but none of the per-theme reasoning underneath them. It could tell you
+the top theme; it could not tell you why that theme was judged ready or blocked, because
+the answer sat in a column nobody passed it.
+
+The digest context now carries each theme's readiness, evidence gaps, next steps,
+severity, trend and score, and the model can cite them inline as `[theme 2026-W33/t3]`.
+The week prefix matters: theme ids are only unique within a run, so a bare `t1` means a
+different theme depending on which digest is being read.
+
+Held back deliberately: a second rule telling the model to distinguish what a customer
+said from what the system concluded. One rule at a time, so it stays possible to tell
+which change moved behaviour.
+
 ### 13 Aug 2026 — the dashboard was unreadable, and two of the reasons were real bugs
 
 Ritika opened the live demo and could not read it. That is the only user signal this
