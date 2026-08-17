@@ -72,6 +72,8 @@ function buildThemeBreakdown(
         headline: dxByThemeId.get(t.theme_id)?.headline,
         mechanism: nonEmpty(dxByThemeId.get(t.theme_id)?.mechanism),
         first_move: dxByThemeId.get(t.theme_id)?.firstMove,
+        options: dxByThemeId.get(t.theme_id)?.options,
+        options_leftover: dxByThemeId.get(t.theme_id)?.optionsLeftover,
         // Never persist an empty explanation. A readiness badge with nothing beside it
         // is the thing that made this panel unreadable; the model can still return
         // nothing, so the deterministic reason stands in when it does.

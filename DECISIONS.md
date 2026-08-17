@@ -15,6 +15,79 @@ overwrite history).
 
 ---
 
+## 2026-08-18 — Everything the mockup had, and the report rebuilt around it
+
+**What changed.** The four remaining gaps against the mockup are closed, and the report
+page was rebuilt to use the same shape as the digest.
+
+- **Gradient washes** on the three evidence panels. They were ported with their top rules
+  but without the colour fade, so three panels read as identical grey cards with a stripe
+  and the colour stopped working below the header.
+- **Cut line** in the ranking table, after the last group whose top theme can carry a
+  decision. Below it the list is a record, not a queue.
+- **Options menu** — Agent 6 now also returns `options` and `options_leftover`: the moves
+  worth choosing between once the first move reports back.
+- **Metric chips** — named product metrics detected in generated prose, with a hover
+  definition.
+- **Decision actions** — Raise the query / Ask about this / Not this week.
+- **Report page** — `ThemeDossier` replaces `EvidenceGapCards` and `NextStepsList`.
+
+**PM rationale.**
+
+*Options.* `covers` is the field that matters. Three options listed without it read as
+three equally good ideas, which is how a backlog fills with work that fixes the smallest
+slice of a problem. `covers: 0` is explicitly allowed and explicitly useful — splitting a
+theme so two teams own their half fixes nothing on its own and unblocks everything else.
+`options_leftover` applies the same instinct to the menu as a whole: a PM who ships every
+option and still gets complaints has been misled, so the set names its own gaps.
+
+*Metric chips.* The mockup used braces typed by hand. That cannot survive contact with a
+model — a marker it forgets to emit is a term that silently loses its definition. So the
+glossary is fixed and terms are detected on render: the page decides what a metric is,
+not the model. Output is React elements, never HTML, so a term inside model output cannot
+inject markup.
+
+*Decision actions.* "Not this week" writes `not_now`, not `not_useful`. Filing a deferral
+as "not useful" would tell the next reader the analysis was wrong when the PM only meant
+"not now" — and that distinction is the one no tool records. Every tool logs what was
+built; almost none logs what was deliberately deferred, which is why "why didn't we do
+returns in August" has no answer six weeks later.
+
+*Report page.* It answered a narrower question than the digest: a scores table, then every
+theme's gaps in one list, then every theme's next steps in another. Reading it meant
+holding a theme in your head while scrolling between three places that each knew a third
+of the story. One section per problem, in the same order as the card, means the two pages
+teach the same reading habit instead of two different ones.
+
+**Two stale things the rebuild exposed.** The report's themes table still described the
+old formula — Reach x Impact x Confidence x version / effort x trend — and `adjustedRice`
+still multiplied by `trend_multiplier`. So "Score" and "Your score" no longer shared a
+formula and differed even when the PM had changed nothing, which is exactly the defect
+that function's own comment says it was written to fix. Both corrected.
+
+**Mechanics.**
+- `MoveOption` in both type layers. `parseOptions` drops options individually rather than
+  all-or-nothing, because a menu of two good options is still a menu. `covers` is clamped
+  to the theme's own complaint count — an option claiming to fix more complaints than
+  exist is the clearest sign the model lost track of the data.
+- `VALID_RATINGS` gains `doing` and `not_now`. Values in the existing Rating column, not
+  a new column, so no sheet change is needed.
+- `MetricText` matches longest-term-first, so "checkout completion rate" beats
+  "completion rate".
+- 2 further tests: good options kept while bad ones drop, and an over-claiming `covers`
+  rejected.
+
+**Considered & not done.**
+- *Asking the model to emit metric markers.* One forgotten marker is a silently missing
+  definition, and there is no way to notice.
+- *Keeping EvidenceGapCards and NextStepsList alongside the dossier.* Both are already
+  inside the third panel; keeping them would print every gap twice.
+- *A real ticket integration behind "Raise the query".* Nothing is wired to a ticketing
+  system, and a button that pretends to file one is worse than a button that records the
+  decision honestly.
+
+---
+
 ## 2026-08-17 — The chat cannot pass a system conclusion off as a quote
 
 **What changed.** `compactThemes` now hands each theme to the model in three named

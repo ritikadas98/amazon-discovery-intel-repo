@@ -221,7 +221,19 @@ app.get('/effort-overrides', async (req: Request, res: Response) => {
 });
 
 // ─── PM feedback loop (Enhancement 3) ────────────────────────────────────────
-const VALID_RATINGS = new Set(['useful', 'not_useful']);
+/**
+ * Ratings the feedback webhook accepts.
+ *
+ * "useful"/"not_useful" came from the thumbs in the digest email and stay for
+ * those links. The dashboard's action buttons add two more, because rating a
+ * recommendation and deciding what to do about it are different questions:
+ * "doing" is a commitment, "not_now" is a deferral. Filing a deferral as
+ * "not_useful" would tell the next reader the analysis was wrong when the PM
+ * only meant "not this week" — and that distinction is the one no tool records.
+ *
+ * These are values in the existing Rating column, not a new column.
+ */
+const VALID_RATINGS = new Set(['useful', 'not_useful', 'doing', 'not_now']);
 
 function thankYouHtml(rating: string, theme_id: string): string {
   const isUseful = rating === 'useful';
@@ -258,7 +270,7 @@ app.get('/webhook/digest-feedback', async (req: Request, res: Response) => {
 
     if (!theme_id || !week_id || !VALID_RATINGS.has(rating)) {
       res.status(400).type('text/plain').send(
-        'Bad request: theme_id, week_id, and a valid rating (useful|not_useful) are required.',
+        'Bad request: theme_id, week_id, and a valid rating (useful|not_useful|doing|not_now) are required.',
       );
       return;
     }

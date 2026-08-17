@@ -51,7 +51,14 @@ export function WhatPeopleReported({
         className="absolute inset-x-0 top-0 h-[3px] bg-emerald-600 dark:bg-emerald-500"
         aria-hidden
       />
-      <div className="mb-2.5 flex items-center gap-2">
+      {/* The artifact washed each panel with its own colour, fading out under
+          the rule. Without it three panels read as identical grey cards with a
+          stripe, and the colour stops working below the header. */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-[3px] h-24 bg-gradient-to-b from-emerald-500/[0.13] dark:from-emerald-500/[0.10] to-transparent"
+        aria-hidden
+      />
+      <div className="relative mb-2.5 flex items-center gap-2">
         <span
           className="grid h-5 w-5 shrink-0 place-items-center rounded-md bg-emerald-600 text-[11px] font-bold text-white dark:bg-emerald-500 dark:text-emerald-950"
           title="Counted straight from the reviews. Nobody interpreted these."
@@ -63,7 +70,7 @@ export function WhatPeopleReported({
         </span>
       </div>
 
-      <ul className="space-y-1.5 text-[13px] leading-relaxed text-muted-foreground">
+      <ul className="relative space-y-1.5 text-[13px] leading-relaxed text-muted-foreground">
         {costly.length > 0 && (
           <li>
             {costly.map((c, i) => (

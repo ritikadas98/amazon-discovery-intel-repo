@@ -33,6 +33,24 @@ async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  /**
+   * Record what the PM decided about a recommendation.
+   *
+   * GET because the endpoint was built for one-click links in the digest email
+   * and the SPA reuses it rather than growing a second write path. Best effort:
+   * a failed write must not block the interaction, so callers do not await a
+   * result they would only discard.
+   */
+  recordDecision: (params: {
+    theme_id: string;
+    week_id: string;
+    feature_group_id: string;
+    rating: 'doing' | 'not_now' | 'useful' | 'not_useful';
+  }) =>
+    fetch(`${API_BASE}/webhook/digest-feedback?${new URLSearchParams(params).toString()}`).then(
+      (r) => r.ok,
+    ),
+
   health: () => jsonFetch<{ status: string; timestamp: string }>('/health'),
 
   runPipeline: (recipient_email?: string, use_mock?: boolean) =>

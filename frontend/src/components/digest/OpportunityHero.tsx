@@ -12,7 +12,10 @@ import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
 import { WhatPeopleReported } from './WhatPeopleReported';
 import { WhatWeThink } from './WhatWeThink';
 import { WhatWeDontKnow } from './WhatWeDontKnow';
-import type { Consequence, FirstMove, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
+import { OptionsMenu } from './OptionsMenu';
+import { DecisionActions } from './DecisionActions';
+import { MetricText } from '@/components/common/MetricText';
+import type { Consequence, FirstMove, MoveOption, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
 
 export interface OpportunityHeroData {
   groupId: string;
@@ -44,9 +47,21 @@ export interface OpportunityHeroData {
   /** What the evidence cannot settle, and the step that would. */
   gaps?: string[];
   nextSteps?: string[];
+  options?: MoveOption[];
+  optionsLeftover?: string;
+  /** Identity for recording what the PM decided. */
+  themeId?: string;
+  featureGroupId?: string;
 }
 
 /** Named for what it asks of the reader, not for what it is internally. */
+/** The button says what will happen, not what the field is called. */
+const MOVE_KIND_ACTION: Record<FirstMove['kind'], string> = {
+  query: 'Raise the query',
+  check: 'Ask the team',
+  ship: 'Create ticket',
+};
+
 const MOVE_KIND_LABEL: Record<FirstMove['kind'], string> = {
   query: 'Pull a number',
   check: 'Confirm with a team',
@@ -239,11 +254,11 @@ export function OpportunityHero({ data }: Props) {
               )}
             </div>
             <p className="mt-2 text-[15px] font-semibold leading-snug">
-              {data.firstMove?.action ?? data.nextStep}
+              <MetricText>{data.firstMove?.action ?? data.nextStep}</MetricText>
             </p>
             {data.firstMove ? (
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
-                {data.firstMove.rationale}
+                <MetricText>{data.firstMove.rationale}</MetricText>
               </p>
             ) : (
               !actionable && (
@@ -254,9 +269,23 @@ export function OpportunityHero({ data }: Props) {
             )}
               </div>
             )}
+            {data.themeId && (
+              <DecisionActions
+                themeId={data.themeId}
+                weekId={data.weekId}
+                featureGroupId={data.featureGroupId ?? data.groupId}
+                actionLabel={data.firstMove ? MOVE_KIND_ACTION[data.firstMove.kind] : 'Act on this'}
+              />
+            )}
           </div>
         </div>
       </CardContent>
+      <OptionsMenu
+        options={data.options}
+        leftover={data.optionsLeftover}
+        totalComplaints={data.signalCount ?? 0}
+        gatedOn={data.firstMove}
+      />
     </Card>
   );
 }

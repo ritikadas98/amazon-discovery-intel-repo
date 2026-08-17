@@ -15,16 +15,20 @@ interface Props {
 }
 
 /**
- * PM-adjusted RICE — the same formula the pipeline uses, with the PM's effort swapped in.
+ * The system score with the PM's effort divided into it.
  *
- * This used to drop version_multiplier and trend_multiplier, so the two columns differed
- * even when the PM had changed nothing. A reader could only conclude one of them was
- * wrong. Effort is now the only thing that varies between them, which is the entire
- * point of letting a PM edit it.
+ * Must stay in step with `system_rice` in `src/pipeline/rice.ts`, or the two
+ * columns differ when the PM has changed nothing and a reader can only conclude
+ * one of them is wrong. It previously multiplied by `trend_multiplier`, which
+ * the pipeline dropped at FORMULA_VERSION 2 — so effort stopped being the only
+ * difference between the columns, which is the entire point of the control.
+ *
+ * Effort is deliberately absent from the system score: the pipeline has no
+ * estimate of its own, and the PM supplying one here is the whole feature.
  */
 function adjustedRice(t: ThemeBreakdownEntry, effort: number): number {
   if (effort <= 0) return 0;
-  const raw = ((t.reach * t.impact * t.confidence * t.version_multiplier) / effort) * t.trend_multiplier;
+  const raw = (t.reach * t.impact * t.confidence * t.version_multiplier) / effort;
   return Math.round(raw * 10) / 10;
 }
 
@@ -75,27 +79,30 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>Themes in this group</CardTitle>
+        {/* This description named the old formula, including the two factors
+            that were removed. A page whose whole claim is that every number is
+            checkable cannot describe an equation it no longer uses. */}
         <CardDescription>
-          Change the Effort column to see the score move. Both columns use the same
-          formula &mdash; Reach &times; Impact &times; Confidence &times; version &divide; effort
-          &times; trend &mdash; so effort is the only difference between them.
+          Score is complaints &times; how upset &times; spread across stores &times; app version.
+          Work needed is <em>not</em> in it &mdash; the system has no estimate of its own, so set it
+          yourself and your score appears beside it.
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Theme</TableHead>
-              {/* Single letters were unreadable to anyone who did not already know
-                  RICE. The abbreviation stays in the tooltip for those who do. */}
-              <TableHead className="text-right" title="Reach — how many people mentioned it">People</TableHead>
-              <TableHead className="text-right" title="Impact — how unhappy they were, 1 to 5">Severity</TableHead>
-              <TableHead className="text-right" title="Confidence — how many sources it came from">Sources</TableHead>
-              <TableHead>Effort</TableHead>
+              <TableHead>Problem</TableHead>
+              {/* Named for what they measure, matching the digest. The framework
+                  term stays in the tooltip for anyone who knows RICE. */}
+              <TableHead className="text-right" title="Reach — how many people mentioned it">Complaints</TableHead>
+              <TableHead className="text-right" title="Impact — how upset they sounded, 1 to 5. Tone, not cost.">How upset</TableHead>
+              <TableHead className="text-right" title="Confidence — how many stores it came from">Where from</TableHead>
+              <TableHead>Work needed</TableHead>
               <TableHead className="text-right">Score</TableHead>
               <TableHead className="text-right">Your score</TableHead>
               <TableHead>Priority</TableHead>
-              <TableHead>Evidence</TableHead>
+              <TableHead>Can we act?</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

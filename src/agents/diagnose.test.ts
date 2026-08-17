@@ -213,6 +213,41 @@ describe('diagnoseThemes', () => {
     expect(out[0].firstMove).toBeUndefined();
   });
 
+  /**
+   * Options are dropped individually, unlike the first move: a menu of two good
+   * options is still a menu, whereas a move missing half its fields is not a move.
+   */
+  it('keeps the good options and drops the bad ones', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        options: [
+          { title: 'Fix the blockers', covers: 4, effort: 'Medium build', tradeoff: 'Leaves the double charge.' },
+          { title: 'Missing effort', covers: 1, effort: '', tradeoff: 'Incomplete.' },
+          { title: 'Route separately', covers: 0, effort: 'One day', tradeoff: 'Fixes nothing directly.' },
+        ],
+      },
+    ]);
+    const opts = (await diagnoseThemes(items))[0].options;
+    expect(opts?.map((o) => o.title)).toEqual(['Fix the blockers', 'Route separately']);
+    // covers: 0 is a legitimate answer — routing unblocks the others.
+    expect(opts?.[1].covers).toBe(0);
+  });
+
+  it('drops an option claiming to fix more complaints than exist', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        options: [{ title: 'Fix everything', covers: 99, effort: 'Big', tradeoff: 'All of it.' }],
+      },
+    ]);
+    expect((await diagnoseThemes(items))[0].options).toBeUndefined();
+  });
+
   it('fences the review block and puts the standing rule after it', async () => {
     reply([{ theme_id: 't4', headline: 'Checkout fails.', mechanism: [] }]);
     await diagnoseThemes(items);

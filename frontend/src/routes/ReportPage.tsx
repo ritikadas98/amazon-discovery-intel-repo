@@ -4,8 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GroupReadinessSummary } from '@/components/report/GroupReadinessSummary';
 import { ThemeRiceBreakdownTable } from '@/components/report/ThemeRiceBreakdownTable';
-import { EvidenceGapCards } from '@/components/report/EvidenceGapCards';
-import { NextStepsList } from '@/components/report/NextStepsList';
+import { ThemeDossier } from '@/components/report/ThemeDossier';
 import { SourceBadge } from '@/components/digest/SourceBadge';
 import { api } from '@/lib/api';
 import { parseDigestRow, rowSource } from '@/lib/parsers';
@@ -105,9 +104,25 @@ export function ReportPage() {
         overrides={effortQuery.data?.overrides ?? []}
       />
 
-      <EvidenceGapCards themes={groupThemes} />
-
-      <NextStepsList themes={groupThemes} groupId={group} />
+      {/* One section per problem, in the same shape the decision card uses:
+          counted, inferred, unknown, then what to do. This replaces two lists
+          that each held a third of every theme's story — gaps in one, next
+          steps in the other — and made a reader scroll between them holding a
+          theme in their head. Highest priority first, same order as the table
+          above it. */}
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+          <h2 className="text-base font-semibold tracking-tight">Each problem in full</h2>
+          <p className="text-[12.5px] text-muted-foreground">
+            What was counted, what we think, and what we still cannot see.
+          </p>
+        </div>
+        {[...groupThemes]
+          .sort((a, b) => b.system_rice - a.system_rice)
+          .map((t) => (
+            <ThemeDossier key={t.theme_id} theme={t} />
+          ))}
+      </div>
     </div>
   );
 }

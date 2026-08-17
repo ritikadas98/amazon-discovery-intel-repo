@@ -19,6 +19,17 @@ export type Consequence = 'money' | 'lost' | 'blocked' | 'annoyance';
  */
 export type MoveKind = 'query' | 'check' | 'ship';
 
+/**
+ * A move available once the first move reports back. `covers` is the honest
+ * part: three options listed without it read as three equally good ideas.
+ */
+export interface MoveOption {
+  title: string;
+  covers: number;
+  effort: string;
+  tradeoff: string;
+}
+
 export interface FirstMove {
   kind: MoveKind;
   action: string;
@@ -178,6 +189,8 @@ export interface ThemeBreakdownEntry {
   headline?: string;
   mechanism?: string[];
   first_move?: FirstMove;
+  options?: MoveOption[];
+  options_leftover?: string;
   moscow: MoSCoW;
   readiness: Readiness;
   gap_reasons?: string[];

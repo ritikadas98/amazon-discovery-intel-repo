@@ -121,6 +121,23 @@ const diagnoses: ThemeDiagnosis[] = topReadyTheme
           'Sample fixture text — a real run replaces this with a reading of the actual reviews.',
           'Two different failures may be wearing one label here; the counted panel beside this is real.',
         ],
+        options: [
+          {
+            title: 'Sample fixture option — a real run names the build or the flow here.',
+            covers: Math.max(1, Math.floor(topReadyTheme.signal_count / 3)),
+            effort: 'Medium build',
+            tradeoff: 'Fixture text. A real run says what this fixes and what it leaves alone.',
+          },
+          {
+            title: 'Split the problem and route the halves separately',
+            covers: 0,
+            effort: 'Routing, one day',
+            tradeoff:
+              'Fixes nothing on its own. Puts each half in front of the team that owns it, which unblocks the option above.',
+          },
+        ],
+        optionsLeftover:
+          'Sample fixture leftover — a real run names the complaints no option above addresses.',
         firstMove: {
           kind: 'query',
           action: 'Sample fixture move — a real run names the metric and the build here.',

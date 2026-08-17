@@ -75,6 +75,10 @@ export interface ThemeDiagnosis {
   mechanism: string[];
   /** The one cheap step that comes before committing anyone. Absent if rejected. */
   firstMove?: FirstMove;
+  /** What the first move gates: the moves worth choosing between once it reports. */
+  options?: MoveOption[];
+  /** Complaints no listed option addresses. Named, because a menu that hides its own gaps is worse than no menu. */
+  optionsLeftover?: string;
 }
 
 /**
@@ -87,6 +91,25 @@ export interface ThemeDiagnosis {
  * engineering time to learn what a dashboard already knows.
  */
 export type MoveKind = 'query' | 'check' | 'ship';
+
+/**
+ * One of the moves available once the first move has reported back.
+ *
+ * `covers` is the honest part: how many of this problem's complaints the option
+ * actually addresses. Three options listed without it read as three equally
+ * good ideas, which is how a backlog fills with work that fixes the smallest
+ * slice. A move that fixes nothing on its own — splitting a theme so two teams
+ * can own their half — is allowed to say `covers: 0`.
+ */
+export interface MoveOption {
+  title: string;
+  /** How many of the theme's complaints this addresses. 0 is a valid answer. */
+  covers: number;
+  /** Rough size, in plain words: "Medium build", "Routing · 1 day". */
+  effort: string;
+  /** What it buys, and what it does not. */
+  tradeoff: string;
+}
 
 export interface FirstMove {
   kind: MoveKind;
@@ -232,6 +255,8 @@ export interface ThemeBreakdownEntry extends ScoredTheme {
   headline?: string;
   mechanism?: string[];
   first_move?: FirstMove;
+  options?: MoveOption[];
+  options_leftover?: string;
 }
 
 export interface EffortOverride {

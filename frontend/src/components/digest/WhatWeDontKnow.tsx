@@ -27,7 +27,14 @@ export function WhatWeDontKnow({
   return (
     <div className="relative mt-3 overflow-hidden rounded-xl border bg-card p-4">
       <span className="absolute inset-x-0 top-0 h-[3px] bg-slate-400 dark:bg-slate-500" aria-hidden />
-      <div className="mb-2.5 flex items-center gap-2">
+      {/* The artifact washed each panel with its own colour, fading out under
+          the rule. Without it three panels read as identical grey cards with a
+          stripe, and the colour stops working below the header. */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-[3px] h-24 bg-gradient-to-b from-slate-500/[0.12] dark:from-slate-400/[0.09] to-transparent"
+        aria-hidden
+      />
+      <div className="relative mb-2.5 flex items-center gap-2">
         <span
           className="grid h-5 w-5 shrink-0 place-items-center rounded-md bg-slate-500 text-[11px] font-bold text-white dark:bg-slate-400 dark:text-slate-900"
           title="Questions the reviews cannot answer. Each one needs a different source."
@@ -39,7 +46,7 @@ export function WhatWeDontKnow({
         </span>
       </div>
 
-      <ul className="list-disc space-y-1.5 pl-4 text-[13px] leading-relaxed text-muted-foreground marker:text-slate-400">
+      <ul className="relative list-disc space-y-1.5 pl-4 text-[13px] leading-relaxed text-muted-foreground marker:text-slate-400">
         {items.map((g, i) => (
           <li key={i}>{g}</li>
         ))}

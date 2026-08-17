@@ -1,9 +1,11 @@
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { groupColor, TREND_ARROW, TREND_CLASS, severityTier } from '@/lib/colors';
 import { ConsequenceBadge, MoscowBadge, ScoreBandBadge } from '@/components/common/StatusBadges';
+import { CutLine } from './CutLine';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { featureGroupName } from '@/lib/parsers';
 import { useScopedLinkBuilder } from '@/lib/url-state';
@@ -91,6 +93,15 @@ export function RankingTable({ digest }: Props) {
   // know its own top before it can describe any row.
   const topScore = rows[0]?.score ?? 0;
 
+  // Where the list stops being a queue and becomes a record: after the last
+  // group whose top theme can carry a decision. Everything below is both lower
+  // scoring and unactionable, so the reader is told rather than left to scroll.
+  const readyGroups = new Set(
+    digest.themeBreakdown.filter((t) => t.readiness === 'READY').map((t) => t.feature_group_id),
+  );
+  const lastActionable = rows.reduce((last, r, i) => (readyGroups.has(r.id) ? i : last), -1);
+  const cutAfter = lastActionable >= 0 && lastActionable < rows.length - 1 ? lastActionable : null;
+
   return (
     <Card>
       <CardHeader>
@@ -124,7 +135,8 @@ export function RankingTable({ digest }: Props) {
               const color = groupColor(r.id).hex;
 
               return (
-                <TableRow key={r.id} className="hover:bg-muted/40">
+                <Fragment key={r.id}>
+                <TableRow className="hover:bg-muted/40">
                   <TableCell className="text-muted-foreground font-mono text-xs pl-6">{idx + 1}</TableCell>
                   <TableCell>
                     <Link to={buildLink('/digest', { group: r.id })} className="inline-flex items-center gap-2 font-medium hover:underline">
@@ -172,6 +184,17 @@ export function RankingTable({ digest }: Props) {
                     )}
                   </TableCell>
                 </TableRow>
+                {cutAfter === idx && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={8} className="px-6 py-0">
+                      <CutLine
+                        remaining={rows.length - idx - 1}
+                        below={rows[idx + 1]?.score ?? null}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
               );
             })}
           </TableBody>

@@ -245,6 +245,23 @@ and the theme may still be the right thing to work on. The first recommended nex
 renders inside it as "Would settle it", because a gap and the thing that closes it
 belong together.
 
+### 18 Aug 2026 — parity with the mockup, and the report rebuilt
+
+The four remaining gaps are closed: gradient washes on the three panels, the cut line in
+the ranking table, the gated options menu with coverage counts, metric chips with hover
+definitions, and the three decision buttons.
+
+Agent 6 also returns `options` and `options_leftover`. `covers` is the load-bearing
+field — three options without it read as three equally good ideas — and the leftover line
+names the complaints no option addresses, because a menu that hides its own gaps is worse
+than none.
+
+The report page was rebuilt around `ThemeDossier`: one section per problem, in the same
+counted / inferred / unknown / act shape the digest card uses. It replaces two lists that
+each held a third of every theme's story. The rebuild exposed two stale things — that
+page described the pre-v2 formula, and `adjustedRice` still multiplied by trend, so
+"Score" and "Your score" no longer shared a formula. Both fixed.
+
 ### 17 Aug 2026 — the chat cannot pass a conclusion off as a quote
 
 `compactThemes` hands each theme to the model as `said` / `counted` / `inferred` rather
