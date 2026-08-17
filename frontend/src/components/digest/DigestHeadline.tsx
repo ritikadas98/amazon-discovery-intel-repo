@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { groupColor } from '@/lib/colors';
 import { featureGroupName, formatWeekLabel } from '@/lib/parsers';
 import type { ParsedDigest } from '@/lib/parsers';
-import type { Consequence, ThemeBreakdownEntry } from '@/types';
+import type { ThemeBreakdownEntry } from '@/types';
 
 /**
  * The verdict, then the numbers behind it.
@@ -20,8 +20,6 @@ interface Props {
   /** Every complaint collected for the week, which is larger than the number scored. */
   collectedCount: number;
 }
-
-const RANK: Consequence[] = ['money', 'lost', 'blocked', 'annoyance'];
 
 function Kpi({
   label,
@@ -97,7 +95,7 @@ export function DigestHeadline({ digest, collectedCount }: Props) {
     <div className="space-y-5">
       <div className="space-y-2">
         <p className="text-[10.5px] font-medium uppercase tracking-[0.115em] text-muted-foreground">
-          {formatWeekLabel(digest.weekId)} · {digest.source === 'Sample' ? 'Sample data' : 'Live data'}
+          {formatWeekLabel(digest.weekId)} · {digest.dataSource === 'Sample' ? 'Sample data' : 'Live data'}
         </p>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight text-balance">{headline}</h1>
         <p className="max-w-[64ch] text-[15px] leading-relaxed text-muted-foreground">
