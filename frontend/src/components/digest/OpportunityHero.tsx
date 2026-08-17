@@ -11,7 +11,7 @@ import { ConsequenceBadge, ReadinessBadge, ScoreBandBadge } from '@/components/c
 import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
 import { WhatPeopleReported } from './WhatPeopleReported';
 import { WhatWeThink } from './WhatWeThink';
-import type { Consequence, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
+import type { Consequence, FirstMove, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
 
 export interface OpportunityHeroData {
   groupId: string;
@@ -38,7 +38,16 @@ export interface OpportunityHeroData {
   evidence?: ThemeEvidence;
   /** Agent 6's reading of the evidence, when the theme earned one. */
   mechanism?: string[];
+  /** The one cheap step before anyone is committed. */
+  firstMove?: FirstMove;
 }
+
+/** Named for what it asks of the reader, not for what it is internally. */
+const MOVE_KIND_LABEL: Record<FirstMove['kind'], string> = {
+  query: 'Pull a number',
+  check: 'Confirm with a team',
+  ship: 'Small change',
+};
 
 /** 3 must read "3rd", not "3th" — the teens are the exception that catches naive tables. */
 function ordinal(n: number): string {
@@ -214,12 +223,29 @@ export function OpportunityHero({ data }: Props) {
                 {actionable && <span aria-hidden>▲</span>}
                 {actionable ? 'Do this first' : 'Before you can act'}
               </span>
+              {data.firstMove && (
+                <span className="text-[11.5px] font-semibold text-muted-foreground">
+                  {/* "query" is the cheapest thing this system can ask for, and
+                      saying so is the difference between a step a PM will take
+                      today and one they will defer. */}
+                  {MOVE_KIND_LABEL[data.firstMove.kind]} · {data.firstMove.owner} ·{' '}
+                  {data.firstMove.effort}
+                </span>
+              )}
             </div>
-            <p className="mt-2 text-[15px] font-semibold leading-snug">{data.nextStep}</p>
-            {!actionable && (
-              <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                Not enough behind this yet. This is the step that would change that.
+            <p className="mt-2 text-[15px] font-semibold leading-snug">
+              {data.firstMove?.action ?? data.nextStep}
+            </p>
+            {data.firstMove ? (
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                {data.firstMove.rationale}
               </p>
+            ) : (
+              !actionable && (
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Not enough behind this yet. This is the step that would change that.
+                </p>
+              )
             )}
               </div>
             )}

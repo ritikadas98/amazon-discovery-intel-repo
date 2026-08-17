@@ -232,6 +232,22 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — the action names a metric, an owner and a price
+
+Agent 6 also returns a `first_move`: kind, action, owner, effort, rationale. The action
+block reads *Pull a number · Data · about a day* instead of "take it to the team that
+owns this area", which is what a dashboard says when it has no opinion.
+
+`kind` is where the argument lives. Reviews establish that something is wrong, never how
+often, so the prompt pushes towards `query` and permits `ship` only when the fix is small
+and already justified without a number. Agent 5's next steps were retargeted at the
+themes that are not ready — the step that settles the gap it just named, never a fix for
+a theme it has just called thin.
+
+The move is validated all-or-nothing and independently of the headline: a step with no
+owner reads as more certainty than the model produced, but a bad action should not cost
+the finding.
+
 ### 17 Aug 2026 — Agent 6 writes the finding, for READY themes only
 
 `src/agents/diagnose.ts` adds a `headline` and a `mechanism` to themes that cleared the

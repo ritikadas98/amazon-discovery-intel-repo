@@ -120,6 +120,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
     topScore: ranked[0]?.system_rice,
     evidence: lead?.evidence,
     mechanism: lead?.mechanism,
+    firstMove: lead?.first_move,
     rank: lead ? ranked.indexOf(lead) + 1 : undefined,
     totalThemes: ranked.length,
   };
@@ -197,6 +198,7 @@ function SingleGroupView({
     readiness: topTheme?.readiness ?? null,
     evidence: topTheme?.evidence,
     mechanism: topTheme?.mechanism,
+    firstMove: topTheme?.first_move,
   };
 
   return (

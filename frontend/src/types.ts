@@ -13,6 +13,21 @@ export type Readiness = 'READY' | 'NEEDS_MORE_EVIDENCE' | 'BLOCKED';
 export type Consequence = 'money' | 'lost' | 'blocked' | 'annoyance';
 
 /**
+ * How much commitment the first step asks for. "query" pulls a number that
+ * already exists; "check" confirms something with another team; "ship" is a
+ * small change. Mirrors `MoveKind` in the backend.
+ */
+export type MoveKind = 'query' | 'check' | 'ship';
+
+export interface FirstMove {
+  kind: MoveKind;
+  action: string;
+  owner: string;
+  effort: string;
+  rationale: string;
+}
+
+/**
  * The counted half of a theme's evidence — arithmetic over its signals, no
  * model involved. Mirrors `ThemeEvidence` in the backend `src/types.ts`.
  * Optional: rows written before this existed have none, and an absent block
@@ -162,6 +177,7 @@ export interface ThemeBreakdownEntry {
   /** Agent 6 output. Absent unless the theme was READY and passed validation. */
   headline?: string;
   mechanism?: string[];
+  first_move?: FirstMove;
   moscow: MoSCoW;
   readiness: Readiness;
   gap_reasons?: string[];

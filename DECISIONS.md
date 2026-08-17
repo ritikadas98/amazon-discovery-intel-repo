@@ -15,6 +15,59 @@ overwrite history).
 
 ---
 
+## 2026-08-17 — The action names a metric, an owner and a price
+
+**What changed.** Agent 6 now also returns a `first_move`: a `kind` of `query` / `check`
+/ `ship`, plus the action, an owner, an effort and a rationale. It replaces the generic
+"Enough to act on. Take it to the team that owns this area." in the action block, which
+now reads e.g. *Pull a number · Data · about a day*. Agent 5's `recommended_next_steps`
+was retargeted at the themes that are **not** ready — the step that would settle the gap
+it just named.
+
+**PM rationale.** The action block is the loudest thing on the page and it was saying
+nothing. "Take it to the team that owns this area" is what a dashboard says when it has
+no opinion; a PM already knew that much before opening it.
+
+The `kind` field carries the argument. Reviews can establish that something is wrong;
+they cannot establish how often. A digest that opens with "rebuild checkout" off five
+reviews spends engineering time to learn what a dashboard already knows, so the prompt
+pushes hard towards `query` and only allows `ship` when the fix is small *and* the
+evidence already justifies it without a number. Surfacing the kind as "Pull a number" is
+the difference between a step a PM takes today and one they defer.
+
+Owner and effort sit opposite the eyebrow so the price of the step is visible at the
+same moment as the step. The rationale is asked to say what happens if the answer comes
+back negative — a step worth taking is one you are willing to lose.
+
+Splitting the two agents by readiness matters. Agent 5 sees two samples truncated to 220
+characters, which is enough to say "get a second source" but nowhere near enough to name
+a metric. Agent 6 sees the full reviews, and only for themes that cleared the bar.
+
+**Mechanics.**
+- `src/types.ts` — `MoveKind`, `FirstMove`, `firstMove` on `ThemeDiagnosis`,
+  `first_move` on `ThemeBreakdownEntry`.
+- `src/agents/diagnose.ts` — `parseMove` is all-or-nothing: `kind` must be in the enum
+  and every field must be non-empty and pass the same number rule. A step with no owner,
+  or an owner with no step, reads as more certainty than the model produced.
+- A rejected move does not reject the headline. The two are validated independently, so
+  a bad action costs the action only.
+- `src/agents/readiness.ts` — next steps must name the source that would settle the gap,
+  and must never propose building a fix for a theme just judged to lack evidence.
+  "Wait and see whether it grows next week" is explicitly allowed as a real answer.
+- 5 further tests: complete move kept, missing field rejected, invented `kind` rejected,
+  number rule applied to the move, and headline surviving a rejected move.
+
+**Considered & not done.**
+- *Free-text owner validation against a list of teams.* Team names vary by org and a
+  wrong list would reject correct answers. Length cap and the number rule are enough.
+- *Falling back to the old generic sentence when a move is rejected.* It is still there
+  for themes with no diagnosis at all, but a rejected move means the model produced
+  something we could not trust — quietly substituting filler would hide that.
+- *Letting Agent 5 write the action for READY themes too.* It cannot see enough to name
+  a metric, and an action that cannot name its own source is the thing being fixed.
+
+---
+
 ## 2026-08-17 — A finding and a mechanism, for the few themes that earn one
 
 **What changed.** New Agent 6 (`src/agents/diagnose.ts`) writes two fields for READY

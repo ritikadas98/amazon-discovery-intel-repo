@@ -121,6 +121,14 @@ const diagnoses: ThemeDiagnosis[] = topReadyTheme
           'Sample fixture text — a real run replaces this with a reading of the actual reviews.',
           'Two different failures may be wearing one label here; the counted panel beside this is real.',
         ],
+        firstMove: {
+          kind: 'query',
+          action: 'Sample fixture move — a real run names the metric and the build here.',
+          owner: 'Data',
+          effort: 'about a day',
+          rationale:
+            'A query, not a fix. It turns anecdotes into a rate before anyone commits engineering time, and if the rate held flat this drops.',
+        },
       },
     ]
   : [];

@@ -129,6 +129,90 @@ describe('diagnoseThemes', () => {
     expect(await diagnoseThemes(items)).toEqual([]);
   });
 
+  /**
+   * A first move is all-or-nothing. A step with no owner, or an owner with no
+   * step, reads as more certainty than the model actually produced — and the
+   * action block is the loudest thing on the page.
+   */
+  it('keeps a complete first move', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        first_move: {
+          kind: 'query',
+          action: 'Query checkout completion rate on 27.13.0 against the previous build.',
+          owner: 'Data',
+          effort: 'about a day',
+          rationale: 'Turns 5 anecdotes into a rate. If it held flat, this drops.',
+        },
+      },
+    ]);
+    const move = (await diagnoseThemes(items))[0].firstMove;
+    expect(move?.kind).toBe('query');
+    expect(move?.owner).toBe('Data');
+  });
+
+  it('drops a first move that is missing a field', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        first_move: { kind: 'query', action: 'Pull the rate.', owner: '', effort: 'a day', rationale: 'Cheap.' },
+      },
+    ]);
+    const out = await diagnoseThemes(items);
+    expect(out).toHaveLength(1);
+    expect(out[0].firstMove).toBeUndefined();
+  });
+
+  it('drops a first move with an invented kind', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        first_move: {
+          kind: 'escalate',
+          action: 'Escalate to leadership.',
+          owner: 'PM',
+          effort: 'a day',
+          rationale: 'Because.',
+        },
+      },
+    ]);
+    expect((await diagnoseThemes(items))[0].firstMove).toBeUndefined();
+  });
+
+  it('applies the number rule to the move as well as the headline', async () => {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Checkout fails.',
+        mechanism: [],
+        first_move: {
+          kind: 'query',
+          action: 'Pull the rate.',
+          owner: 'Data',
+          effort: 'a day',
+          rationale: 'Affects 93 customers.',
+        },
+      },
+    ]);
+    expect((await diagnoseThemes(items))[0].firstMove).toBeUndefined();
+  });
+
+  it('keeps the headline even when the move is rejected', async () => {
+    reply([
+      { theme_id: 't4', headline: '4 of 5 could not pay.', mechanism: [], first_move: { kind: 'nope' } },
+    ]);
+    const out = await diagnoseThemes(items);
+    expect(out[0].headline).toContain('could not pay');
+    expect(out[0].firstMove).toBeUndefined();
+  });
+
   it('fences the review block and puts the standing rule after it', async () => {
     reply([{ theme_id: 't4', headline: 'Checkout fails.', mechanism: [] }]);
     await diagnoseThemes(items);

@@ -73,6 +73,31 @@ export interface ThemeDiagnosis {
   headline: string;
   /** 2–3 bullets on what we think is going on underneath. */
   mechanism: string[];
+  /** The one cheap step that comes before committing anyone. Absent if rejected. */
+  firstMove?: FirstMove;
+}
+
+/**
+ * What kind of move this is, in increasing order of commitment.
+ *
+ * The distinction is the point. Reviews can establish that something is wrong;
+ * they cannot establish how often, and almost every theme's honest first step
+ * is to find that out. A digest that opens with "rebuild checkout" from five
+ * reviews is worse than one that opens with a query, because it spends
+ * engineering time to learn what a dashboard already knows.
+ */
+export type MoveKind = 'query' | 'check' | 'ship';
+
+export interface FirstMove {
+  kind: MoveKind;
+  /** The step itself, named specifically. A metric, a source, a team. */
+  action: string;
+  /** Who does it — a function, not a person. */
+  owner: string;
+  /** Rough duration, in plain words. */
+  effort: string;
+  /** Why this before anything else, and what it would settle. */
+  rationale: string;
 }
 
 export interface RawSignal {
@@ -206,6 +231,7 @@ export interface ThemeBreakdownEntry extends ScoredTheme {
   /** Agent 6 output. Absent on themes that were not READY, and on older rows. */
   headline?: string;
   mechanism?: string[];
+  first_move?: FirstMove;
 }
 
 export interface EffortOverride {

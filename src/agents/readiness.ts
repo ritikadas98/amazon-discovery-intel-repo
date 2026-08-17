@@ -66,8 +66,19 @@ writing for the engineer who maintains this pipeline.
 
 - "gap_reasons": what is missing from the evidence, in plain language. Say "only one
   person reported this" rather than "signal volume below threshold".
-- "recommended_next_steps": something a PM can actually go and do — talk to a team,
-  check a specific dashboard, watch a metric for a week, ship a small fix.
+
+- "recommended_next_steps": the step that would SETTLE the gap you just named. These
+  themes cannot yet carry a decision, so the step is about getting evidence, not about
+  building anything.
+  - Name the source that would settle it: a support ticket count, a crash rate, a second
+    store's reviews, the team that owns the area.
+  - "Check whether support has tickets matching this in the same week" — not "gather
+    more feedback" or "monitor this".
+  - Say roughly how long it takes if you can. An afternoon and a sprint are different
+    answers.
+  - One step, not a plan. If the honest answer is "wait and see whether it grows next
+    week", say exactly that — it is a real answer and it costs nothing.
+  - Never propose building a fix for a theme you have just judged as lacking evidence.
 
 Never suggest re-running, re-scoring, re-classifying or otherwise adjusting this
 analysis. The PM cannot do that and it reads as the tool blaming itself. Avoid the
