@@ -11,6 +11,7 @@ import { ConsequenceBadge, ReadinessBadge, ScoreBandBadge } from '@/components/c
 import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
 import { WhatPeopleReported } from './WhatPeopleReported';
 import { WhatWeThink } from './WhatWeThink';
+import { WhatWeDontKnow } from './WhatWeDontKnow';
 import type { Consequence, FirstMove, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
 
 export interface OpportunityHeroData {
@@ -40,6 +41,9 @@ export interface OpportunityHeroData {
   mechanism?: string[];
   /** The one cheap step before anyone is committed. */
   firstMove?: FirstMove;
+  /** What the evidence cannot settle, and the step that would. */
+  gaps?: string[];
+  nextSteps?: string[];
 }
 
 /** Named for what it asks of the reader, not for what it is internally. */
@@ -197,9 +201,10 @@ export function OpportunityHero({ data }: Props) {
           )}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-3">
           <WhatPeopleReported evidence={data.evidence} signalCount={data.signalCount ?? 0} />
           <WhatWeThink mechanism={data.mechanism} />
+          <WhatWeDontKnow gaps={data.gaps} nextSteps={data.nextSteps} />
         </div>
 
         {data.nextStep && (

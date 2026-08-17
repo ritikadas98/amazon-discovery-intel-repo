@@ -121,6 +121,8 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
     evidence: lead?.evidence,
     mechanism: lead?.mechanism,
     firstMove: lead?.first_move,
+    gaps: lead?.gap_reasons,
+    nextSteps: lead?.recommended_next_steps,
     rank: lead ? ranked.indexOf(lead) + 1 : undefined,
     totalThemes: ranked.length,
   };
@@ -199,6 +201,8 @@ function SingleGroupView({
     evidence: topTheme?.evidence,
     mechanism: topTheme?.mechanism,
     firstMove: topTheme?.first_move,
+    gaps: topTheme?.gap_reasons,
+    nextSteps: topTheme?.recommended_next_steps,
   };
 
   return (

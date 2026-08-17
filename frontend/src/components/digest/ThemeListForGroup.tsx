@@ -7,6 +7,7 @@ import { ConsequenceBadge, MoscowBadge, ReadinessBadge } from '@/components/comm
 import { ThemeScoreDerivation } from './ThemeScoreDerivation';
 import { WhatPeopleReported } from './WhatPeopleReported';
 import { WhatWeThink } from './WhatWeThink';
+import { WhatWeDontKnow } from './WhatWeDontKnow';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ThemeBreakdownEntry } from '@/types';
@@ -83,6 +84,7 @@ export function ThemeListForGroup({ themes }: Props) {
                 </div>
                 <WhatPeopleReported evidence={t.evidence} signalCount={t.signal_count} />
                 <WhatWeThink mechanism={t.mechanism} />
+                <WhatWeDontKnow gaps={t.gap_reasons} nextSteps={t.recommended_next_steps} />
                 <ThemeScoreDerivation theme={t} topScore={topScore} />
               </div>
             ))}

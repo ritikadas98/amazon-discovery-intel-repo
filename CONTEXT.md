@@ -232,6 +232,19 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — the third panel: what the evidence cannot settle
+
+`WhatWeDontKnow` completes the three-claim block. Its data already existed as Agent 5's
+`gap_reasons`, but it lived in a collapsed strip and on the report page, so the two
+confident panels sat side by side with nothing next to them. A card that shows what it
+counted and what it concluded, and stays quiet about what it cannot see, reads more
+certain than the evidence is.
+
+Marked with `?` rather than a warning triangle: these are open questions, not failures,
+and the theme may still be the right thing to work on. The first recommended next step
+renders inside it as "Would settle it", because a gap and the thing that closes it
+belong together.
+
 ### 17 Aug 2026 — the chat cannot pass a conclusion off as a quote
 
 `compactThemes` hands each theme to the model as `said` / `counted` / `inferred` rather
