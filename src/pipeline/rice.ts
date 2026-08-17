@@ -1,12 +1,14 @@
-import type {
-  Meta,
-  MoSCoW,
-  Readiness,
-  ScoredGroup,
-  ScoredTheme,
-  TaggedSignal,
-  Theme,
-  TrendDirection,
+import {
+  CONSEQUENCE_ORDER,
+  type Consequence,
+  type Meta,
+  type MoSCoW,
+  type Readiness,
+  type ScoredGroup,
+  type ScoredTheme,
+  type TaggedSignal,
+  type Theme,
+  type TrendDirection,
 } from '../types.js';
 
 const SOURCE_CONFIDENCE: Record<number, number> = { 1: 0.6, 2: 0.8, 3: 1.0 };
@@ -79,12 +81,41 @@ function computeThemeComponents(theme: Theme, groupId: string, meta: Meta): Them
   const impact = round1(signals.reduce((sum, s) => sum + (s.severity_score || 3.0), 0) / signals.length);
   const versionMultiplier = round2(getVersionRatioMultiplier(signals));
 
-  const systemRice = round1(((reach * impact * confidence * versionMultiplier) / effort) * trendMultiplier);
+  // FORMULA_VERSION 2 — effort and trend are computed and stored, but no longer
+  // multiplied in. Neither was carrying its weight:
+  //
+  //   effort  takes exactly two values (0.8 for a regression group, else 1) and
+  //           is a property of the GROUP, so it scales every theme inside that
+  //           group by the same amount and cannot reorder them. It is a
+  //           regression discount wearing the name of an effort estimate. The
+  //           PM supplies real effort in the UI, where it is theirs to set.
+  //   trend   is derived from week-over-week movement, and two pipeline runs
+  //           can land in the same week (they append, never upsert), so the
+  //           comparison behind it is not sound. Across 2026-W33 it was 1.2 on
+  //           every scored theme, which is a constant by another name.
+  //
+  // Dropping both left the ranking of all 12 themes in that week identical —
+  // asserted in rice.test.ts.
+  const systemRice = round1(reach * impact * confidence * versionMultiplier);
   return { reach, impact, confidence, versionMultiplier, effort, trendMultiplier, systemRice };
 }
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+/**
+ * A theme takes the most costly consequence present in it, and the count of
+ * signals at that tier. Worst-case rather than average: one double charge
+ * inside ten grumbles is still a double charge, and averaging would bury it.
+ */
+function rollUpConsequence(theme: Theme): { consequence: Consequence; count: number } {
+  const signals = theme.signals || [];
+  for (const tier of CONSEQUENCE_ORDER) {
+    const count = signals.filter((s) => s.consequence === tier).length;
+    if (count > 0) return { consequence: tier, count };
+  }
+  return { consequence: 'annoyance', count: 0 };
+}
 
 function percentile(arr: number[], p: number): number {
   if (arr.length === 0) return 0;
@@ -142,6 +173,7 @@ export function calculateRice(
       // the stored score are the same numbers the UI prints. Do not re-round here.
       const c = computeThemeComponents(t, groupId, meta);
       const systemRice = c.systemRice;
+      const cons = rollUpConsequence(t);
       return {
         theme_id: t.theme_id,
         theme_label: t.theme_label,
@@ -155,6 +187,8 @@ export function calculateRice(
         effort: c.effort,
         trend_multiplier: c.trendMultiplier,
         system_rice: systemRice,
+        consequence: cons.consequence,
+        consequence_count: cons.count,
         // Placeholder — overwritten below once every theme's score is known.
         moscow: 'Could Have',
         readiness: computeThemeReadiness(t),

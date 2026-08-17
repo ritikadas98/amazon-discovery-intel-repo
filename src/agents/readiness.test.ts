@@ -26,6 +26,7 @@ function signal(themeId: string): TaggedSignal {
     app_version: null,
     severity_score: 3.4,
     version_flagged: false,
+    consequence: 'annoyance',
     feature_group_id: 'delivery_tracking',
     theme_id: themeId,
     theme_label: themeId,

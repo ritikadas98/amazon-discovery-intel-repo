@@ -5,6 +5,13 @@ export type TrendDirection = 'worsening' | 'stable' | 'improving';
 export type MoSCoW = 'Must Have' | 'Should Have' | 'Could Have' | "Won't Have";
 export type Readiness = 'READY' | 'NEEDS_MORE_EVIDENCE' | 'BLOCKED';
 
+/**
+ * What the problem cost the customer. Ordered most to least costly; a theme
+ * takes the highest tier present among its signals. Mirrors `Consequence` in
+ * the backend `src/types.ts`.
+ */
+export type Consequence = 'money' | 'lost' | 'blocked' | 'annoyance';
+
 /** What POST /run-pipeline returns. */
 export interface PipelineResult {
   status: 'complete';
@@ -98,6 +105,11 @@ export interface WoWDeltaEntry {
   id: string;
   rice_delta: number | null;
   rice_delta_pct: number | null;
+  /**
+   * False when last week's row was scored by a different formula. Absent on
+   * older payloads, so treat undefined as comparable.
+   */
+  scores_comparable?: boolean;
   signal_delta: number | null;
   severity_delta: number | null;
   moscow_changed: boolean;
@@ -125,6 +137,13 @@ export interface ThemeBreakdownEntry {
   effort: number;
   trend_multiplier: number;
   system_rice: number;
+  /**
+   * Highest-ranking consequence among this theme's signals, with how many
+   * carry it. Optional because rows written before FORMULA_VERSION 2 have
+   * neither — render "unknown" rather than assuming "annoyance".
+   */
+  consequence?: Consequence;
+  consequence_count?: number;
   moscow: MoSCoW;
   readiness: Readiness;
   gap_reasons?: string[];

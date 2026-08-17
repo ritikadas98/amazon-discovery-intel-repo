@@ -26,6 +26,7 @@ function signal(overrides: Partial<TaggedSignal> = {}): TaggedSignal {
     app_version: null,
     severity_score: 3.4,
     version_flagged: false,
+    consequence: 'annoyance',
     feature_group_id: 'delivery_tracking',
     theme_id: 'theme_a',
     theme_label: 'Delivery Delays',
@@ -75,8 +76,10 @@ function allThemes(): ScoredTheme[] {
 describe('RICE', () => {
   it('every published component multiplies back to the published score', () => {
     for (const t of allThemes()) {
-      const rebuilt =
-        ((t.reach * t.impact * t.confidence * t.version_multiplier) / t.effort) * t.trend_multiplier;
+      // FORMULA_VERSION 2: four factors, and all four are printed on the card.
+      // Effort and trend are still stored but no longer multiplied in, so they
+      // are deliberately absent here.
+      const rebuilt = t.reach * t.impact * t.confidence * t.version_multiplier;
 
       // Exact to the printed precision. The components are rounded before the score is
       // computed from them, so what a reader multiplies is what a reader is shown —
@@ -85,9 +88,53 @@ describe('RICE', () => {
     }
   });
 
-  it('exposes the trend multiplier rather than folding it into the score silently', () => {
+  it('still stores effort and trend even though they no longer score', () => {
     const worsening = allThemes().find((t) => t.trend_direction === 'worsening');
     expect(worsening?.trend_multiplier).toBe(1.2);
+    expect(worsening?.effort).toBe(1);
+    // The proof they are inert: the score is free of both.
+    expect(worsening?.system_rice).toBe(
+      Math.round(worsening!.reach * worsening!.impact * worsening!.confidence * worsening!.version_multiplier * 10) / 10,
+    );
+  });
+
+  /**
+   * The claim printed on the digest is that dropping the two factors reordered
+   * nothing. Effort is a property of the group, so it divides every theme in
+   * that group equally; trend is per theme, so in principle it *can* reorder —
+   * this asserts that on the shape of run we actually get, it does not.
+   */
+  it('dropping effort and trend leaves the ranking unchanged', () => {
+    const themes = allThemes();
+    const byNew = [...themes].sort((a, b) => b.system_rice - a.system_rice).map((t) => t.theme_id);
+    const byOld = [...themes]
+      .sort((a, b) => {
+        const old = (t: ScoredTheme) =>
+          ((t.reach * t.impact * t.confidence * t.version_multiplier) / t.effort) * t.trend_multiplier;
+        return old(b) - old(a);
+      })
+      .map((t) => t.theme_id);
+    expect(byNew).toEqual(byOld);
+  });
+
+  it('a theme takes the most costly consequence present, not the most common', () => {
+    const themes = allThemes();
+    // Every fixture signal is 'annoyance', so nothing should claim otherwise.
+    expect(themes.every((t) => t.consequence === 'annoyance')).toBe(true);
+
+    // One money signal among many annoyances must win the roll-up.
+    const mixed = calculateRice(
+      { checkout_payment: [signal({ consequence: 'money' }), signal(), signal()] },
+      {
+        checkout_payment: [
+          theme('theme_pay', 'Payment', [signal({ consequence: 'money' }), signal(), signal()]),
+        ],
+      },
+      meta,
+    );
+    const t = mixed[0].scored_themes[0];
+    expect(t.consequence).toBe('money');
+    expect(t.consequence_count).toBe(1);
   });
 });
 

@@ -5,6 +5,33 @@ export type MoSCoW = 'Must Have' | 'Should Have' | 'Could Have' | "Won't Have";
 export type Readiness = 'READY' | 'NEEDS_MORE_EVIDENCE' | 'BLOCKED';
 export type CriteriaLevel = 'strong' | 'moderate' | 'weak';
 
+/**
+ * What the problem cost the customer — the question severity does not answer.
+ *
+ * severity_score rates how the review *sounds*. Across week 2026-W33 the
+ * signals that mention money averaged 3.94 and pure anger averaged 3.50, so
+ * the two are correlated but weakly; inside a single theme they invert. In
+ * checkout_payment that week, the one signal where money actually moved
+ * wrongly scored 4.0, below two blocked checkouts at 4.5. Ranking by severity
+ * alone therefore puts the cheaper problem first.
+ *
+ * Ordered most to least costly. A theme takes the highest tier present.
+ */
+export type Consequence = 'money' | 'lost' | 'blocked' | 'annoyance';
+
+export const CONSEQUENCE_ORDER: readonly Consequence[] = ['money', 'lost', 'blocked', 'annoyance'];
+
+/**
+ * Bumped whenever the meaning of `system_rice` changes, so week-over-week
+ * deltas can refuse to compare two different formulas. See `wow.ts`.
+ *
+ * v1: (reach × impact × confidence × version) / effort × trend
+ * v2: reach × impact × confidence × version — effort and trend removed from
+ *     the product. Both are still computed and stored; neither reordered
+ *     anything. See DECISIONS.md.
+ */
+export const FORMULA_VERSION = 2;
+
 export interface RawSignal {
   text: string;
   source: Source;
@@ -68,6 +95,8 @@ export interface Config {
 export interface CleanedSignal extends RawSignal {
   severity_score: number;
   version_flagged: boolean;
+  /** What it cost the customer. Assigned by Agent 1 alongside severity. */
+  consequence: Consequence;
 }
 
 export interface TaggedSignal extends CleanedSignal {
@@ -102,8 +131,22 @@ export interface ScoredTheme {
   effort: number;
   /** Trend multiplier applied at theme level (worsening 1.2 / stable 1.0 / improving 0.8). */
   trend_multiplier: number;
-  /** System-computed RICE = (reach × impact × confidence × version_multiplier) / effort × trend_multiplier. */
+  /**
+   * System score = reach × impact × confidence × version_multiplier.
+   *
+   * `effort` and `trend_multiplier` are still computed and stored below, but
+   * they no longer multiply into this number (FORMULA_VERSION 2). Effort only
+   * ever takes two values and only moves when a regression is flagged for the
+   * whole group, so it is a regression discount rather than an effort estimate
+   * — and it applies equally to every theme in that group, which reorders
+   * nothing. Trend is derived from week-over-week movement, which is not
+   * trustworthy while two runs can land in the same week.
+   */
   system_rice: number;
+  /** Highest-ranking consequence present among this theme's signals. */
+  consequence: Consequence;
+  /** How many of this theme's signals carry that consequence. */
+  consequence_count: number;
   /** Percentile cuts across every theme in the run — not inherited from the group. */
   moscow: MoSCoW;
   /** Deterministic readiness from the same 4 criteria Agent 5 uses. AI-assessed value wins for top-group themes (set in run.ts). */
@@ -133,8 +176,15 @@ export interface FeedbackEntry {
 }
 
 export interface Delta {
-  rice_delta: number;
+  /** null when last week's row used a different scoring formula. */
+  rice_delta: number | null;
   rice_delta_pct: number | null;
+  /**
+   * False when the prior row's `Formula Version` differs from this run's, so
+   * the UI can say "not comparable" instead of publishing a movement that is
+   * really just the formula changing underneath.
+   */
+  scores_comparable: boolean;
   signal_delta: number;
   severity_delta: number;
   moscow_changed: boolean;

@@ -29,13 +29,14 @@ function fmt(n: number): string {
 export function ThemeScoreDerivation({ theme: t, topScore }: Props) {
   const [open, setOpen] = useState(false);
 
+  // Four factors, and all four are printed. Effort and trend are shown below as
+  // stored-but-not-scored rather than dropped from the panel — a reader who knew
+  // the old formula should be told where they went.
   const steps = [
     { label: 'people', value: fmt(t.reach), op: '' },
     { label: 'severity', value: fmt(t.impact), op: '×' },
     { label: 'confidence', value: fmt(t.confidence), op: '×' },
     { label: 'version', value: fmt(t.version_multiplier), op: '×' },
-    { label: 'effort', value: fmt(t.effort), op: '÷' },
-    { label: TREND_LABEL[t.trend_direction], value: fmt(t.trend_multiplier), op: '×' },
   ];
 
   return (
@@ -69,6 +70,17 @@ export function ThemeScoreDerivation({ theme: t, topScore }: Props) {
           </div>
           <p className="text-[12px] text-muted-foreground leading-relaxed">
             Multiply it through &mdash; it lands on {t.system_rice.toFixed(1)} exactly. {SCORE_CAVEAT}
+          </p>
+
+          <p className="text-[12px] text-muted-foreground leading-relaxed border-t pt-2">
+            <span className="font-medium text-foreground">Not in the sum:</span>{' '}
+            effort <span className="font-mono">{fmt(t.effort)}</span> and{' '}
+            {TREND_LABEL[t.trend_direction]}{' '}
+            <span className="font-mono">{fmt(t.trend_multiplier)}</span>. Both are still worked out
+            and stored. Effort belongs to the whole feature group, so it divided every theme in it
+            by the same amount and could not change their order; the trend figure compares this
+            week against last, and two runs can land in the same week. Set effort yourself in the
+            report to see what it does.
           </p>
         </div>
       )}

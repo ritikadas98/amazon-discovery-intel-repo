@@ -1,12 +1,13 @@
-import type {
-  Meta,
-  Readiness,
-  ReadinessResult,
-  ScoredGroup,
-  ScoredTheme,
-  TaggedSignal,
-  ThemeBreakdownEntry,
-  ThemeReadiness,
+import {
+  FORMULA_VERSION,
+  type Meta,
+  type Readiness,
+  type ReadinessResult,
+  type ScoredGroup,
+  type ScoredTheme,
+  type TaggedSignal,
+  type ThemeBreakdownEntry,
+  type ThemeReadiness,
 } from '../types.js';
 
 /** Mirrors "Format for Sheets" — column shaping for the "Signals" tab. */
@@ -19,6 +20,8 @@ export function formatSignalsForSheet(signals: TaggedSignal[], meta: Meta): Reco
     Date: s.date,
     Rating: s.rating,
     'Severity Score': s.severity_score,
+    // What it cost the customer, which severity does not answer. See types.ts.
+    Consequence: s.consequence,
     'Feature Group ID': s.feature_group_id,
     'Theme ID': s.theme_id,
     'Theme Label': s.theme_label,
@@ -141,6 +144,9 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
       scoredGroups.map((g) => ({ id: g.feature_group_id, trend: g.trend_direction })),
     ),
     'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [])),
+    // Stamps which scoring formula produced the numbers in this row, so a later
+    // run can refuse to publish a week-over-week delta across a formula change.
+    'Formula Version': FORMULA_VERSION,
     'Created At': new Date().toISOString(),
     'Discovery Readiness JSON': JSON.stringify(readiness ?? {}),
     'Overall Group Readiness': readiness?.overall_readiness ?? '',

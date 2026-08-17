@@ -1,8 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { MOSCOW_CLASS, READINESS_CLASS } from '@/lib/colors';
-import { MOSCOW_HINT, READINESS_HINT, READINESS_LABEL } from '@/lib/vocabulary';
-import type { MoSCoW, Readiness } from '@/types';
+import { CONSEQUENCE_CLASS, MOSCOW_CLASS, READINESS_CLASS } from '@/lib/colors';
+import {
+  CONSEQUENCE_HINT,
+  CONSEQUENCE_LABEL,
+  MOSCOW_HINT,
+  READINESS_HINT,
+  READINESS_LABEL,
+} from '@/lib/vocabulary';
+import type { Consequence, MoSCoW, Readiness } from '@/types';
 
 /**
  * The badge markup was copy-pasted into five files, which is how readiness ended up
@@ -33,6 +39,39 @@ export function MoscowBadge({ value, className }: { value: MoSCoW; className?: s
   return (
     <Badge variant="outline" title={MOSCOW_HINT[value]} className={cn(PILL, MOSCOW_CLASS[value], className)}>
       {value}
+    </Badge>
+  );
+}
+
+/**
+ * What it cost the customer, which the score deliberately does not measure.
+ *
+ * Colour tracks cost, not tone — money is the loudest thing on the row even
+ * when the reviews behind it were calm. Rows written before this field existed
+ * render nothing rather than a default, because "annoyance" would be a claim
+ * the data never made.
+ */
+export function ConsequenceBadge({
+  value,
+  count,
+  total,
+  className,
+}: {
+  value?: Consequence;
+  count?: number;
+  total?: number;
+  className?: string;
+}) {
+  if (!value) return null;
+  const share = count != null && total != null ? ` ${count}/${total}` : '';
+  return (
+    <Badge
+      variant="outline"
+      title={CONSEQUENCE_HINT[value]}
+      className={cn(PILL, CONSEQUENCE_CLASS[value], className)}
+    >
+      {CONSEQUENCE_LABEL[value]}
+      {share}
     </Badge>
   );
 }

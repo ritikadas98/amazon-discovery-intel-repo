@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Send, Square, Sparkles } from 'lucide-react';
+import { Send, Square, MessagesSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,7 +150,10 @@ export function ChatPage() {
     <TooltipProvider>
       <div className="flex flex-col h-[calc(100svh-7rem)]">
         <div className="flex items-center gap-2 pb-3 text-xs text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5" style={{ color: accentHex }} />
+          {/* Was a sparkle. The four-point sparkle has become the generic "AI
+              did this" badge, and it says nothing about what this panel does —
+              which is answer questions about the week in scope. */}
+          <MessagesSquare className="h-3.5 w-3.5" style={{ color: accentHex }} />
           <span>
             Chatting over <span className="font-medium text-foreground">{scopeLabel}</span>
             {weekId ? (

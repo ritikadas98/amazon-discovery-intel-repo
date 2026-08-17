@@ -1,9 +1,19 @@
 import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MOSCOW_CAVEAT, READINESS_HINT, READINESS_LABEL, SCORE_CAVEAT, SCORING_GLOSSARY } from '@/lib/vocabulary';
-import type { Readiness } from '@/types';
+import {
+  CONSEQUENCE_HINT,
+  CONSEQUENCE_LABEL,
+  MOSCOW_CAVEAT,
+  READINESS_HINT,
+  READINESS_LABEL,
+  RETIRED_SCORING_FACTORS,
+  SCORE_CAVEAT,
+  SCORING_GLOSSARY,
+} from '@/lib/vocabulary';
+import type { Consequence, Readiness } from '@/types';
 
 const READINESS_ORDER: Readiness[] = ['READY', 'NEEDS_MORE_EVIDENCE', 'BLOCKED'];
+const CONSEQUENCE_ORDER: Consequence[] = ['money', 'lost', 'blocked', 'annoyance'];
 
 /**
  * Everything a first-time reader needs, one click away and nowhere else.
@@ -27,8 +37,8 @@ export function ScoringGlossary() {
             Every theme gets one number, so the list can be ordered. {SCORE_CAVEAT}
           </p>
           <p className="text-muted-foreground leading-relaxed">
-            Six things go into it. Each theme card shows its own arithmetic under
-            &ldquo;Show the scoring&rdquo;.
+            {SCORING_GLOSSARY.length} things go into it. Each theme card shows its own arithmetic
+            under &ldquo;Show the scoring&rdquo;, and the four multiply back to the number exactly.
           </p>
         </div>
 
@@ -40,6 +50,41 @@ export function ScoringGlossary() {
             </div>
           ))}
         </dl>
+
+        {/* Named rather than quietly dropped: a reader who knew the old formula
+            should find out where two of its factors went, and why. */}
+        <div className="space-y-1.5 border-t pt-3">
+          <p className="font-medium text-sm">What used to be in it, and is not</p>
+          <p className="text-muted-foreground leading-relaxed">
+            Both are still worked out and still stored. Neither changed the order of anything, so
+            neither multiplies into the score any more.
+          </p>
+          <dl className="space-y-1.5">
+            {RETIRED_SCORING_FACTORS.map((g) => (
+              <div key={g.term} className="grid grid-cols-[72px_1fr] gap-2">
+                <dt className="font-medium">{g.term}</dt>
+                <dd className="text-muted-foreground leading-relaxed">{g.plain}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="space-y-1.5 border-t pt-3">
+          <p className="font-medium text-sm">What it cost them</p>
+          <p className="text-muted-foreground leading-relaxed">
+            Separate from the score, and deliberately so. Impact rates how loud a review is, not
+            what the problem cost — a double charge can score below a complaint that cost nobody
+            anything. This column answers the cost.
+          </p>
+          <dl className="space-y-1.5">
+            {CONSEQUENCE_ORDER.map((c) => (
+              <div key={c} className="grid grid-cols-[110px_1fr] gap-2">
+                <dt className="font-medium">{CONSEQUENCE_LABEL[c]}</dt>
+                <dd className="text-muted-foreground leading-relaxed">{CONSEQUENCE_HINT[c]}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
 
         <div className="space-y-1 border-t pt-3">
           <p className="font-medium text-sm">Must / Should / Could / Won&rsquo;t</p>

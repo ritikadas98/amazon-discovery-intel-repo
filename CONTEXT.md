@@ -232,6 +232,44 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — the score keeps only what changes the answer, and cost gets its own column
+
+An audit of the 14 August run found that four of the six scoring inputs were effectively
+constant across all twelve themes: effort was `1.0` twelve times out of twelve, trend was
+`1.2` on every scored theme, version spanned `1.00–1.07`, and confidence took two values.
+The score was complaint count times loudness, carrying four extra decimal places of
+apparent rigour.
+
+`system_rice` is now `reach × impact × confidence × version`. Effort and trend are still
+computed and stored, and the derivation panel names them, but neither multiplies in.
+Effort was the clearer cut: it belongs to the feature *group*, so it divided every theme
+inside that group by the same number and could not reorder them — a regression discount
+using the vocabulary of an effort estimate. The PM sets real effort in the report.
+
+A second finding drove a new field. Severity rates how a review *sounds*, not what it
+cost. In week 33's checkout theme the one signal where money actually moved wrongly
+scored 4.0, below two blocked checkouts at 4.5. Every signal now carries a
+`consequence` — money / lost / blocked / annoyance — assigned by Agent 1 beside severity,
+and a theme takes the most costly tier present rather than the most common.
+
+Changing the formula breaks week-over-week comparison exactly once, so the digest row now
+stamps a `Formula Version` and `assignWoWDeltas` withholds score deltas across a version
+change instead of publishing a ~17% fall that is really just the formula moving. Signal
+and severity deltas are unaffected and still compare.
+
+The same commit hardened Agent 1's prompt, since it reads third-party review text: the
+untrusted block is fenced with the standing instruction restated *after* it, each review
+is capped at 1,200 characters, control characters and bidi overrides are stripped, and
+`consequence` is validated against the enum, falling back to the least costly tier so an
+injection cannot promote itself.
+
+**Two sheet headers must be added by hand before the next run** — `Consequence` on
+Signals, `Formula Version` on Weekly Digests. `appendRows` aligns by header name, so
+without them those values are silently dropped (hard rule 5).
+
+**Not yet done:** the pipeline has not been re-run under FORMULA_VERSION 2. Existing rows
+remain v1 and are correctly labelled as such.
+
 ---
 
 ## 4. Architecture today (high level)

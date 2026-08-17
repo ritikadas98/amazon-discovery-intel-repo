@@ -87,7 +87,21 @@ export function severityTier(score: number): SeverityTier {
 
 // ─── MoSCoW colors (per spec) ─────────────────────────────────────────────────
 
-import type { MoSCoW, Readiness } from '@/types';
+import type { Consequence, MoSCoW, Readiness } from '@/types';
+
+/**
+ * Consequence colour tracks cost, not tone.
+ *
+ * Deliberately not the same ramp as severity: a theme can be "critical" on
+ * severity and cost nobody anything, which is the whole reason this field
+ * exists. Money is the only one that gets red.
+ */
+export const CONSEQUENCE_CLASS: Record<Consequence, string> = {
+  money: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400',
+  lost: 'bg-orange-100 text-orange-900 dark:bg-orange-500/15 dark:text-orange-400',
+  blocked: 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-400',
+  annoyance: 'bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300',
+};
 
 // Light-mode text is a step or two darker than the obvious -700 pairing. On a -100
 // tint, -700 lands around 4.5:1 and gray-500 was closer to 3:1 — legible on a big

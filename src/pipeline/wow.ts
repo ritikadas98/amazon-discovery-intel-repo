@@ -1,4 +1,12 @@
-import type { Delta, MoSCoW, ScoredGroup } from '../types.js';
+import { FORMULA_VERSION, type Delta, type MoSCoW, type ScoredGroup } from '../types.js';
+
+/**
+ * Rows written before the formula version was recorded are v1 by definition —
+ * that is the only formula that existed then.
+ */
+function formulaVersionOf(row: Record<string, string>): number {
+  return parseInt(row['Formula Version'], 10) || 1;
+}
 
 const MOSCOW_ORDER: MoSCoW[] = ['Must Have', 'Should Have', 'Could Have', "Won't Have"];
 
@@ -47,9 +55,18 @@ export function assignWoWDeltas(scoredGroups: ScoredGroup[], lastWeekLookup: Las
     const lastAvgSeverity = parseFloat(last['Avg Severity']) || 0;
     const lastMoSCoW = (last['Top MoSCoW'] as MoSCoW) || null;
 
-    const riceDelta = parseFloat((group.top_rice_score - lastRice).toFixed(1));
+    // A score delta across a formula change is not a delta, it is the change of
+    // formula. Removing the 1.2 trend multiplier alone would read as a 17% fall
+    // in a week where nothing moved, so the score deltas are withheld and
+    // labelled rather than published as fact. Signal count and severity are
+    // unaffected by the formula, so those still compare.
+    const comparableScores = formulaVersionOf(last) === FORMULA_VERSION;
+
+    const riceDelta = comparableScores ? parseFloat((group.top_rice_score - lastRice).toFixed(1)) : null;
     const riceDeltaPct =
-      lastRice !== 0 ? Math.round(((group.top_rice_score - lastRice) / lastRice) * 100) : null;
+      comparableScores && lastRice !== 0
+        ? Math.round(((group.top_rice_score - lastRice) / lastRice) * 100)
+        : null;
     const signalDelta = group.signal_count - lastSignalCount;
     const severityDelta = parseFloat((group.avg_severity - lastAvgSeverity).toFixed(2));
 
@@ -60,6 +77,7 @@ export function assignWoWDeltas(scoredGroups: ScoredGroup[], lastWeekLookup: Las
     const delta: Delta = {
       rice_delta: riceDelta,
       rice_delta_pct: riceDeltaPct,
+      scores_comparable: comparableScores,
       signal_delta: signalDelta,
       severity_delta: severityDelta,
       moscow_changed: moscowChanged,

@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TREND_CLASS } from '@/lib/colors';
-import { MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
+import { ConsequenceBadge, MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { ThemeScoreDerivation } from './ThemeScoreDerivation';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
@@ -66,6 +66,13 @@ export function ThemeListForGroup({ themes }: Props) {
                 {/* The trend is already in the sentence above; repeating it as a chip
                     was the same fact three times on one card. */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Cost first: it is the one badge here that says what the
+                      problem actually did to someone. */}
+                  <ConsequenceBadge
+                    value={t.consequence}
+                    count={t.consequence_count}
+                    total={t.signal_count}
+                  />
                   <MoscowBadge value={t.moscow} />
                   <ReadinessBadge value={t.readiness} />
                 </div>
