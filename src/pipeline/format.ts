@@ -7,6 +7,7 @@ import {
   type ScoredTheme,
   type TaggedSignal,
   type ThemeBreakdownEntry,
+  type ThemeDiagnosis,
   type ThemeReadiness,
 } from '../types.js';
 
@@ -40,6 +41,8 @@ export interface DigestRowInput {
   topGroupTopTheme: string;
   scoredGroups: ScoredGroup[];
   readiness: ReadinessResult | null;
+  /** Headlines and mechanisms for READY themes. See diagnoseThemes. */
+  diagnoses?: ThemeDiagnosis[];
   /** Every theme in the run, not just the top group's. See assessReadiness. */
   allThemeReadiness?: ThemeReadiness[];
   themesReady: number;
@@ -51,8 +54,10 @@ export interface DigestRowInput {
 function buildThemeBreakdown(
   scoredGroups: ScoredGroup[],
   allThemeReadiness: ThemeReadiness[],
+  diagnoses: ThemeDiagnosis[] = [],
 ): ThemeBreakdownEntry[] {
   const aiByThemeId = new Map(allThemeReadiness.map((t) => [t.theme_id, t] as const));
+  const dxByThemeId = new Map(diagnoses.map((d) => [d.theme_id, d] as const));
   const entries: ThemeBreakdownEntry[] = [];
   for (const g of scoredGroups) {
     for (const t of g.scored_themes) {
@@ -61,6 +66,11 @@ function buildThemeBreakdown(
       entries.push({
         ...t,
         readiness,
+        // Only READY themes are diagnosed, and a diagnosis can also fail
+        // validation, so both fields are legitimately absent most of the time.
+        // No fallback here on purpose: an invented headline is worse than none.
+        headline: dxByThemeId.get(t.theme_id)?.headline,
+        mechanism: nonEmpty(dxByThemeId.get(t.theme_id)?.mechanism),
         // Never persist an empty explanation. A readiness badge with nothing beside it
         // is the thing that made this panel unreadable; the model can still return
         // nothing, so the deterministic reason stands in when it does.
@@ -111,8 +121,18 @@ function fallbackNextSteps(readiness: Readiness): string[] {
 }
 
 export function formatDigestRow(input: DigestRowInput): Record<string, unknown> {
-  const { weekId, topGroup, topGroupTopTheme, scoredGroups, readiness, allThemeReadiness, themesReady, themesBlocked, meta } =
-    input;
+  const {
+    weekId,
+    topGroup,
+    topGroupTopTheme,
+    scoredGroups,
+    readiness,
+    allThemeReadiness,
+    diagnoses,
+    themesReady,
+    themesBlocked,
+    meta,
+  } = input;
 
   return {
     'Week ID': weekId,
@@ -143,7 +163,7 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     'Trend Direction JSON': JSON.stringify(
       scoredGroups.map((g) => ({ id: g.feature_group_id, trend: g.trend_direction })),
     ),
-    'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [])),
+    'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [], diagnoses)),
     // Stamps which scoring formula produced the numbers in this row, so a later
     // run can refuse to publish a week-over-week delta across a formula change.
     'Formula Version': FORMULA_VERSION,

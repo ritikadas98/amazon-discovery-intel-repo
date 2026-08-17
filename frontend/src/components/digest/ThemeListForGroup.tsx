@@ -6,6 +6,7 @@ import { TREND_CLASS } from '@/lib/colors';
 import { ConsequenceBadge, MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { ThemeScoreDerivation } from './ThemeScoreDerivation';
 import { WhatPeopleReported } from './WhatPeopleReported';
+import { WhatWeThink } from './WhatWeThink';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ThemeBreakdownEntry } from '@/types';
@@ -52,7 +53,10 @@ export function ThemeListForGroup({ themes }: Props) {
             {sorted.map((t) => (
               <div key={t.theme_id} className="rounded-md border bg-card p-3">
                 <div className="flex items-start justify-between gap-3 mb-1.5">
-                  <p className="text-[15px] font-semibold leading-snug flex-1">{t.theme_label}</p>
+                  {/* The finding when we have one; the category label only as a fallback. */}
+                  <p className="text-[15px] font-semibold leading-snug flex-1">
+                    {t.headline || t.theme_label}
+                  </p>
                   <span className="font-mono tabular-nums text-base font-semibold shrink-0">
                     {t.system_rice.toFixed(1)}
                   </span>
@@ -78,6 +82,7 @@ export function ThemeListForGroup({ themes }: Props) {
                   <ReadinessBadge value={t.readiness} />
                 </div>
                 <WhatPeopleReported evidence={t.evidence} signalCount={t.signal_count} />
+                <WhatWeThink mechanism={t.mechanism} />
                 <ThemeScoreDerivation theme={t} topScore={topScore} />
               </div>
             ))}

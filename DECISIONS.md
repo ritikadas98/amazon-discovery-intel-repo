@@ -15,6 +15,58 @@ overwrite history).
 
 ---
 
+## 2026-08-17 — A finding and a mechanism, for the few themes that earn one
+
+**What changed.** New Agent 6 (`src/agents/diagnose.ts`) writes two fields for READY
+themes only: a `headline` stating what happened to customers, and a `mechanism` of two
+or three bullets on what we think is going on. The headline replaces the category label
+at the top of a theme card. The mechanism renders in its own amber `∴` panel beside the
+green `✓` counted panel.
+
+**PM rationale.** `theme_label` is a category — "Payment processing and cart issues" —
+and a category is not a finding. The digest's job on a Monday is to give a PM a sentence
+they could repeat in a stand-up.
+
+Scope is the whole design. Only READY themes are diagnosed, typically one to three a
+week. Agent 5 has already judged everything else as unable to carry a decision, and
+writing a confident mechanism over two signals is exactly the overreach this system
+exists to avoid. It also ties the cost of the expensive call to what a PM will act on
+rather than to how much was scraped — a quiet week makes no call at all.
+
+The two panels are deliberately unalike. One is counted and a reader may treat it as
+fact; the other is an argument and arguments can be wrong. Mixing them is how a
+dashboard talks someone into a decision the evidence does not carry.
+
+**Mechanics.**
+- `src/agents/diagnose.ts` — fenced untrusted block with the standing rule restated
+  *after* it, 900-char cap per review, 12 reviews per theme, control and bidi characters
+  stripped via a `RegExp` built from a string (the literal characters do not survive
+  editing, and a half-mangled class silently stops matching).
+- **The numbers rule.** The model is handed the computed counts and may only echo them.
+  Validation strips known version strings, then scans for digits and rejects any that
+  were not supplied. A headline claiming "7 of 5" would sit directly beside a counted
+  panel saying 4 of 5, and a reader would have no way to know which half to believe.
+- Free text also fails on instruction-shaped content and on any `theme_id` we did not
+  send. A rejected field is simply absent — there is no fallback, because an invented
+  headline is worse than none.
+- `src/pipeline/run.ts` — non-fatal, like readiness. A missing headline costs a sentence,
+  not a week of ingestion. Skipped entirely when nothing is READY.
+- `src/agents/diagnose.test.ts` — 8 tests covering the number rule, partial mechanism
+  rejection, version strings, injection shapes, unknown ids, and fence ordering.
+
+**Considered & not done.**
+- *Adding the fields to Agent 5's existing prompt.* It sends two samples truncated to 220
+  characters, which cannot support a finding; raising that for all ~20 themes is the cost
+  we are avoiding. Two passes keeps the cheap rubric cheap.
+- *Letting the model produce counts.* Then two halves of the same card can disagree, and
+  the counted half stops being worth trusting.
+- *Falling back to a generated headline when validation fails.* The label is the honest
+  fallback. Silence beats invention.
+- *Diagnosing every theme.* Cost scales with scraping rather than with decisions, and it
+  would put confident prose under themes we have just told the reader to ignore.
+
+---
+
 ## 2026-08-17 — Count the evidence instead of asking a model for it
 
 **What changed.** Every scored theme now carries a `ThemeEvidence` block: signal

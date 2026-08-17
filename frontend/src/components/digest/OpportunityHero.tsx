@@ -10,6 +10,7 @@ import { useScopedLinkBuilder } from '@/lib/url-state';
 import { ConsequenceBadge, ReadinessBadge, ScoreBandBadge } from '@/components/common/StatusBadges';
 import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
 import { WhatPeopleReported } from './WhatPeopleReported';
+import { WhatWeThink } from './WhatWeThink';
 import type { Consequence, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
 
 export interface OpportunityHeroData {
@@ -35,6 +36,8 @@ export interface OpportunityHeroData {
   totalThemes?: number;
   /** Counted facts about the theme's signals. */
   evidence?: ThemeEvidence;
+  /** Agent 6's reading of the evidence, when the theme earned one. */
+  mechanism?: string[];
 }
 
 /** 3 must read "3rd", not "3th" — the teens are the exception that catches naive tables. */
@@ -185,7 +188,10 @@ export function OpportunityHero({ data }: Props) {
           )}
         </div>
 
-        <WhatPeopleReported evidence={data.evidence} signalCount={data.signalCount ?? 0} />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <WhatPeopleReported evidence={data.evidence} signalCount={data.signalCount ?? 0} />
+          <WhatWeThink mechanism={data.mechanism} />
+        </div>
 
         {data.nextStep && (
           <div

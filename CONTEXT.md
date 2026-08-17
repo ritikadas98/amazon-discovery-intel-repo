@@ -232,6 +232,20 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — Agent 6 writes the finding, for READY themes only
+
+`src/agents/diagnose.ts` adds a `headline` and a `mechanism` to themes that cleared the
+evidence bar — one to three a week. The headline replaces the category label; the
+mechanism gets its own amber panel beside the green counted one, so a reader can tell an
+argument from a fact at a glance.
+
+Three properties matter. Scope: nothing else is diagnosed, so cost tracks decisions
+rather than scraping, and a quiet week makes no call. Numbers: the model is given the
+computed counts and may only echo them — validation strips version strings, scans the
+remaining digits, and rejects anything it was not handed, because a headline that
+contradicts the panel beside it destroys both. Failure: rejected text is simply absent,
+and the stage is non-fatal, so a bad response costs a sentence rather than a run.
+
 ### 17 Aug 2026 — the evidence panel is counted, not generated
 
 Every theme carries a `ThemeEvidence` block — sources, dominant version, consequence

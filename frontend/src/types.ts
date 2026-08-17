@@ -159,6 +159,9 @@ export interface ThemeBreakdownEntry {
   consequence?: Consequence;
   consequence_count?: number;
   evidence?: ThemeEvidence;
+  /** Agent 6 output. Absent unless the theme was READY and passed validation. */
+  headline?: string;
+  mechanism?: string[];
   moscow: MoSCoW;
   readiness: Readiness;
   gap_reasons?: string[];

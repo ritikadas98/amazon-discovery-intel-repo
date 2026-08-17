@@ -13,12 +13,14 @@ import { aggregateByGroup } from './aggregate.js';
 import { calculateRice } from './rice.js';
 import { assignWoWDeltas, buildLastWeekLookup } from './wow.js';
 import { assessReadiness } from '../agents/readiness.js';
+import { diagnoseThemes, type ThemeToDiagnose } from '../agents/diagnose.js';
 import { formatDigestRow, formatSignalsForSheet } from './format.js';
 import { appendRows, readRows } from '../lib/sheets.js';
 import { sendEmail } from '../lib/email.js';
 import { renderRegressionEmail } from '../templates/regressionEmail.js';
 import { renderDigestEmail } from '../templates/digestEmail.js';
 import type {
+  ThemeDiagnosis,
   GroupSummary,
   PipelineResult,
   RawSignal,
@@ -176,6 +178,41 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     log(`Readiness stage FAILED, continuing with deterministic values only: ${message}`);
   }
 
+  // 10b. Diagnose only the themes that cleared the evidence bar.
+  //
+  // Everything else was already judged unable to carry a decision, and writing a
+  // confident mechanism for a theme with two signals is the overreach this system
+  // exists to avoid. It also keeps the cost of the expensive call tied to what a PM
+  // will act on rather than to how much was scraped. Non-fatal for the same reason
+  // readiness is: a missing headline costs a sentence, not a week of ingestion.
+  let diagnoses: ThemeDiagnosis[] = [];
+  const readyIds = new Set(
+    allThemeReadiness.filter((t) => t.readiness === 'READY').map((t) => t.theme_id),
+  );
+  if (readyIds.size > 0) {
+    const toDiagnose: ThemeToDiagnose[] = [];
+    for (const g of scoredGroups) {
+      const groupName =
+        config.feature_groups.find((c) => c.id === g.feature_group_id)?.name ?? g.feature_group_id;
+      for (const scored of g.scored_themes) {
+        if (!readyIds.has(scored.theme_id)) continue;
+        const theme = (themesPerGroup[g.feature_group_id] || []).find(
+          (t) => t.theme_id === scored.theme_id,
+        );
+        if (theme) toDiagnose.push({ theme, scored, groupName });
+      }
+    }
+    try {
+      diagnoses = await diagnoseThemes(toDiagnose);
+      log(`Diagnosed ${diagnoses.length} of ${toDiagnose.length} READY themes`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log(`Diagnosis stage FAILED, continuing without headlines: ${message}`);
+    }
+  } else {
+    log('No READY themes this run — skipping diagnosis (no API call made)');
+  }
+
   // 11. Append the weekly digest row
   const topGroupTopTheme = themesOfTopGroup[0]?.theme_label || topGroup.top_theme || '';
   const digestRow = formatDigestRow({
@@ -185,6 +222,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     scoredGroups,
     readiness,
     allThemeReadiness,
+    diagnoses,
     themesReady,
     themesBlocked,
     meta,

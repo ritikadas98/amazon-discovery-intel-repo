@@ -105,7 +105,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
 
   const heroData: OpportunityHeroData = {
     groupId: 'all',
-    topTheme: lead?.theme_label || digest.topTheme,
+    topTheme: lead?.headline || lead?.theme_label || digest.topTheme,
     summary: digest.readiness?.readiness_summary ?? '',
     severity: lead?.impact ?? digest.avgSeverity,
     trend: digest.trend,
@@ -119,6 +119,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
     score: lead?.system_rice,
     topScore: ranked[0]?.system_rice,
     evidence: lead?.evidence,
+    mechanism: lead?.mechanism,
     rank: lead ? ranked.indexOf(lead) + 1 : undefined,
     totalThemes: ranked.length,
   };
@@ -183,7 +184,7 @@ function SingleGroupView({
 
   const heroData: OpportunityHeroData = {
     groupId,
-    topTheme: topTheme?.theme_label || `No themes for this group this week.`,
+    topTheme: topTheme?.headline || topTheme?.theme_label || `No themes for this group this week.`,
     summary: isTopGroup ? digest.readiness?.readiness_summary ?? '' : '',
     severity: topTheme?.impact ?? 0,
     trend: groupTrend,
@@ -195,6 +196,7 @@ function SingleGroupView({
     nextStep: topTheme?.recommended_next_steps?.[0] ?? null,
     readiness: topTheme?.readiness ?? null,
     evidence: topTheme?.evidence,
+    mechanism: topTheme?.mechanism,
   };
 
   return (

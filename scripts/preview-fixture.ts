@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 import { config } from '../src/config/featureGroups.js';
 import { calculateRice } from '../src/pipeline/rice.js';
 import { formatDigestRow } from '../src/pipeline/format.js';
+import type { ThemeDiagnosis } from '../src/types.js';
 import { CONSEQUENCE_ORDER, type Consequence, type Meta, type TaggedSignal, type Theme } from '../src/types.js';
 
 const PORT = 8787;
@@ -104,6 +105,26 @@ const meta: Meta = {
 const scoredGroups = calculateRice(byGroup, themesPerGroup, meta);
 const topGroup = scoredGroups[0];
 
+// Agent 6 output, written by hand because this path makes no Gemini call.
+//
+// It exists so the "What we think is going on" panel can be reviewed at all
+// locally — without it the panel is correctly absent and there is nothing to
+// look at. The wording is deliberately generic: this is a layout fixture, not
+// a finding, and nobody should mistake it for one. Real runs replace it.
+const topReadyTheme = scoredGroups[0]?.scored_themes.find((t) => t.readiness === 'READY');
+const diagnoses: ThemeDiagnosis[] = topReadyTheme
+  ? [
+      {
+        theme_id: topReadyTheme.theme_id,
+        headline: `${topReadyTheme.signal_count} customers hit the same problem in one week.`,
+        mechanism: [
+          'Sample fixture text — a real run replaces this with a reading of the actual reviews.',
+          'Two different failures may be wearing one label here; the counted panel beside this is real.',
+        ],
+      },
+    ]
+  : [];
+
 const row = formatDigestRow({
   weekId: WEEK,
   topGroup,
@@ -112,6 +133,7 @@ const row = formatDigestRow({
   // No Gemini here — this is exactly the path where the deterministic fallback copy
   // has to carry the explanation, so previewing without it is the point.
   readiness: null,
+  diagnoses,
   allThemeReadiness: [],
   themesReady: 0,
   themesBlocked: 0,

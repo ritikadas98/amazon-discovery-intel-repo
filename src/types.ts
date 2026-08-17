@@ -60,6 +60,21 @@ export interface ThemeEvidence {
   dateRange: { first: string; last: string } | null;
 }
 
+/**
+ * The inferred half, written by Agent 6 for READY themes only.
+ *
+ * Kept as its own type, and rendered in its own panel, because a reader must be
+ * able to tell it apart from `ThemeEvidence` at a glance. One is counted; this
+ * one is an argument, and arguments can be wrong.
+ */
+export interface ThemeDiagnosis {
+  theme_id: string;
+  /** The finding in one sentence — what happened to customers, not a category. */
+  headline: string;
+  /** 2–3 bullets on what we think is going on underneath. */
+  mechanism: string[];
+}
+
 export interface RawSignal {
   text: string;
   source: Source;
@@ -188,6 +203,9 @@ export interface ScoredTheme {
 export interface ThemeBreakdownEntry extends ScoredTheme {
   gap_reasons?: string[];
   recommended_next_steps?: string[];
+  /** Agent 6 output. Absent on themes that were not READY, and on older rows. */
+  headline?: string;
+  mechanism?: string[];
 }
 
 export interface EffortOverride {
