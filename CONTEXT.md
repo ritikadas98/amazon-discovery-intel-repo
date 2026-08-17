@@ -232,6 +232,21 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — the chat cannot pass a conclusion off as a quote
+
+`compactThemes` hands each theme to the model as `said` / `counted` / `inferred` rather
+than one flat object. Customer words exist in exactly one place, so a system sentence
+cannot be attributed to a customer while still technically quoting the payload — a test
+asserts the quote appears in `said` and nowhere else.
+
+The structure is the mechanism and the prompt rule is secondary. A rule alone is weak
+when every field arrives in the same shape: following it takes effort and breaking it
+takes none. This matters more now that Agent 6 writes mechanisms, which are the
+system's reading and the part most likely to be wrong.
+
+Cost, measured on a real digest: ~13.8KB of theme context per digest, three per request,
+roughly 10k tokens. A size test caps it so it cannot grow silently.
+
 ### 17 Aug 2026 — the action names a metric, an owner and a price
 
 Agent 6 also returns a `first_move`: kind, action, owner, effort, rationale. The action

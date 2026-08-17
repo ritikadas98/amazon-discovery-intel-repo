@@ -15,6 +15,58 @@ overwrite history).
 
 ---
 
+## 2026-08-17 — The chat cannot pass a system conclusion off as a quote
+
+**What changed.** `compactThemes` now hands each theme to the model in three named
+blocks — `said`, `counted`, `inferred` — instead of one flat object, and the prompt
+gained a rule about not blurring them. `said` holds only verbatim customer quotations;
+`counted` is arithmetic; `inferred` is the headline, mechanism, readiness, gaps, next
+steps and first move.
+
+**PM rationale.** This is the surface where a system conclusion can be laundered into
+"customers said". Once Agent 6 writes a mechanism — "changing a payment method appends
+rather than replaces" — a PM asking the chat what customers reported can be handed that
+sentence back as though someone wrote it in a review. It is the system's reading, it is
+the part most likely to be wrong, and a PM deciding what to build is entitled to know
+which sentences carry that risk.
+
+The structural split is the mechanism; the rule is secondary. A rule alone is weak when
+every field arrives in the same shape, because following it takes effort and breaking it
+takes none. With three blocks, the only customer words in the payload live in one place
+and everything in `inferred` is visibly ours. Following the rule becomes the path of
+least resistance.
+
+Two smaller rules went in beside it: the mechanism must be described as a reading rather
+than a finding, and `avg_how_upset` must be distinguished from `by_consequence` when
+asked which problem is worst — they routinely disagree, and a theme can be the angriest
+and the cheapest at once.
+
+**Mechanics.**
+- `src/agents/chat.ts` — three blocks, and `compactThemes` exported so the shape can be
+  asserted rather than inferred from reading a prompt string.
+- `src/agents/chat.test.ts` — 7 tests. The load-bearing one asserts a verbatim quote
+  appears in `said` and in neither of the other blocks: if a quote leaks into `counted`
+  or `inferred`, the model could attribute a system sentence to a customer while still
+  technically quoting the payload.
+- An empty `said` is left empty. The prompt tells the model to say so plainly rather
+  than paraphrase `inferred` text into a customer's mouth to fill the gap.
+
+**Cost.** Measured on a real fixture digest: 13,831 bytes of theme context per digest,
+and three digests ride in each request — roughly 41KB, about 10k tokens. That is a real
+increase over the previous flat shape, and a size test caps it so it cannot grow
+silently.
+
+**Considered & not done.**
+- *A prompt rule without the structural split.* Cheaper, and it is the version that fails
+  quietly: nothing in the payload would make the violation visible in review.
+- *Dropping `inferred` from the chat context entirely.* It would make the rule
+  unbreakable and the assistant useless — "why did you say that" is the question a PM
+  actually asks, and answering it requires the reasoning.
+- *Sending only `said` for non-READY themes.* Most themes have no `inferred` content
+  anyway, so the saving is small and the special case is not worth the branch.
+
+---
+
 ## 2026-08-17 — The action names a metric, an owner and a price
 
 **What changed.** Agent 6 now also returns a `first_move`: a `kind` of `query` / `check`
