@@ -32,6 +32,34 @@ export const CONSEQUENCE_ORDER: readonly Consequence[] = ['money', 'lost', 'bloc
  */
 export const FORMULA_VERSION = 2;
 
+/**
+ * The countable half of a theme's evidence.
+ *
+ * Everything here is arithmetic over the theme's own signals — no model, no
+ * cost, and nothing that can be hallucinated or injected. It answers "what did
+ * people actually report", which is the column a PM checks before believing
+ * anything the model inferred on top of it.
+ *
+ * Computed in the pipeline rather than the browser on purpose: `theme.signals`
+ * is the exact set this run scored, while a frontend join on Theme ID can pick
+ * up signals from a different run that shares the week.
+ */
+export interface ThemeEvidence {
+  /** Signal count per source, biggest first. */
+  sources: Array<{ source: Source; count: number }>;
+  /** The most-named app version and how many signals named it, if any did. */
+  topVersion: { version: string; count: number } | null;
+  /** Consequence tally, most costly tier first. */
+  consequences: Array<{ consequence: Consequence; count: number }>;
+  /**
+   * Two verbatim quotations: the most severe, then the one least like it.
+   * Two similar quotes are one piece of evidence printed twice.
+   */
+  quotes: Array<{ text: string; source: Source; severity: number }>;
+  /** Earliest and latest signal date in the theme. */
+  dateRange: { first: string; last: string } | null;
+}
+
 export interface RawSignal {
   text: string;
   source: Source;
@@ -147,6 +175,8 @@ export interface ScoredTheme {
   consequence: Consequence;
   /** How many of this theme's signals carry that consequence. */
   consequence_count: number;
+  /** Counted facts about this theme's signals. See ThemeEvidence. */
+  evidence: ThemeEvidence;
   /** Percentile cuts across every theme in the run — not inherited from the group. */
   moscow: MoSCoW;
   /** Deterministic readiness from the same 4 criteria Agent 5 uses. AI-assessed value wins for top-group themes (set in run.ts). */

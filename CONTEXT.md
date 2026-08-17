@@ -232,6 +232,24 @@ spending credits.
 **Not yet done:** the pipeline has not been re-run, so the live sheet still holds rows
 scored the old way. Until a run happens, the deployed site shows the old numbers.
 
+### 17 Aug 2026 — the evidence panel is counted, not generated
+
+Every theme carries a `ThemeEvidence` block — sources, dominant version, consequence
+tally, two verbatim quotes, date range — computed in `rice.ts` from the theme's own
+signals. It renders as "What people reported", badged as counted so a reader can tell
+fact from inference at a glance.
+
+The principle: anything a `reduce` can produce must never be a prompt. It is cheaper, it
+cannot hallucinate, and it cannot be steered by text inside a review. Only the middle
+column of the artifact's card — the mechanism — genuinely needs a model, and that is the
+next step rather than this one.
+
+Two judgement calls are load-bearing. The second quote is chosen for being *unlike* the
+first rather than next-most-severe, because severity alone kept returning two phrasings
+of one complaint. And a version is only named at 2+ signals and 25%+ of the theme; the
+fixture surfaced one at 1 of 14, which would have sent someone chasing a build for
+nothing.
+
 ### 17 Aug 2026 — the score keeps only what changes the answer, and cost gets its own column
 
 An audit of the 14 August run found that four of the six scoring inputs were effectively

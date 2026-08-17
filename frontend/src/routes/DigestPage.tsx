@@ -118,6 +118,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
     readiness: lead?.readiness ?? null,
     score: lead?.system_rice,
     topScore: ranked[0]?.system_rice,
+    evidence: lead?.evidence,
     rank: lead ? ranked.indexOf(lead) + 1 : undefined,
     totalThemes: ranked.length,
   };
@@ -193,6 +194,7 @@ function SingleGroupView({
     signalCount: topTheme?.signal_count,
     nextStep: topTheme?.recommended_next_steps?.[0] ?? null,
     readiness: topTheme?.readiness ?? null,
+    evidence: topTheme?.evidence,
   };
 
   return (

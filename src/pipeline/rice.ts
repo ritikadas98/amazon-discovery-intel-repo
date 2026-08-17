@@ -7,7 +7,9 @@ import {
   type ScoredGroup,
   type ScoredTheme,
   type TaggedSignal,
+  type Source,
   type Theme,
+  type ThemeEvidence,
   type TrendDirection,
 } from '../types.js';
 
@@ -103,6 +105,103 @@ function computeThemeComponents(theme: Theme, groupId: string, meta: Meta): Them
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
+/** Longest quotation kept. Long enough to carry a point, short enough to scan. */
+const MAX_QUOTE_CHARS = 240;
+
+/** Words carried by almost every review, so overlap in them means nothing. */
+const STOP = new Set([
+  'the', 'and', 'for', 'that', 'this', 'with', 'you', 'not', 'was', 'have', 'has',
+  'but', 'are', 'they', 'its', 'from', 'get', 'got', 'app', 'amazon', 'been', 'when',
+  'what', 'your', 'all', 'can', 'will', 'would', 'there', 'their', 'them', 'out',
+]);
+
+function contentWords(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOP.has(w)),
+  );
+}
+
+/** Jaccard overlap. 1 means the same words, 0 means nothing shared. */
+function overlap(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const w of a) if (b.has(w)) shared++;
+  return shared / (a.size + b.size - shared);
+}
+
+function truncate(text: string): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  return clean.length <= MAX_QUOTE_CHARS ? clean : `${clean.slice(0, MAX_QUOTE_CHARS - 1)}…`;
+}
+
+/**
+ * Count what the signals actually say. No model involved — see ThemeEvidence.
+ */
+function computeEvidence(theme: Theme): ThemeEvidence {
+  const signals = theme.signals || [];
+  if (signals.length === 0) {
+    return { sources: [], topVersion: null, consequences: [], quotes: [], dateRange: null };
+  }
+
+  const bySource = new Map<Source, number>();
+  const byVersion = new Map<string, number>();
+  const byConsequence = new Map<Consequence, number>();
+  for (const s of signals) {
+    bySource.set(s.source, (bySource.get(s.source) ?? 0) + 1);
+    byConsequence.set(s.consequence, (byConsequence.get(s.consequence) ?? 0) + 1);
+    const v = (s.app_version || '').trim();
+    if (v) byVersion.set(v, (byVersion.get(v) ?? 0) + 1);
+  }
+
+  // A version is only worth printing if it looks like concentration. One
+  // mention out of fourteen is a coincidence, and putting it on the card as
+  // "1 of 14 on 5.2" invites a reader to chase a build for no reason.
+  const versions = [...byVersion.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .filter(([, count]) => count >= 2 && count / signals.length >= 0.25);
+  const dates = signals.map((s) => s.date).filter(Boolean).sort();
+
+  // Most severe first, then the quote least like it. Picking the top two by
+  // severity alone routinely returns two phrasings of the same complaint, which
+  // reads as corroboration where there is only repetition.
+  const ranked = [...signals].sort((a, b) => (b.severity_score || 0) - (a.severity_score || 0));
+  const quotes = ranked.slice(0, 1);
+  if (ranked.length > 1) {
+    const firstWords = contentWords(ranked[0].text);
+    let mostDistinct = ranked[1];
+    let lowest = Infinity;
+    for (const s of ranked.slice(1)) {
+      const score = overlap(firstWords, contentWords(s.text));
+      if (score < lowest) {
+        lowest = score;
+        mostDistinct = s;
+      }
+    }
+    quotes.push(mostDistinct);
+  }
+
+  return {
+    sources: [...bySource.entries()]
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count),
+    topVersion: versions.length > 0 ? { version: versions[0][0], count: versions[0][1] } : null,
+    consequences: CONSEQUENCE_ORDER.filter((c) => byConsequence.has(c)).map((c) => ({
+      consequence: c,
+      count: byConsequence.get(c)!,
+    })),
+    quotes: quotes.map((s) => ({
+      text: truncate(s.text),
+      source: s.source,
+      severity: s.severity_score,
+    })),
+    dateRange: dates.length > 0 ? { first: dates[0], last: dates[dates.length - 1] } : null,
+  };
+}
+
 /**
  * A theme takes the most costly consequence present in it, and the count of
  * signals at that tier. Worst-case rather than average: one double charge
@@ -189,6 +288,7 @@ export function calculateRice(
         system_rice: systemRice,
         consequence: cons.consequence,
         consequence_count: cons.count,
+        evidence: computeEvidence(t),
         // Placeholder — overwritten below once every theme's score is known.
         moscow: 'Could Have',
         readiness: computeThemeReadiness(t),

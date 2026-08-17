@@ -9,7 +9,8 @@ import { featureGroupName, formatWeekLabel } from '@/lib/parsers';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import { ConsequenceBadge, ReadinessBadge, ScoreBandBadge } from '@/components/common/StatusBadges';
 import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
-import type { Consequence, Readiness, WoWDeltaEntry } from '@/types';
+import { WhatPeopleReported } from './WhatPeopleReported';
+import type { Consequence, Readiness, ThemeEvidence, WoWDeltaEntry } from '@/types';
 
 export interface OpportunityHeroData {
   groupId: string;
@@ -32,6 +33,8 @@ export interface OpportunityHeroData {
   topScore?: number;
   rank?: number;
   totalThemes?: number;
+  /** Counted facts about the theme's signals. */
+  evidence?: ThemeEvidence;
 }
 
 /** 3 must read "3rd", not "3th" — the teens are the exception that catches naive tables. */
@@ -181,6 +184,8 @@ export function OpportunityHero({ data }: Props) {
             </Button>
           )}
         </div>
+
+        <WhatPeopleReported evidence={data.evidence} signalCount={data.signalCount ?? 0} />
 
         {data.nextStep && (
           <div

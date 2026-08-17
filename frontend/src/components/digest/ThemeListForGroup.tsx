@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TREND_CLASS } from '@/lib/colors';
 import { ConsequenceBadge, MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { ThemeScoreDerivation } from './ThemeScoreDerivation';
+import { WhatPeopleReported } from './WhatPeopleReported';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ThemeBreakdownEntry } from '@/types';
@@ -76,6 +77,7 @@ export function ThemeListForGroup({ themes }: Props) {
                   <MoscowBadge value={t.moscow} />
                   <ReadinessBadge value={t.readiness} />
                 </div>
+                <WhatPeopleReported evidence={t.evidence} signalCount={t.signal_count} />
                 <ThemeScoreDerivation theme={t} topScore={topScore} />
               </div>
             ))}

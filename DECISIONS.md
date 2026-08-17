@@ -15,6 +15,50 @@ overwrite history).
 
 ---
 
+## 2026-08-17 — Count the evidence instead of asking a model for it
+
+**What changed.** Every scored theme now carries a `ThemeEvidence` block: signal
+count per source, the dominant app version where one exists, a consequence tally, two
+verbatim quotations, and the date range. It renders as a "What people reported" panel on
+the decision card and on every theme card, marked with a ✓ badge and a green rule.
+
+**PM rationale.** The artifact's decision card has three columns — what people reported,
+what we think is going on, what we still don't know. Only the middle one needs a model.
+The first is arithmetic over signals the pipeline already holds, and computing it rather
+than prompting for it is cheaper, cannot hallucinate a number, and cannot be steered by
+text inside a review. The rule that follows: if a `reduce` can produce it, it must never
+be a prompt.
+
+The panel is deliberately marked as *counted*. A PM deciding what to work on should be
+able to see, at a glance, which half of the argument is fact and which half is inference.
+Mixing them is how a dashboard talks someone into a decision the evidence does not carry.
+
+**Mechanics.**
+- `src/types.ts` — `ThemeEvidence`, and `evidence` on `ScoredTheme`.
+- `src/pipeline/rice.ts` — `computeEvidence`. Two details worth keeping:
+  - **Quote choice.** Most severe first, then the quote least like it by Jaccard overlap
+    on content words. Taking the top two by severity routinely returned two phrasings of
+    the same complaint, which reads as corroboration where there is only repetition.
+  - **Version threshold.** A version is reported only at 2+ signals and 25%+ of the
+    theme. The fixture surfaced `5.2` at 1 of 14 — a coincidence that, printed on a card,
+    would send someone chasing a build for no reason.
+- Frontend — `WhatPeopleReported.tsx`. Renders nothing when the block is absent, so rows
+  scored before this change do not imply nobody reported anything.
+- Computed in the pipeline, not the browser, because `theme.signals` is the exact set
+  this run scored while a frontend join on Theme ID can pick up signals from a different
+  run sharing the week — the same ambiguity behind the unusable week-over-week deltas.
+
+**Considered & not done.**
+- *Asking the readiness agent to write this column.* It receives two samples truncated to
+  220 characters, so it could not produce a platform split or a count even if asked; and
+  a model asked for numbers it cannot see will invent them.
+- *Computing it in the frontend from the signals endpoint.* Cheaper to ship, wrong on any
+  week with two runs.
+- *Showing every quote.* Two is the point at which a reader can check the claim without
+  the panel becoming the transcript.
+
+---
+
 ## 2026-08-17 — The score keeps only the factors that change the answer
 
 **What changed.** `system_rice` was `(reach × impact × confidence × version) / effort ×

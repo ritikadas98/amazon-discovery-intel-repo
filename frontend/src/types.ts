@@ -12,6 +12,20 @@ export type Readiness = 'READY' | 'NEEDS_MORE_EVIDENCE' | 'BLOCKED';
  */
 export type Consequence = 'money' | 'lost' | 'blocked' | 'annoyance';
 
+/**
+ * The counted half of a theme's evidence — arithmetic over its signals, no
+ * model involved. Mirrors `ThemeEvidence` in the backend `src/types.ts`.
+ * Optional: rows written before this existed have none, and an absent block
+ * should render as nothing rather than as zeroes.
+ */
+export interface ThemeEvidence {
+  sources: Array<{ source: Source; count: number }>;
+  topVersion: { version: string; count: number } | null;
+  consequences: Array<{ consequence: Consequence; count: number }>;
+  quotes: Array<{ text: string; source: Source; severity: number }>;
+  dateRange: { first: string; last: string } | null;
+}
+
 /** What POST /run-pipeline returns. */
 export interface PipelineResult {
   status: 'complete';
@@ -144,6 +158,7 @@ export interface ThemeBreakdownEntry {
    */
   consequence?: Consequence;
   consequence_count?: number;
+  evidence?: ThemeEvidence;
   moscow: MoSCoW;
   readiness: Readiness;
   gap_reasons?: string[];

@@ -117,6 +117,71 @@ describe('RICE', () => {
     expect(byNew).toEqual(byOld);
   });
 
+  /**
+   * The evidence block is the half of the card that must never be wrong: it is
+   * counted, not inferred, so a reader is entitled to treat it as fact.
+   */
+  it('counts sources, versions and consequences straight from the signals', () => {
+    const sigs = [
+      signal({ source: 'app_store', app_version: '27.13.0', consequence: 'money', severity_score: 4.0 }),
+      signal({ source: 'app_store', app_version: '27.13.0', consequence: 'blocked', severity_score: 4.5 }),
+      signal({ source: 'play_store', app_version: '28.7.0', consequence: 'blocked', severity_score: 3.5 }),
+    ];
+    const run = calculateRice(
+      { checkout_payment: sigs },
+      { checkout_payment: [theme('t_ev', 'Payment', sigs)] },
+      meta,
+    );
+    const ev = run[0].scored_themes[0].evidence;
+
+    expect(ev.sources).toEqual([
+      { source: 'app_store', count: 2 },
+      { source: 'play_store', count: 1 },
+    ]);
+    expect(ev.topVersion).toEqual({ version: '27.13.0', count: 2 });
+
+    // A version named once in a large theme is a coincidence, not a lead.
+    const thin = [
+      ...Array.from({ length: 10 }, () => signal({ app_version: null })),
+      signal({ app_version: '5.2' }),
+    ];
+    const thinRun = calculateRice(
+      { product_detail: thin },
+      { product_detail: [theme('t_thin', 'Detail', thin)] },
+      meta,
+    );
+    expect(thinRun[0].scored_themes[0].evidence.topVersion).toBeNull();
+    // Ordered most costly first, regardless of how many carry each tier.
+    expect(ev.consequences).toEqual([
+      { consequence: 'money', count: 1 },
+      { consequence: 'blocked', count: 2 },
+    ]);
+    // Every source count must add back to the theme's own signal count.
+    expect(ev.sources.reduce((n, s) => n + s.count, 0)).toBe(sigs.length);
+  });
+
+  it('picks a second quote that is unlike the first, not merely the next most severe', () => {
+    const near = 'Checkout keeps failing when I try to pay for my order every single time';
+    const sigs = [
+      signal({ text: 'Charged twice for one order and nobody will reverse it', severity_score: 4.5 }),
+      signal({ text: near, severity_score: 4.4 }),
+      signal({ text: `${near} really`, severity_score: 4.3 }),
+      signal({ text: 'Delivery driver left the parcel in the rain', severity_score: 2.0 }),
+    ];
+    const run = calculateRice(
+      { checkout_payment: sigs },
+      { checkout_payment: [theme('t_q', 'Payment', sigs)] },
+      meta,
+    );
+    const quotes = run[0].scored_themes[0].evidence.quotes;
+
+    expect(quotes).toHaveLength(2);
+    expect(quotes[0].text).toContain('Charged twice');
+    // 4.4 is the next most severe, but the parcel quote shares no vocabulary with
+    // the first, so it carries information the near-duplicate does not.
+    expect(quotes[1].text).toContain('parcel in the rain');
+  });
+
   it('a theme takes the most costly consequence present, not the most common', () => {
     const themes = allThemes();
     // Every fixture signal is 'annoyance', so nothing should claim otherwise.
