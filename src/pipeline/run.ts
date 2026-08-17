@@ -178,39 +178,55 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     log(`Readiness stage FAILED, continuing with deterministic values only: ${message}`);
   }
 
-  // 10b. Diagnose only the themes that cleared the evidence bar.
+  // 10b. Diagnose the themes worth words, and always at least one.
   //
-  // Everything else was already judged unable to carry a decision, and writing a
-  // confident mechanism for a theme with two signals is the overreach this system
-  // exists to avoid. It also keeps the cost of the expensive call tied to what a PM
-  // will act on rather than to how much was scraped. Non-fatal for the same reason
-  // readiness is: a missing headline costs a sentence, not a week of ingestion.
+  // This was READY-only. On live data that meant never: the readiness rubric
+  // needs 3 of 4 criteria strong, one of which is signals from 3+ sources, and
+  // Cloud Run is IP-blocked from the App Store — so live runs are effectively
+  // Play-Store-only and every theme comes back BLOCKED. A gate no real run can
+  // pass is not a gate, and the digest's headline card was permanently empty.
+  //
+  // So: diagnose everything READY, and if nothing is, diagnose the single
+  // highest-scoring theme anyway. The UI marks that one provisional, and the
+  // "what we still don't know" panel is already loud about thin evidence. A
+  // hedged reading beats no reading; a confident one would not.
+  //
+  // Cost is unchanged in shape — one to three themes — and cannot run away,
+  // because the fallback is exactly one.
   let diagnoses: ThemeDiagnosis[] = [];
-  const readyIds = new Set(
-    allThemeReadiness.filter((t) => t.readiness === 'READY').map((t) => t.theme_id),
-  );
-  if (readyIds.size > 0) {
-    const toDiagnose: ThemeToDiagnose[] = [];
-    for (const g of scoredGroups) {
-      const groupName =
-        config.feature_groups.find((c) => c.id === g.feature_group_id)?.name ?? g.feature_group_id;
-      for (const scored of g.scored_themes) {
-        if (!readyIds.has(scored.theme_id)) continue;
-        const theme = (themesPerGroup[g.feature_group_id] || []).find(
-          (t) => t.theme_id === scored.theme_id,
-        );
-        if (theme) toDiagnose.push({ theme, scored, groupName });
-      }
+  const readinessById = new Map(allThemeReadiness.map((t) => [t.theme_id, t.readiness] as const));
+
+  const candidates: ThemeToDiagnose[] = [];
+  for (const g of scoredGroups) {
+    const groupName =
+      config.feature_groups.find((c) => c.id === g.feature_group_id)?.name ?? g.feature_group_id;
+    for (const scored of g.scored_themes) {
+      const theme = (themesPerGroup[g.feature_group_id] || []).find(
+        (t) => t.theme_id === scored.theme_id,
+      );
+      if (!theme) continue;
+      const readiness = readinessById.get(scored.theme_id) ?? scored.readiness;
+      candidates.push({ theme, scored, groupName, readiness });
     }
+  }
+
+  const ready = candidates.filter((c) => c.readiness === 'READY');
+  const toDiagnose =
+    ready.length > 0
+      ? ready
+      : candidates.sort((a, b) => b.scored.system_rice - a.scored.system_rice).slice(0, 1);
+
+  if (toDiagnose.length > 0) {
     try {
       diagnoses = await diagnoseThemes(toDiagnose);
-      log(`Diagnosed ${diagnoses.length} of ${toDiagnose.length} READY themes`);
+      const basis = ready.length > 0 ? 'READY' : 'top-scoring (provisional — nothing was READY)';
+      log(`Diagnosed ${diagnoses.length} of ${toDiagnose.length} ${basis} theme(s)`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       log(`Diagnosis stage FAILED, continuing without headlines: ${message}`);
     }
   } else {
-    log('No READY themes this run — skipping diagnosis (no API call made)');
+    log('No themes to diagnose this run — skipping (no API call made)');
   }
 
   // 11. Append the weekly digest row

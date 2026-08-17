@@ -218,7 +218,7 @@ export function OpportunityHero({ data }: Props) {
 
         <div className="grid gap-3 lg:grid-cols-3">
           <WhatPeopleReported evidence={data.evidence} signalCount={data.signalCount ?? 0} />
-          <WhatWeThink mechanism={data.mechanism} />
+          <WhatWeThink mechanism={data.mechanism} readiness={data.readiness ?? undefined} />
           <WhatWeDontKnow gaps={data.gaps} nextSteps={data.nextSteps} />
         </div>
 

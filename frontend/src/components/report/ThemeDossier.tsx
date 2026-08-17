@@ -59,7 +59,7 @@ export function ThemeDossier({ theme }: { theme: ThemeBreakdownEntry }) {
 
       <div className="grid gap-3 px-5 py-4 lg:grid-cols-3">
         <WhatPeopleReported evidence={theme.evidence} signalCount={theme.signal_count} />
-        <WhatWeThink mechanism={theme.mechanism} />
+        <WhatWeThink mechanism={theme.mechanism} readiness={theme.readiness} />
         <WhatWeDontKnow gaps={theme.gap_reasons} nextSteps={theme.recommended_next_steps} />
       </div>
 

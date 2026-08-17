@@ -1,5 +1,13 @@
 import { callGemini, parseJsonOrThrow } from '../lib/gemini.js';
-import type { FirstMove, MoveKind, MoveOption, ScoredTheme, Theme, ThemeDiagnosis } from '../types.js';
+import type {
+  FirstMove,
+  MoveKind,
+  MoveOption,
+  Readiness,
+  ScoredTheme,
+  Theme,
+  ThemeDiagnosis,
+} from '../types.js';
 
 /**
  * Agent 6: a finding and a mechanism, for the few themes worth the words.
@@ -71,13 +79,21 @@ export interface ThemeToDiagnose {
   theme: Theme;
   scored: ScoredTheme;
   groupName: string;
+  /**
+   * How much the evidence supports acting. Passed in so the writing can be
+   * hedged to match: a BLOCKED theme still deserves a reading, but not a
+   * confident one, and its first move must be about getting evidence rather
+   * than building.
+   */
+  readiness: Readiness;
 }
 
 function buildPrompt(items: ThemeToDiagnose[]): string {
-  const payload = items.map(({ theme, scored, groupName }) => ({
+  const payload = items.map(({ theme, scored, groupName, readiness }) => ({
     theme_id: theme.theme_id,
     current_label: theme.theme_label,
     part_of_app: groupName,
+    evidence_strength: readiness,
     // The counted facts, so the model can echo a number without inventing one.
     counted: {
       total_complaints: scored.signal_count,
@@ -155,6 +171,17 @@ already justifies it without a number.
 "options_leftover" — ONE sentence naming the complaints NO option above addresses, or
 omit it if the options cover everything. A menu that hides its own gaps is worse than no
 menu: a PM who ships every option and still gets complaints has been misled.
+
+EVIDENCE STRENGTH — read this before writing anything.
+Each theme carries "evidence_strength".
+- "READY": the evidence supports acting. Write plainly.
+- "NEEDS_MORE_EVIDENCE" or "BLOCKED": the evidence is thin, and you are being asked for a
+  reading anyway because a PM still has to decide where to look. Hedge honestly. Prefer
+  "the reviews suggest" and "this may be" over "this is". Say what would change your mind.
+  Do NOT manufacture confidence the evidence does not carry, and do NOT pad the mechanism
+  to look thorough — one honest bullet beats three speculative ones.
+  For these, "first_move" must be "query" or "check". Never "ship": a theme that cannot
+  carry a decision cannot justify building anything.
 
 NUMBERS — this rule is absolute.
 Every figure in the "counted" object is already computed and displayed. If you use a

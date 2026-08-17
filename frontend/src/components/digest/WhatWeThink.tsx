@@ -1,3 +1,5 @@
+import type { Readiness } from '@/types';
+
 /**
  * The inferred half of the evidence, marked so it can never be mistaken for the
  * counted half.
@@ -11,7 +13,21 @@
  * without a sentence, and the title attribute says it in words for anyone who
  * has not met the symbol.
  */
-export function WhatWeThink({ mechanism }: { mechanism?: string[] }) {
+export function WhatWeThink({
+  mechanism,
+  readiness,
+}: {
+  mechanism?: string[];
+  /**
+   * When this is not READY the reading was produced anyway, because a PM still
+   * has to decide where to look. Derived here rather than stored: a flag on the
+   * row could drift out of step with the readiness beside it, and there is only
+   * one right answer.
+   */
+  readiness?: Readiness;
+}) {
+  const provisional = readiness !== undefined && readiness !== 'READY';
+
   // Absent on every theme that was not READY, and on any diagnosis that failed
   // validation. Rendering nothing is correct: no inference was made.
   if (!mechanism || mechanism.length === 0) return null;
@@ -36,6 +52,14 @@ export function WhatWeThink({ mechanism }: { mechanism?: string[] }) {
         <span className="text-[10px] font-medium uppercase tracking-[0.115em] text-muted-foreground">
           What we think is going on
         </span>
+        {provisional && (
+          <span
+            className="rounded-full border border-amber-500/50 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-[0.08em] text-amber-700 dark:text-amber-400"
+            title="The evidence does not yet support acting. This reading is offered so you know where to look, not so you can act on it."
+          >
+            Provisional
+          </span>
+        )}
       </div>
 
       <ul className="relative list-disc space-y-1.5 pl-4 text-[13px] leading-relaxed text-muted-foreground marker:text-amber-600/60 dark:marker:text-amber-500/60">
@@ -43,6 +67,13 @@ export function WhatWeThink({ mechanism }: { mechanism?: string[] }) {
           <li key={i}>{m}</li>
         ))}
       </ul>
+
+      {provisional && (
+        <p className="relative mt-3 border-t pt-2.5 text-[12px] leading-relaxed text-muted-foreground">
+          Written from thin evidence, because knowing where to look is still useful. Treat it as a
+          question to test, not a conclusion.
+        </p>
+      )}
     </div>
   );
 }

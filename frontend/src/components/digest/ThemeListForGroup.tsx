@@ -83,7 +83,7 @@ export function ThemeListForGroup({ themes }: Props) {
                   <ReadinessBadge value={t.readiness} />
                 </div>
                 <WhatPeopleReported evidence={t.evidence} signalCount={t.signal_count} />
-                <WhatWeThink mechanism={t.mechanism} />
+                <WhatWeThink mechanism={t.mechanism} readiness={t.readiness} />
                 <WhatWeDontKnow gaps={t.gap_reasons} nextSteps={t.recommended_next_steps} />
                 <ThemeScoreDerivation theme={t} topScore={topScore} />
               </div>

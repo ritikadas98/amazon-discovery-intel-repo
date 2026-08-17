@@ -245,6 +245,20 @@ and the theme may still be the right thing to work on. The first recommended nex
 renders inside it as "Would settle it", because a gap and the thing that closes it
 belong together.
 
+### 18 Aug 2026 — the diagnosis gate was unreachable on live data
+
+The first live v2 run came back READY 0, BLOCKED 8, so Agent 6 never fired and the
+headline card was permanently empty. The readiness rubric needs 3 of 4 criteria strong,
+one being signals from 3+ sources — and Cloud Run is IP-blocked from the App Store, so
+live runs are effectively Play-Store-only and that criterion cannot be met.
+
+The gate now diagnoses every READY theme, and the single highest-scoring theme when none
+are. Cost keeps its shape because the fallback is exactly one. The agent receives
+evidence_strength and is told to hedge, to say what would change its mind, and never to
+propose shipping on a theme that cannot carry a decision. WhatWeThink shows a
+Provisional chip, derived from readiness rather than stored so it cannot drift from the
+badge beside it.
+
 ### 18 Aug 2026 — the email carries the decision, and has a way out
 
 The weekly digest email led with a category label and a score, and linked nowhere: its

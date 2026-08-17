@@ -61,7 +61,7 @@ const scored = {
   },
 } as unknown as ScoredTheme;
 
-const items = [{ theme, scored, groupName: 'Checkout & Payment' }];
+const items = [{ theme, scored, groupName: 'Checkout & Payment', readiness: 'READY' as const }];
 
 function reply(body: unknown) {
   callGemini.mockResolvedValueOnce(JSON.stringify(body));
@@ -246,6 +246,22 @@ describe('diagnoseThemes', () => {
       },
     ]);
     expect((await diagnoseThemes(items))[0].options).toBeUndefined();
+  });
+
+  /**
+   * The live failure this guards. Every theme on real data came back BLOCKED,
+   * so a READY-only gate meant the digest's headline card was permanently
+   * empty. A thin theme still gets a reading — the prompt is told to hedge it
+   * and the UI marks it provisional.
+   */
+  it('tells the model how thin the evidence is', async () => {
+    reply([{ theme_id: 't4', headline: 'Checkout fails.', mechanism: [] }]);
+    await diagnoseThemes([{ ...items[0], readiness: 'BLOCKED' }]);
+    const prompt = callGemini.mock.calls[0][0] as string;
+
+    expect(prompt).toContain('"evidence_strength": "BLOCKED"');
+    // And the standing instruction that a thin theme cannot justify building.
+    expect(prompt).toMatch(/Never "ship"/);
   });
 
   it('fences the review block and puts the standing rule after it', async () => {
