@@ -21,3 +21,7 @@ BLURB.md
 Amazon Discovery Intelligence v2.json
 Amazon Discovery Intelligence(4).json
 n8n-gcp-hosting-guide.md
+
+# Local preview server logs
+fixture.out
+fixture.err
