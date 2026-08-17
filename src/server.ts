@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import { getEnv } from './config/env.js';
+import { FORMULA_VERSION } from './types.js';
 import { runPipeline } from './pipeline/run.js';
 import { appendRows, readRows } from './lib/sheets.js';
 import { handleChatStream, type ChatTurn } from './agents/chat.js';
@@ -46,8 +47,28 @@ const chatLimiter = rateLimit({
 });
 app.use(generalLimiter);
 
+/**
+ * Liveness, plus which build is actually serving.
+ *
+ * `--source .` deploys whatever is in the folder the script was run from, not
+ * what is on the default branch — so a stale clone silently ships old code and
+ * the only way to find out was to run the pipeline and inspect the row it
+ * wrote. Three runs were spent that way. Now the answer is one curl.
+ *
+ * `formulaVersion` is the honest tell: it is the constant the scoring code
+ * carries, so if this says 2 the deployed build has the current formula, the
+ * evidence block and the widened diagnosis gate.
+ */
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    formulaVersion: FORMULA_VERSION,
+    features: {
+      themeEvidence: true,
+      diagnosisFallsBackWhenNothingReady: true,
+    },
+  });
 });
 
 // ─── Pipeline trigger ────────────────────────────────────────────────────────
