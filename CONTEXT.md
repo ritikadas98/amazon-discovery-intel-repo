@@ -245,6 +245,28 @@ and the theme may still be the right thing to work on. The first recommended nex
 renders inside it as "Would settle it", because a gap and the thing that closes it
 belong together.
 
+### 18 Aug 2026 — the email carries the decision, and has a way out
+
+The weekly digest email led with a category label and a score, and linked nowhere: its
+only links were the feedback buttons, pointing at the Cloud Run API host. Clicking one
+landed a PM on a bare JSON host with nowhere to go, which was the last impression the
+product left each week.
+
+It now opens with Agent 6's headline, carries the action block with owner and cost, shows
+consequence per group, and offers deep links that carry the week — a six-week-old email
+still opens the week it was about. Feedback became "Doing this" / "Not this week", because
+an inbox on Monday morning is where deferrals actually happen.
+
+Two things were actively wrong. The delta printed "RICE 12 vs last week", a name the
+formula no longer has. And `severity_delta` is null across a formula change, which the
+email rendered as "First run" — the first v2 digest would have claimed week 33 was week
+one. A run is now only "first" when no group has a delta at all.
+
+`APP_BASE_URL` is new in `env.ts` and the deploy script, deliberately separate from
+`PUBLIC_BASE_URL`: one variable doing two jobs is why the dead end existed.
+`scripts/preview-email.ts` renders the template to a file and asserts eight properties,
+because a template that compiles is not a template that reads correctly.
+
 ### 18 Aug 2026 — parity with the mockup, and the report rebuilt
 
 The four remaining gaps are closed: gradient washes on the three panels, the cut line in

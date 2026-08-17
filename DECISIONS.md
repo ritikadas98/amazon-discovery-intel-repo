@@ -15,6 +15,66 @@ overwrite history).
 
 ---
 
+## 2026-08-18 — The digest email carries the decision, and has a way out
+
+**What changed.** The weekly email led with a category label and a score, and had no link
+to the dashboard at all. It now opens with the finding, carries the first move, and every
+route out of it lands somewhere useful.
+
+- **Leads with the headline** from Agent 6, with the action block underneath.
+- **Consequence per group** — "Lost money 1/5" beside the complaint count.
+- **Deep links** — a primary "Open the digest" CTA and a link on every group name, both
+  carrying the week.
+- **Three-way feedback** — "Doing this" / "Not this week" replaces the thumbs.
+- **Vocabulary** — complaints, how upset, size. Matching the dashboard.
+- **The thank-you page** offers the dashboard instead of "you can close this tab".
+
+**Two things that were actively wrong.**
+
+The delta line printed `RICE 12 vs last week`. It has not been RICE since effort and trend
+left the formula, and the number beside a retired framework name invites arithmetic that
+will not reconcile.
+
+Worse: `severity_delta` — which despite its name carries the *score* delta — is now null
+when the formula version changed, and the email's null branch printed **"First run"**. The
+first v2 digest would have told a reader it was week one when it was week 33. It now
+distinguishes the two: a run is only "first" when *no* group has a delta, because a single
+group carrying one proves a previous week existed.
+
+**PM rationale.** The email is where a PM decides whether to open the dashboard at all,
+and it was a dead end — the only links were the feedback buttons, pointing at
+`PUBLIC_BASE_URL`, which the deploy script sets to the Cloud Run *API* host. Clicking
+"useful" landed a reader on a bare JSON host with a thank-you page and nowhere to go. That
+was the last impression the product left each week.
+
+Deep links carry the week rather than defaulting to latest. Rows append and are never
+deleted, so a link in a six-week-old email still opens the week that email was about — a
+link that quietly shows a different week is worse than no link.
+
+The feedback buttons matter more here than in the dashboard. `not_now` is the deferral
+signal, and Monday morning in an inbox is where deferrals actually happen. Recording it as
+`not_useful` would have told the next reader the analysis was wrong when the PM only meant
+"not this week".
+
+**Mechanics.**
+- `APP_BASE_URL` added to `env.ts` and `gcp-deploy.sh`, defaulting to the live site.
+  Deliberately separate from `PUBLIC_BASE_URL`: one is the API, one is the dashboard.
+- `GroupSummary` gains `headline`, `consequence`, `consequence_count`, `first_move`,
+  populated in `run.ts` from the group's highest-scoring theme.
+- `scripts/preview-email.ts` renders the template to a file with a fixture built so the
+  *second* group has a delta and the first does not — which is the only way to prove the
+  "First run" fix works. It asserts eight properties, including the absence of "RICE".
+
+**Considered & not done.**
+- *Reusing `PUBLIC_BASE_URL` for the links.* It is the API host. The reason this bug
+  existed is that one variable was doing two jobs.
+- *Keeping 👍/👎 alongside the new buttons.* Four buttons on a phone is a worse decision
+  surface than two, and "useful" was never the question a PM needed to answer.
+- *Rewriting the regression email.* It reports version, complaint count and verbatim
+  quotes — no scores, no MoSCoW, no formula. Nothing this change touches affects it.
+
+---
+
 ## 2026-08-18 — Everything the mockup had, and the report rebuilt around it
 
 **What changed.** The four remaining gaps against the mockup are closed, and the report

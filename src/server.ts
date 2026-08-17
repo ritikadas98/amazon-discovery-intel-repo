@@ -235,8 +235,24 @@ app.get('/effort-overrides', async (req: Request, res: Response) => {
  */
 const VALID_RATINGS = new Set(['useful', 'not_useful', 'doing', 'not_now']);
 
-function thankYouHtml(rating: string, theme_id: string): string {
-  const isUseful = rating === 'useful';
+/**
+ * The page a PM lands on after clicking a button in the digest email.
+ *
+ * It used to end with "you can close this tab" on the bare API host — the last
+ * thing the product said to them each week was a dead end. It now names what
+ * was recorded and offers the way onward, because a click from the email is the
+ * single clearest signal that someone is willing to look further.
+ */
+function thankYouHtml(rating: string, theme_id: string, weekId: string, groupId: string): string {
+  const positive = rating === 'doing' || rating === 'useful';
+  const RECORDED: Record<string, string> = {
+    doing: 'doing this',
+    not_now: 'not this week',
+    useful: 'useful',
+    not_useful: 'not useful',
+  };
+  const app = (getEnv().APP_BASE_URL ?? 'https://amazon.ritikadas.in').replace(/\/$/, '');
+  const params = new URLSearchParams({ week: weekId, ...(groupId ? { group: groupId } : {}) });
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><title>Feedback recorded</title>
 <style>
@@ -248,11 +264,17 @@ function thankYouHtml(rating: string, theme_id: string): string {
   code { background:#f4f3ec; padding: 2px 6px; border-radius:4px; font-size: 12px; }
 </style></head><body>
   <div class="card">
-    <div class="emoji">${isUseful ? '👍' : '👎'}</div>
-    <h1>Feedback recorded</h1>
-    <p>Thanks — we logged this theme as <strong>${isUseful ? 'useful' : 'not useful'}</strong>.</p>
+    <div class="emoji">${positive ? '✓' : '↩'}</div>
+    <h1>Recorded</h1>
+    <p>Logged as <strong>${RECORDED[rating] ?? rating}</strong>${
+      rating === 'not_now'
+        ? ', with the week it was deferred in — so the decision is answerable later.'
+        : '.'
+    }</p>
     <p><code>${theme_id}</code></p>
-    <p style="color:#999;font-size:12px;margin-top:24px;">You can close this tab.</p>
+    <p style="margin-top:24px;">
+      <a href="${app}/digest?${params.toString()}" style="display:inline-block;background:#1e293b;color:#fff;padding:10px 22px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">Open the digest</a>
+    </p>
   </div>
 </body></html>`;
 }
@@ -285,7 +307,7 @@ app.get('/webhook/digest-feedback', async (req: Request, res: Response) => {
       },
     ]);
 
-    res.type('text/html').send(thankYouHtml(rating, theme_id));
+    res.type('text/html').send(thankYouHtml(rating, theme_id, week_id, feature_group_id));
   } catch (err) {
     console.error('[server] digest-feedback failed:', err);
     res.status(500).type('text/plain').send('Could not record feedback. Please try again later.');

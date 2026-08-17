@@ -35,6 +35,15 @@ const schema = z.object({
   // Public-facing base URL of this service (used to bake links into the digest email).
   // Required for the 👍/👎 feedback anchors to work; locally, falls back to localhost:PORT.
   PUBLIC_BASE_URL: z.string().optional(),
+  /**
+   * Where the dashboard lives, for links out of the digest email.
+   *
+   * Deliberately separate from PUBLIC_BASE_URL: that is the Cloud Run API host,
+   * and the deploy script sets it to the service URL. Sending a PM there gives
+   * them a JSON host with no route onward — which is what every feedback click
+   * did before this existed.
+   */
+  APP_BASE_URL: z.string().optional(),
 
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().default(465),

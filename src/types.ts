@@ -330,6 +330,13 @@ export interface ReadinessResult {
 }
 
 export interface GroupSummary {
+  /** Agent 6's finding for this group's top theme, when it earned one. */
+  headline?: string;
+  /** What the top theme cost customers, and how many it cost. */
+  consequence?: Consequence;
+  consequence_count?: number;
+  /** The one cheap step, so the email can carry the decision rather than a score. */
+  first_move?: FirstMove;
   group_id: string;
   group_name: string;
   rank: number;

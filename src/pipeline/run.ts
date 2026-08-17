@@ -244,6 +244,18 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
       signal_count: g.signal_count,
       avg_severity: g.avg_severity,
       severity_delta: g.delta?.rice_delta ?? null,
+      // The email leads with the finding when there is one. Keyed to this
+      // group's highest-scoring theme, which is the one the card is about.
+      ...(() => {
+        const top = [...g.scored_themes].sort((a, b) => b.system_rice - a.system_rice)[0];
+        const dx = top ? diagnoses.find((d) => d.theme_id === top.theme_id) : undefined;
+        return {
+          headline: dx?.headline,
+          consequence: top?.consequence,
+          consequence_count: top?.consequence_count,
+          first_move: dx?.firstMove,
+        };
+      })(),
       themes: themes.map((t) => ({
         theme_id: t.theme_id,
         theme_label: t.theme_label,
@@ -268,6 +280,9 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
 
   // 13. Send the digest email
   const baseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
+  // Falls back to the live site rather than to the API host: a wrong-but-useful
+  // link beats one that lands a PM on a JSON endpoint.
+  const appUrl = env.APP_BASE_URL ?? 'https://amazon.ritikadas.in';
   const { subject, html } = renderDigestEmail({
     groupSummaries,
     topGroup: topGroupView,
@@ -276,6 +291,7 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     meta,
     readiness,
     baseUrl,
+    appUrl,
     recipientEmail: recipient,
   });
   await sendEmail({ to: recipient, subject, html });

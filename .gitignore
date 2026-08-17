@@ -25,3 +25,6 @@ n8n-gcp-hosting-guide.md
 # Local preview server logs
 fixture.out
 fixture.err
+
+# Rendered email preview output
+scripts/out/
