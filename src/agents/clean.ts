@@ -53,7 +53,7 @@ function buildPrompt(signals: Array<{ id: number } & RawSignal>): string {
 For EACH signal, return:
 - id: (same id as input)
 - duplicate: true if this signal is nearly identical in meaning to another signal, false otherwise
-- irrelevant: true if the signal is vague, spam, non-English, or provides no actionable product insight, false otherwise
+- irrelevant: true ONLY if the text is unusable as product feedback — spam, a single word, non-English, or about something other than the app or the order. A complaint about something small is still RELEVANT: "irrelevant" is about whether we can read it, never about how much the problem cost. Most signals are relevant.
 - severity_score: a float from 1.0 to 5.0 where 5.0 = critical product-breaking issue, 3.0 = moderate friction, 1.0 = minor or positive feedback
 - version_flagged: true if the signal mentions a specific version number (e.g. "5.2", "v5") or phrases like "after the update" / "since the update", false otherwise
 - consequence: exactly one of "money", "lost", "blocked", "annoyance"
@@ -62,11 +62,14 @@ CONSEQUENCE is what the problem COST the customer. It is not how angry they soun
 - "money": money moved wrongly or is stuck. Charged twice, charged after cancelling, refund not received, wrong amount taken.
 - "lost": they paid and did not receive it. Order never arrived, parcel lost, item missing from a delivered order.
 - "blocked": they could not finish what they came to do. Cannot check out, cannot pay with their chosen method, cannot search, app crashes or freezes during the task.
-- "annoyance": everything else. Slow, ugly, confusing, unwanted feature, poor support — nothing lost and nothing prevented.
+- "annoyance": everything else. Slow, ugly, confusing, unwanted feature, poor support. Nothing was lost and nothing was prevented, but the complaint is still real and still relevant — do NOT mark it irrelevant for being an annoyance.
 Pick the MOST COSTLY tier that applies. A review describing both a failed checkout and a double charge is "money".
 
 RULES:
 - severity_score must always be a float between 1.0 and 5.0. Never null, never outside this range.
+- Return one entry for EVERY id you were given, including ones you mark duplicate or irrelevant.
+- It is almost never correct to mark every signal irrelevant. If you are about to, you have
+  misread the task: these are real customer reviews and most of them say something.
 - consequence must be exactly one of the four strings above, lowercase.
 - Only mark duplicate: true on the LATER of two similar signals (keep the first)
 - irrelevant signals still need a severity_score
@@ -120,6 +123,8 @@ export async function cleanSignals(rawSignals: RawSignal[]): Promise<CleanOutcom
   // when the model flags a signal as both).
   let droppedDuplicate = 0;
   let droppedIrrelevant = 0;
+  /** Results whose id matched no input signal — a hallucinated or renumbered id. */
+  let unmapped = 0;
   for (const r of results) {
     if (r.duplicate === true) {
       droppedDuplicate++;
@@ -130,7 +135,10 @@ export async function cleanSignals(rawSignals: RawSignal[]): Promise<CleanOutcom
       continue;
     }
     const original = rawSignals[r.id];
-    if (!original) continue;
+    if (!original) {
+      unmapped++;
+      continue;
+    }
 
     const score = parseFloat(String(r.severity_score));
     if (Number.isNaN(score) || score < 1.0 || score > 5.0) {
@@ -146,7 +154,39 @@ export async function cleanSignals(rawSignals: RawSignal[]): Promise<CleanOutcom
   }
 
   if (out.length === 0) {
-    throw new Error('Zero signals survived cleaning. Check Gemini response.');
+    // "Check Gemini response" named four different failures as one message, and
+    // the operator could not tell which had happened without re-running. Each
+    // has a different fix: everything-irrelevant is a prompt problem, unmapped
+    // ids mean the model renumbered, and an empty array means it returned
+    // nothing at all. Say which.
+    const parts = [
+      `${rawSignals.length} sent`,
+      `${results.length} returned`,
+      `${droppedDuplicate} duplicate`,
+      `${droppedIrrelevant} irrelevant`,
+      `${unmapped} with an unknown id`,
+    ].join(', ');
+
+    let likely = 'The model returned no usable rows.';
+    if (results.length === 0) {
+      likely = 'The model returned an empty array — it produced valid JSON but no entries.';
+    } else if (droppedIrrelevant === results.length) {
+      likely =
+        'Every signal was marked irrelevant. That is almost never true of real reviews — ' +
+        'suspect the prompt, not the data.';
+    } else if (unmapped === results.length) {
+      likely =
+        'Every id came back unrecognised, so the model renumbered the signals instead of ' +
+        'echoing the ids it was given.';
+    } else if (droppedDuplicate === results.length) {
+      likely = 'Every signal was marked a duplicate of another.';
+    }
+
+    throw new Error(`Zero signals survived cleaning (${parts}). ${likely}`);
+  }
+
+  if (unmapped > 0) {
+    console.warn(`[clean] ${unmapped} result(s) had an id matching no input signal — dropped.`);
   }
   return { signals: out, droppedDuplicate, droppedIrrelevant };
 }
