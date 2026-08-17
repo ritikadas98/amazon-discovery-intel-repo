@@ -96,16 +96,25 @@ export function DigestPage() {
 // ─── All Groups view ─────────────────────────────────────────────────────────
 
 function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: SignalRow[] }) {
+  // Lead with the theme that can actually carry a decision, not the biggest one.
+  // Score measures size; readiness measures whether you can defend acting. When
+  // they disagree, evidence wins — that is the whole argument of this page.
+  const ranked = digest.themeBreakdown.slice().sort((a, b) => b.system_rice - a.system_rice);
+  const lead = ranked.find((t) => t.readiness === 'READY') ?? ranked[0];
+
   const heroData: OpportunityHeroData = {
     groupId: 'all',
-    topTheme:
-      digest.themeBreakdown.slice().sort((a, b) => b.system_rice - a.system_rice)[0]?.theme_label ||
-      digest.topTheme,
+    topTheme: lead?.theme_label || digest.topTheme,
     summary: digest.readiness?.readiness_summary ?? '',
-    severity: digest.avgSeverity,
+    severity: lead?.impact ?? digest.avgSeverity,
     trend: digest.trend,
     weekId: digest.weekId,
     delta: digest.wow.find((w) => w.id === digest.topGroupId) ?? null,
+    consequence: lead?.consequence,
+    consequenceCount: lead?.consequence_count,
+    signalCount: lead?.signal_count,
+    nextStep: lead?.recommended_next_steps?.[0] ?? null,
+    readiness: lead?.readiness ?? null,
   };
 
   return (
@@ -143,6 +152,11 @@ function SingleGroupView({
     trend: groupTrend,
     weekId: digest.weekId,
     delta: groupDelta,
+    consequence: topTheme?.consequence,
+    consequenceCount: topTheme?.consequence_count,
+    signalCount: topTheme?.signal_count,
+    nextStep: topTheme?.recommended_next_steps?.[0] ?? null,
+    readiness: topTheme?.readiness ?? null,
   };
 
   return (

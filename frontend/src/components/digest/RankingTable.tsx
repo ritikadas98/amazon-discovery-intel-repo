@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { groupColor, TREND_ARROW, TREND_CLASS, severityTier } from '@/lib/colors';
-import { MoscowBadge } from '@/components/common/StatusBadges';
+import { ConsequenceBadge, MoscowBadge, ScoreBandBadge } from '@/components/common/StatusBadges';
 import { TREND_LABEL } from '@/lib/vocabulary';
 import { featureGroupName } from '@/lib/parsers';
 import { useScopedLinkBuilder } from '@/lib/url-state';
 import type { ParsedDigest } from '@/lib/parsers';
-import type { MoSCoW, TrendDirection } from '@/types';
+import type { Consequence, MoSCoW, TrendDirection } from '@/types';
 
 interface Props {
   digest: ParsedDigest;
@@ -69,6 +69,28 @@ export function RankingTable({ digest }: Props) {
     if (!existing) topThemeByGroup.set(t.feature_group_id, t.theme_label);
   }
 
+  // A group takes the most costly consequence any of its themes carries. Same
+  // worst-case rule as the theme roll-up: averaging would bury the one theme
+  // where money moved.
+  const RANK: Consequence[] = ['money', 'lost', 'blocked', 'annoyance'];
+  const consequenceByGroup = new Map<string, { consequence: Consequence; count: number; total: number }>();
+  for (const t of digest.themeBreakdown) {
+    if (!t.consequence) continue;
+    const cur = consequenceByGroup.get(t.feature_group_id);
+    const better = !cur || RANK.indexOf(t.consequence) < RANK.indexOf(cur.consequence);
+    if (better) {
+      consequenceByGroup.set(t.feature_group_id, {
+        consequence: t.consequence,
+        count: t.consequence_count ?? 0,
+        total: t.signal_count,
+      });
+    }
+  }
+
+  // Bands are relative to the biggest thing in this run, so the table needs to
+  // know its own top before it can describe any row.
+  const topScore = rows[0]?.score ?? 0;
+
   return (
     <Card>
       <CardHeader>
@@ -79,14 +101,17 @@ export function RankingTable({ digest }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
+              {/* Named for someone who has never seen this dashboard. "Severity"
+                  and "Score" told a reader nothing about what they measure —
+                  and worse, implied the two agree. They routinely do not. */}
               <TableHead className="w-[40px] pl-6">#</TableHead>
-              <TableHead>Group</TableHead>
-              <TableHead className="hidden lg:table-cell">Top Theme</TableHead>
-              <TableHead className="text-right">People</TableHead>
-              <TableHead className="text-right">Severity</TableHead>
+              <TableHead>Part of the app</TableHead>
+              <TableHead className="hidden lg:table-cell">Biggest problem</TableHead>
+              <TableHead className="text-right">Complaints</TableHead>
+              <TableHead className="text-right">How upset</TableHead>
+              <TableHead>What it cost</TableHead>
+              <TableHead>How big</TableHead>
               <TableHead>Priority</TableHead>
-              <TableHead className="text-right">Score</TableHead>
-              <TableHead>Trend</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,6 +143,16 @@ export function RankingTable({ digest }: Props) {
                     {sev.toFixed(1)}
                   </TableCell>
                   <TableCell>
+                    <ConsequenceBadge
+                      value={consequenceByGroup.get(r.id)?.consequence}
+                      count={consequenceByGroup.get(r.id)?.count}
+                      total={consequenceByGroup.get(r.id)?.total}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ScoreBandBadge score={r.score} topScore={topScore} />
+                  </TableCell>
+                  <TableCell>
                     {moscow ? (
                       <span className="inline-flex items-center gap-1.5">
                         <MoscowBadge value={moscow} />
@@ -130,15 +165,10 @@ export function RankingTable({ digest }: Props) {
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{r.score.toFixed(1)}</TableCell>
-                  <TableCell>
-                    {trend ? (
-                      <span className={cn('text-xs font-medium', TREND_CLASS[trend] ?? '')}>
+                    {trend && (
+                      <span className={cn('ml-2 text-[11px] font-medium', TREND_CLASS[trend] ?? '')}>
                         {TREND_ARROW[trend] ?? '·'} {TREND_LABEL[trend as TrendDirection] ?? trend}
                       </span>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
                 </TableRow>

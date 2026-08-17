@@ -96,6 +96,17 @@ import type { Consequence, MoSCoW, Readiness } from '@/types';
  * severity and cost nobody anything, which is the whole reason this field
  * exists. Money is the only one that gets red.
  */
+/**
+ * Score bands read as size, not as alarm. Deliberately the neutral ramp:
+ * "High" here means big, and a big problem with no evidence behind it is still
+ * not something to act on. Consequence and evidence carry the alarm.
+ */
+export const SCORE_BAND_CLASS: Record<'high' | 'medium' | 'low', string> = {
+  high: 'bg-slate-800 text-slate-50 dark:bg-slate-200 dark:text-slate-900',
+  medium: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
+  low: 'bg-slate-100 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400',
+};
+
 export const CONSEQUENCE_CLASS: Record<Consequence, string> = {
   money: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400',
   lost: 'bg-orange-100 text-orange-900 dark:bg-orange-500/15 dark:text-orange-400',

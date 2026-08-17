@@ -1,12 +1,15 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CONSEQUENCE_CLASS, MOSCOW_CLASS, READINESS_CLASS } from '@/lib/colors';
+import { CONSEQUENCE_CLASS, MOSCOW_CLASS, READINESS_CLASS, SCORE_BAND_CLASS } from '@/lib/colors';
 import {
   CONSEQUENCE_HINT,
   CONSEQUENCE_LABEL,
   MOSCOW_HINT,
   READINESS_HINT,
   READINESS_LABEL,
+  SCORE_BAND_LABEL,
+  scoreBand,
+  scoreBandCaveat,
 } from '@/lib/vocabulary';
 import type { Consequence, MoSCoW, Readiness } from '@/types';
 
@@ -39,6 +42,35 @@ export function MoscowBadge({ value, className }: { value: MoSCoW; className?: s
   return (
     <Badge variant="outline" title={MOSCOW_HINT[value]} className={cn(PILL, MOSCOW_CLASS[value], className)}>
       {value}
+    </Badge>
+  );
+}
+
+/**
+ * The score as a band, with the number kept in the tooltip.
+ *
+ * The score has no unit and no absolute scale — 66.3 only means something
+ * against this run's top. Three of its four inputs are estimates, so one
+ * decimal place claims a precision they cannot carry. Anyone who wants the
+ * figure can hover; anyone scanning the table gets the answer instead.
+ */
+export function ScoreBandBadge({
+  score,
+  topScore,
+  className,
+}: {
+  score: number;
+  topScore: number;
+  className?: string;
+}) {
+  const band = scoreBand(score, topScore);
+  return (
+    <Badge
+      variant="outline"
+      title={`${score.toFixed(1)} of ${topScore.toFixed(1)} top this week. ${scoreBandCaveat(topScore)}`}
+      className={cn(PILL, SCORE_BAND_CLASS[band], className)}
+    >
+      {SCORE_BAND_LABEL[band]}
     </Badge>
   );
 }

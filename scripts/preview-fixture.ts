@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { config } from '../src/config/featureGroups.js';
 import { calculateRice } from '../src/pipeline/rice.js';
 import { formatDigestRow } from '../src/pipeline/format.js';
-import type { Meta, TaggedSignal, Theme } from '../src/types.js';
+import { CONSEQUENCE_ORDER, type Consequence, type Meta, type TaggedSignal, type Theme } from '../src/types.js';
 
 const PORT = 8787;
 const WEEK = '2026-W33';
@@ -32,6 +32,20 @@ interface FixtureSignal {
 }
 
 const raw: FixtureSignal[] = JSON.parse(readFileSync(new URL('../data/signals.json', import.meta.url), 'utf-8'));
+
+/**
+ * Money is deliberately rare — about 1 in 40, against 1 in 13 lost and 1 in 5
+ * blocked. The first pass used 1 in 11, and with 14 signals per theme almost
+ * every theme caught one, so every row on the digest read "Lost money" and the
+ * column stopped distinguishing anything. A worst-case roll-up only carries
+ * information if the worst case is uncommon.
+ */
+function consequenceFor(i: number): Consequence {
+  if (i % 40 === 0) return 'money';
+  if (i % 13 === 0) return 'lost';
+  if (i % 5 === 0) return 'blocked';
+  return 'annoyance';
+}
 
 // The fixture has no themes (Gemini normally produces them), so group by feature group
 // and split each into a couple of themes — enough shape to exercise the ranking.
@@ -54,6 +68,12 @@ raw.forEach((s, i) => {
     app_version: s.app_version ?? null,
     severity_score: s.severity_score ?? 3.0 + ((i % 5) * 0.4),
     version_flagged: i % 7 === 0,
+    // Agent 1 assigns this from the review text; there is no Gemini on this
+    // path, so spread the four tiers deterministically. Skewed towards the
+    // cheap end on purpose — money is meant to be the rare one, and a preview
+    // where every theme screams "lost money" would not show the ranking doing
+    // any work.
+    consequence: consequenceFor(i),
     feature_group_id: groupId,
     theme_id: themeId,
     theme_label: s.theme_label || `${groupId.replace(/_/g, ' ')} issue ${themeIdx + 1}`,
@@ -107,6 +127,7 @@ const signalRows = Object.values(byGroup)
     Date: s.date,
     Rating: s.rating,
     'Severity Score': s.severity_score,
+    Consequence: s.consequence,
     'Feature Group ID': s.feature_group_id,
     'Theme ID': s.theme_id,
     'Theme Label': s.theme_label,
@@ -140,6 +161,12 @@ http
     console.log(`fixture API on http://localhost:${PORT}`);
     console.log(`groups=${scoredGroups.length} themes=${scoredGroups.flatMap((g) => g.scored_themes).length}`);
     for (const g of scoredGroups) {
-      console.log(`  ${g.feature_group_id.padEnd(22)} ${String(g.top_rice_score).padStart(7)}  ${g.top_moscow}`);
+      const t = g.scored_themes[0];
+      console.log(
+        `  ${g.feature_group_id.padEnd(22)} ${String(g.top_rice_score).padStart(7)}  ` +
+          `${g.top_moscow.padEnd(12)} ${t ? `${t.consequence} ${t.consequence_count}/${t.signal_count}` : ''}`,
+      );
     }
+    console.log(`\nconsequence tiers in play: ${CONSEQUENCE_ORDER.join(', ')}`);
+    console.log('Point the SPA at this with VITE_API_BASE_URL=http://localhost:8787');
   });
