@@ -13,25 +13,23 @@ import { ScoringGlossary } from '@/components/common/ScoringGlossary';
  */
 
 interface Props {
-  signalCount: number;
-  groupCount: number;
+  /** @deprecated shown by DigestHeadline now; kept so callers need no change. */
+  signalCount?: number;
+  groupCount?: number;
   source: 'Sample' | 'Live';
   pulledAt?: string;
   dataQualityWarning?: string | null;
 }
 
-export function DigestIntro({ signalCount, groupCount, source, pulledAt, dataQualityWarning }: Props) {
+export function DigestIntro({ source, pulledAt, dataQualityWarning }: Props) {
   const [notesOpen, setNotesOpen] = useState(false);
 
   return (
     <div className="space-y-2">
-      <p className="text-sm">
-        <span className="font-medium tabular-nums">{signalCount.toLocaleString()}</span> customer
-        complaints this week, grouped into{' '}
-        <span className="font-medium tabular-nums">{groupCount}</span>{' '}
-        {groupCount === 1 ? 'theme' : 'themes'} and ranked by priority.
-      </p>
-
+      {/* The count moved into DigestHeadline, which leads with the finding and
+          carries the figures underneath it. Printing it twice made the page open
+          with the same sentence in two registers. What stays here is the pair of
+          disclosures — how it was scored, and where the data came from. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <ScoringGlossary />
         <button

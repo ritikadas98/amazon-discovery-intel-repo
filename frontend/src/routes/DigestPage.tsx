@@ -11,6 +11,7 @@ import { TopSignalsForGroup } from '@/components/digest/TopSignalsForGroup';
 import { SourceMixChart } from '@/components/digest/SourceMixChart';
 import { GroupRiceTrend } from '@/components/digest/GroupRiceTrend';
 import { DigestIntro } from '@/components/digest/DigestIntro';
+import { DigestHeadline } from '@/components/digest/DigestHeadline';
 import { api } from '@/lib/api';
 import { parseDigestRow, rowSource, type ParsedDigest } from '@/lib/parsers';
 import { useActiveGroup, useActiveSource, useActiveWeek } from '@/lib/url-state';
@@ -115,13 +116,48 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
     signalCount: lead?.signal_count,
     nextStep: lead?.recommended_next_steps?.[0] ?? null,
     readiness: lead?.readiness ?? null,
+    score: lead?.system_rice,
+    topScore: ranked[0]?.system_rice,
+    rank: lead ? ranked.indexOf(lead) + 1 : undefined,
+    totalThemes: ranked.length,
   };
 
+  const readyCount = ranked.filter((t) => t.readiness === 'READY').length;
+
   return (
-    <div className="space-y-4">
-      <OpportunityHero data={heroData} />
-      <ReadinessAlert themes={digest.themeBreakdown} />
-      <RankingTable digest={digest} />
+    <div className="space-y-6">
+      <DigestHeadline digest={digest} collectedCount={signals.length || digest.signalCount} />
+
+      {/* A heading, not another card. The page has one recommendation and a list
+          of things to watch, and the reader should be able to tell which is which
+          before reading either. */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+          <h2 className="text-base font-semibold tracking-tight">Do this one</h2>
+          <p className="text-[12.5px] text-muted-foreground">
+            {readyCount} of {ranked.length} problems{' '}
+            {readyCount === 1 ? 'has' : 'have'} enough behind {readyCount === 1 ? 'it' : 'them'} to act on
+          </p>
+        </div>
+        <OpportunityHero data={heroData} />
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+          <h2 className="text-base font-semibold tracking-tight">Keep an eye on these</h2>
+          {/* Only claim something is bigger when something actually is. When the
+              recommended problem is also the top-scoring one, score and evidence
+              agree this week and there is no tension to explain. */}
+          <p className="text-[12.5px] text-muted-foreground">
+            {heroData.rank && heroData.rank > 1
+              ? 'Some are bigger than the one above. Size does not beat proof.'
+              : 'Ranked by size. None of these has enough behind it to act on yet.'}
+          </p>
+        </div>
+        <ReadinessAlert themes={digest.themeBreakdown} />
+        <RankingTable digest={digest} />
+      </section>
+
       <SignalSparkline signals={signals} groupId="all" />
     </div>
   );
@@ -179,3 +215,4 @@ function SingleGroupView({
     </div>
   );
 }
+

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { groupColor, severityTier } from '@/lib/colors';
 import { featureGroupName, formatWeekLabel } from '@/lib/parsers';
 import { useScopedLinkBuilder } from '@/lib/url-state';
-import { ConsequenceBadge } from '@/components/common/StatusBadges';
+import { ConsequenceBadge, ReadinessBadge, ScoreBandBadge } from '@/components/common/StatusBadges';
 import { SCORES_NOT_COMPARABLE } from '@/lib/vocabulary';
 import type { Consequence, Readiness, WoWDeltaEntry } from '@/types';
 
@@ -27,6 +27,18 @@ export interface OpportunityHeroData {
   nextStep?: string | null;
   /** Whether the top theme has enough behind it to act on. */
   readiness?: Readiness | null;
+  /** This theme's score, and the run's top, so the band has something to mean. */
+  score?: number;
+  topScore?: number;
+  rank?: number;
+  totalThemes?: number;
+}
+
+/** 3 must read "3rd", not "3th" — the teens are the exception that catches naive tables. */
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
 }
 
 interface Props {
@@ -95,15 +107,32 @@ export function OpportunityHero({ data }: Props) {
           <span className="text-xs text-muted-foreground font-mono">{formatWeekLabel(data.weekId)}</span>
         </div>
 
-        <h2 className="text-lg font-semibold leading-snug text-foreground mb-1">
-          {data.topTheme || 'No top theme available'}
-        </h2>
+        {/* The count leads, because "how many people" is the first thing anyone
+            asks of a finding and it was previously buried in a badge row. */}
+        <div className="flex gap-5">
+          {typeof data.signalCount === 'number' && (
+            <div className="shrink-0 text-center">
+              <span className="block text-4xl font-semibold leading-none tracking-tight tabular-nums text-red-700 dark:text-red-400">
+                {data.signalCount}
+              </span>
+              <span className="mt-1.5 block text-[9.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                complaints
+              </span>
+            </div>
+          )}
 
-        {data.summary && (
-          <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">{data.summary}</p>
-        )}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold leading-snug text-foreground mb-1">
+              {data.topTheme || 'No top theme available'}
+            </h2>
 
-        <div className="flex flex-wrap items-center gap-2.5 mt-4">
+            {data.summary && (
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">{data.summary}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2.5 mt-4">
+          {data.readiness && <ReadinessBadge value={data.readiness} />}
+
           <ConsequenceBadge
             value={data.consequence}
             count={data.consequenceCount}
@@ -113,6 +142,26 @@ export function OpportunityHero({ data }: Props) {
           <Badge variant="outline" className={cn('font-medium', sev.className)}>
             How upset {data.severity.toFixed(1)}
           </Badge>
+
+          {typeof data.score === 'number' && typeof data.topScore === 'number' && data.topScore > 0 && (
+            <span className="inline-flex items-center gap-2">
+              <ScoreBandBadge score={data.score} topScore={data.topScore} />
+              {/* A bar, not a bare number: the score has meaning only against the
+                  biggest thing in the run, and a bar says that without a sentence. */}
+              <span className="relative h-1.5 w-24 overflow-hidden rounded-full bg-foreground/10">
+                <span
+                  className="absolute inset-y-0 left-0 rounded-full bg-red-600 dark:bg-red-500"
+                  style={{ width: `${Math.round((data.score / data.topScore) * 100)}%` }}
+                />
+              </span>
+              {typeof data.rank === 'number' && (
+                <span className="text-[11.5px] text-muted-foreground">
+                  {data.rank}
+                  {ordinal(data.rank)} of {data.totalThemes} by score
+                </span>
+              )}
+            </span>
+          )}
 
           {data.trend && (
             <Badge variant="outline" className={cn('font-medium gap-1', trendClass(data.trend))}>
@@ -161,8 +210,10 @@ export function OpportunityHero({ data }: Props) {
                 Not enough behind this yet. This is the step that would change that.
               </p>
             )}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
