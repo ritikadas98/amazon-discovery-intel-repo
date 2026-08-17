@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { MoscowBadge, ReadinessBadge } from '@/components/common/StatusBadges';
 import { api } from '@/lib/api';
 import { SegmentedEffortSelector } from './SegmentedEffortSelector';
-import type { EffortOverride, ThemeBreakdownEntry } from '@/types';
+import type { EffortOverride, MoSCoW, ThemeBreakdownEntry } from '@/types';
 
 interface Props {
   themes: ThemeBreakdownEntry[];
@@ -26,6 +26,28 @@ interface Props {
  * Effort is deliberately absent from the system score: the pipeline has no
  * estimate of its own, and the PM supplying one here is the whole feature.
  */
+/**
+ * Priority, recomputed from the effort the PM just set.
+ *
+ * The two score columns are gone: a raw number has no unit and no scale, and
+ * this page already says so. But removing them would leave the effort control
+ * with nothing to show for itself, so the feedback moved to Priority instead —
+ * change how much work something is, and watch it move up or down the list.
+ *
+ * Mirrors `percentileCuts` / `moscowFor` in `src/pipeline/rice.ts`. Cuts are
+ * drawn across the themes on screen, exactly as the pipeline draws them across
+ * a run, so something is always a Must Have even in a quiet group. That is a
+ * property of forced ranking, not a bug, and the glossary says so.
+ */
+function priorityFor(score: number, allScores: number[]): MoSCoW {
+  const sorted = [...allScores].sort((a, b) => a - b);
+  const at = (pct: number) => sorted[Math.max(0, Math.ceil((pct / 100) * sorted.length) - 1)] ?? 0;
+  if (score >= at(75)) return 'Must Have';
+  if (score >= at(50)) return 'Should Have';
+  if (score >= at(25)) return 'Could Have';
+  return "Won't Have";
+}
+
 function adjustedRice(t: ThemeBreakdownEntry, effort: number): number {
   if (effort <= 0) return 0;
   const raw = (t.reach * t.impact * t.confidence * t.version_multiplier) / effort;
@@ -75,6 +97,12 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
 
   const sorted = [...themes].sort((a, b) => b.system_rice - a.system_rice);
 
+  // Every row's current score, so the percentile cuts move when any one theme's
+  // effort changes — priority is relative, and a change to one is a change to all.
+  const adjustedScores = sorted.map((t) =>
+    adjustedRice(t, overrideByThemeId.get(t.theme_id) ?? t.effort),
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -99,8 +127,6 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
               <TableHead className="text-right" title="Impact — how upset they sounded, 1 to 5. Tone, not cost.">How upset</TableHead>
               <TableHead className="text-right" title="Confidence — how many stores it came from">Where from</TableHead>
               <TableHead>Work needed</TableHead>
-              <TableHead className="text-right">Score</TableHead>
-              <TableHead className="text-right">Your score</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Can we act?</TableHead>
             </TableRow>
@@ -108,7 +134,7 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
           <TableBody>
             {sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                   No themes in this group's breakdown.
                 </TableCell>
               </TableRow>
@@ -138,14 +164,8 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
                       disabled={setEffortMutation.isPending}
                     />
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                    {t.system_rice.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums font-semibold">
-                    {pmRice.toFixed(1)}
-                  </TableCell>
                   <TableCell>
-                    <MoscowBadge value={t.moscow} />
+                    <MoscowBadge value={priorityFor(pmRice, adjustedScores)} />
                   </TableCell>
                   <TableCell>
                     <ReadinessBadge value={t.readiness} />
