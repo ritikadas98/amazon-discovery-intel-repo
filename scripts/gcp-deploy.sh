@@ -58,6 +58,18 @@ fi
 
 # ─── 2. Deploy (Cloud Build + Cloud Run in one shot) ──────────────────────────
 echo "▶ Deploying ${SERVICE} to Cloud Run in ${REGION}…"
+# NOTE: no comments between here and the end of the command. A comment line
+# inside a backslash-continued command terminates it, and every flag after it
+# becomes a separate command that fails with "command not found". That silently
+# dropped --set-env-vars on every deploy: Cloud Run kept the previous revision's
+# variables, so nothing looked wrong until a new variable had to be added.
+#
+  # A run is ingestion across three sources plus four Gemini calls - clean,
+  # synthesize, readiness, diagnose - two of which retry once and budget 32k
+  # output tokens. 120s was already close and adding the diagnosis agent pushed
+  # it over, which surfaces in the browser as "Failed to fetch" because the
+  # request is cut off rather than answered. The service scales to zero, so a
+  # cold start lands on top of that.
 gcloud run deploy "${SERVICE}" \
   --source . \
   --region="${REGION}" \
@@ -65,12 +77,6 @@ gcloud run deploy "${SERVICE}" \
   --port=3000 \
   --memory=512Mi --cpu=1 \
   --min-instances=0 --max-instances=2 \
-  # A run is ingestion across three sources plus four Gemini calls - clean,
-  # synthesize, readiness, diagnose - two of which retry once and budget 32k
-  # output tokens. 120s was already close and adding the diagnosis agent pushed
-  # it over, which surfaces in the browser as "Failed to fetch" because the
-  # request is cut off rather than answered. The service scales to zero, so a
-  # cold start lands on top of that.
   --timeout=900 \
   --allow-unauthenticated \
   --set-env-vars="^|^USE_MOCK=${USE_MOCK}|PIPELINE_FORCE_TOKEN=${PIPELINE_FORCE_TOKEN}|INGEST_MAX_PER_SOURCE=${INGEST_MAX_PER_SOURCE}|VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}|VERTEX_REGION=${VERTEX_REGION}|VERTEX_MODEL=${VERTEX_MODEL}|SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID}|SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB}|SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB}|SHEETS_EFFORT_TAB=${SHEETS_EFFORT_TAB}|SHEETS_FEEDBACK_TAB=${SHEETS_FEEDBACK_TAB}|SHEETS_SEEN_SIGNALS_TAB=${SHEETS_SEEN_SIGNALS_TAB}|SHEETS_WATCH_TAB=${SHEETS_WATCH_TAB}|ENABLE_APP_STORE=${ENABLE_APP_STORE}|ENABLE_AMAZON_PLP=${ENABLE_AMAZON_PLP}|SMTP_HOST=smtp.gmail.com|SMTP_PORT=465|SMTP_USER=${SMTP_USER}|EMAIL_FROM=${EMAIL_FROM}|DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT}|CORS_ORIGIN=${CORS_ORIGIN}|APP_BASE_URL=${APP_BASE_URL}" \
