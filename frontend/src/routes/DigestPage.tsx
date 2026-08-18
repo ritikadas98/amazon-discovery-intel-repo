@@ -167,7 +167,14 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
         <RankingTable digest={digest} />
       </section>
 
-      <SignalSparkline signals={signals} groupId="all" />
+      {/* Two views of the same week's intake: when it arrived, and which store
+          it came from. The source split belongs here rather than only on a
+          group page — "is App Store returning anything" is a question about the
+          run, not about one feature. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <SignalSparkline signals={signals} groupId="all" />
+        <SourceMixChart signals={signals} />
+      </div>
     </div>
   );
 }

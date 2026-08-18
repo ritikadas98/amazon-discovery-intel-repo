@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { SignalRow } from '@/types';
 
@@ -33,7 +33,13 @@ export function SourceMixChart({ signals }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Signal Source Mix</CardTitle>
+        <CardTitle className="text-sm">Where the complaints came from</CardTitle>
+        {/* Source count is not trivia: the evidence bar needs complaints from
+            more than one store, so a source sitting at zero is the reason a
+            problem cannot clear it. Worth seeing without being asked for. */}
+        <CardDescription>
+          A problem needs more than one store behind it before the evidence supports acting.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {total === 0 ? (
