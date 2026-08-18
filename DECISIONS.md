@@ -15,6 +15,46 @@ overwrite history).
 
 ---
 
+## 2026-08-18 — Keep the email, do not rebuild it
+
+**What changed.** The 24-hour reuse rule needed a way to send the digest again
+without re-running the pipeline. The first approach was to rebuild the email from
+the stored Digests row: sixteen fields, thirteen of them saved, three to be
+recomputed. That work was underway when Ritika asked the better question — could
+the filled-in email be cached instead, ready to send at any point in the window.
+
+It can. The rendered digest is about 11,000 characters and a Google Sheets cell
+holds 50,000. So the run now writes the finished email to its own row, in two new
+columns, and a reuse request sends those bytes.
+
+**PM rationale.** Rebuilding carries a failure that never announces itself. A
+recomputed field that differs slightly from the live path produces an email that
+looks completely normal and is wrong, and nobody notices for weeks. Storing the
+bytes removes the class entirely: the reused digest is not a copy of the email, it
+is the email. It also deleted roughly an hour of verification work whose whole
+purpose was to prove the copy matched.
+
+The reconstruction was also growing rather than shrinking. `TopGroupView` turned
+out to extend `ScoredGroup`, adding thirteen more fields to rebuild. That is the
+tell that the approach was wrong: the cost was rising as the work went on.
+
+**Mechanics.** `run.ts` renders the email before appending the row rather than
+after, so `Digest Email Subject` and `Digest Email HTML` can ride along. Stored only
+when under 45,000 characters; a larger week logs and skips, and the reuse path falls
+back to `sendDigestPointer`. `server.ts` reads the newest row, and sends the stored
+email when both columns are present.
+
+**Ritika must add two headers to row 1 of the Digests tab** — `Digest Email Subject`
+and `Digest Email HTML` — because `appendRows` aligns by header name (hard rule #5).
+Without them the write is silently skipped: no error, no stored email, and reuse
+sends the pointer instead. The degradation is graceful, which also makes it quiet.
+
+**Considered & not done.** Google Cloud Storage for the rendered email — correct
+architecture, but a new dependency, a bucket and an IAM grant to solve a problem one
+sheet cell already holds. Rebuilding from the row — abandoned mid-write, see above.
+
+---
+
 ## 2026-08-18 — The numbers we counted outrank the model that read them
 
 **What changed.** The readiness agent graded four evidence criteria. Two of them —

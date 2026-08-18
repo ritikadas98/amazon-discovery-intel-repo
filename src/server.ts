@@ -74,6 +74,7 @@ app.get('/health', (_req: Request, res: Response) => {
       headlineCutsAtAClause: true,
       diagnosisPerGroup: true,
       reuseAnalysisWithin24h: true,
+      reuseSendsTheStoredEmail: true,
       openRecipients: true,
     },
   });
@@ -143,25 +144,26 @@ function recordSend(address: string): void {
  * scales to zero and an in-memory timestamp would not survive the gap between one
  * visitor and the next.
  */
-async function lastRunAt(): Promise<Date | null> {
+async function newestRun(): Promise<{ at: Date; row: Record<string, string> } | null> {
   const rows = await readRows(env.SHEETS_DIGESTS_TAB);
-  let newest: Date | null = null;
+  let newest: { at: Date; row: Record<string, string> } | null = null;
   for (const r of rows) {
     const raw = r['Created At'];
     if (!raw) continue;
-    const d = new Date(raw);
-    if (!Number.isNaN(d.getTime()) && (!newest || d > newest)) newest = d;
+    const at = new Date(raw);
+    if (!Number.isNaN(at.getTime()) && (!newest || at > newest.at)) newest = { at, row: r };
   }
   return newest;
 }
 
 /**
- * What a requester gets when the analysis is already fresh.
+ * The fallback when there is no stored digest to send.
  *
- * Not the full digest. Rebuilding that from a stored row needs the whole email
- * input reconstructed from the sheet, which is a separate piece of work — and a
- * half-rebuilt digest that quietly differs from the real one is worse than a
- * short honest email. This says what week is ready and links straight to it.
+ * Reuse normally re-sends the exact email the run produced, kept on its row. This
+ * covers the two cases where that is absent: rows written before the email was
+ * stored, and a week too large for a single cell. It says which week is ready and
+ * links straight to it, rather than rebuilding a digest that could quietly differ
+ * from the original.
  */
 async function sendDigestPointer(to: string, ranAt: Date): Promise<void> {
   const app = (env.APP_BASE_URL ?? 'https://amazon.ritikadas.in').replace(/\/$/, '');
@@ -215,15 +217,27 @@ const runPipelineHandler = async (req: Request, res: Response) => {
     // So within the window we serve what is already there. No message is shown:
     // the sidebar already prints when the pipeline last ran, so the result is
     // dated without anyone being told they were refused.
-    const previous = await lastRunAt();
-    const fresh = previous !== null && Date.now() - previous.getTime() < ONE_DAY_MS;
+    const previous = await newestRun();
+    const fresh = previous !== null && Date.now() - previous.at.getTime() < ONE_DAY_MS;
     if (fresh && previous) {
-      await sendDigestPointer(recipient_email, previous);
+      // The email the run actually sent, kept on its row. Sending these bytes
+      // rather than rebuilding the digest means the reused copy cannot quietly
+      // differ from the original. A pointer email covers rows written before this
+      // was stored, and weeks too large to keep.
+      const storedHtml = previous.row['Digest Email HTML'];
+      const storedSubject = previous.row['Digest Email Subject'];
+      if (storedHtml && storedSubject) {
+        await sendEmail({ to: recipient_email, subject: storedSubject, html: storedHtml });
+      } else {
+        await sendDigestPointer(recipient_email, previous.at);
+      }
       recordSend(recipient_email);
       res.json({
         ok: true,
         reused: true,
-        lastRunAt: previous.toISOString(),
+        emailed: Boolean(storedHtml && storedSubject) ? 'digest' : 'pointer',
+        lastRunAt: previous.at.toISOString(),
+        weekId: previous.row['Week ID'] ?? null,
         message: 'Showing the most recent analysis.',
       });
       return;

@@ -261,8 +261,9 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     themesBlocked,
     meta,
   });
-  await appendRows(env.SHEETS_DIGESTS_TAB, [digestRow]);
-  log(`Appended digest row to "${env.SHEETS_DIGESTS_TAB}"`);
+  // The row is appended further down, once the digest email has been rendered, so
+  // the finished email can be stored alongside the analysis that produced it. See
+  // the note at the append site.
 
   // 12. Build the per-group summary used by the digest email
   const groupSummaries: GroupSummary[] = scoredGroups.map((g, idx) => {
@@ -328,6 +329,28 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     appUrl,
     recipientEmail: recipient,
   });
+  // Keep the finished email with the run that produced it.
+  //
+  // Requests inside 24 hours reuse this analysis rather than re-running. Sending
+  // the digest again then means either rebuilding the email from the stored row —
+  // reconstructing sixteen fields, three of which were never saved, with every one
+  // a chance to differ silently from the original — or simply keeping the email we
+  // already rendered. It is about 11k characters against a 50k cell limit, so it
+  // keeps. Storing the bytes removes the whole class of drift: the reused digest is
+  // not a rebuilt copy, it is the same email.
+  //
+  // Guarded on size. An unusually large week is not worth failing the append over,
+  // and the reuse path falls back to a short pointer email when this is absent.
+  const MAX_STORED_EMAIL_CHARS = 45000;
+  if (html.length <= MAX_STORED_EMAIL_CHARS) {
+    digestRow['Digest Email Subject'] = subject;
+    digestRow['Digest Email HTML'] = html;
+  } else {
+    log(`Digest email too large to store (${html.length} chars); reuse will send a pointer`);
+  }
+  await appendRows(env.SHEETS_DIGESTS_TAB, [digestRow]);
+  log(`Appended digest row to "${env.SHEETS_DIGESTS_TAB}"`);
+
   await sendEmail({ to: recipient, subject, html });
   log('Digest email sent');
 
