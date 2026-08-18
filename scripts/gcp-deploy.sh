@@ -61,7 +61,13 @@ gcloud run deploy "${SERVICE}" \
   --port=3000 \
   --memory=512Mi --cpu=1 \
   --min-instances=0 --max-instances=2 \
-  --timeout=120 \
+  # A run is ingestion across three sources plus four Gemini calls - clean,
+  # synthesize, readiness, diagnose - two of which retry once and budget 32k
+  # output tokens. 120s was already close and adding the diagnosis agent pushed
+  # it over, which surfaces in the browser as "Failed to fetch" because the
+  # request is cut off rather than answered. The service scales to zero, so a
+  # cold start lands on top of that.
+  --timeout=900 \
   --allow-unauthenticated \
   --set-env-vars="^|^USE_MOCK=${USE_MOCK}|INGEST_MAX_PER_SOURCE=${INGEST_MAX_PER_SOURCE}|VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}|VERTEX_REGION=${VERTEX_REGION}|VERTEX_MODEL=${VERTEX_MODEL}|SHEETS_DOCUMENT_ID=${SHEETS_DOCUMENT_ID}|SHEETS_SIGNALS_TAB=${SHEETS_SIGNALS_TAB}|SHEETS_DIGESTS_TAB=${SHEETS_DIGESTS_TAB}|SHEETS_EFFORT_TAB=${SHEETS_EFFORT_TAB}|SHEETS_FEEDBACK_TAB=${SHEETS_FEEDBACK_TAB}|SHEETS_SEEN_SIGNALS_TAB=${SHEETS_SEEN_SIGNALS_TAB}|SHEETS_WATCH_TAB=${SHEETS_WATCH_TAB}|ENABLE_APP_STORE=${ENABLE_APP_STORE}|ENABLE_AMAZON_PLP=${ENABLE_AMAZON_PLP}|SMTP_HOST=smtp.gmail.com|SMTP_PORT=465|SMTP_USER=${SMTP_USER}|EMAIL_FROM=${EMAIL_FROM}|DEFAULT_RECIPIENT=${DEFAULT_RECIPIENT}|CORS_ORIGIN=${CORS_ORIGIN}|APP_BASE_URL=${APP_BASE_URL}" \
   --set-secrets="SMTP_PASS=smtp-pass:latest"
