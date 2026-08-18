@@ -75,6 +75,7 @@ app.get('/health', (_req: Request, res: Response) => {
       diagnosisPerGroup: true,
       reuseAnalysisWithin24h: true,
       reuseSendsTheStoredEmail: true,
+      ownerCanForceARun: true,
       openRecipients: true,
     },
   });
@@ -217,7 +218,23 @@ const runPipelineHandler = async (req: Request, res: Response) => {
     // So within the window we serve what is already there. No message is shown:
     // the sidebar already prints when the pipeline last ran, so the result is
     // dated without anyone being told they were refused.
-    const previous = await newestRun();
+    // The owner's way past her own rule.
+    //
+    // The 24-hour window is aimed at visitors, but it applies to every caller —
+    // including Ritika, whose first attempt at a real run after shipping the rule
+    // was refused 12 hours into the window. A launch cannot depend on waiting out
+    // a timer. Requires a token that only she holds; with PIPELINE_FORCE_TOKEN
+    // unset there is no override to guess at.
+    const configuredToken = env.PIPELINE_FORCE_TOKEN ?? '';
+    const offeredToken = String(req.body?.token ?? '');
+    const forced =
+      req.body?.force === true && configuredToken !== '' && offeredToken === configuredToken;
+    if (req.body?.force === true && !forced) {
+      res.status(403).json({ error: 'force requires a valid token.' });
+      return;
+    }
+
+    const previous = forced ? null : await newestRun();
     const fresh = previous !== null && Date.now() - previous.at.getTime() < ONE_DAY_MS;
     if (fresh && previous) {
       // The email the run actually sent, kept on its row. Sending these bytes

@@ -500,6 +500,8 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   serves the stored run and emails a pointer, instead of re-running
 - **Anyone may request the digest (2026-08-18)** — capped at one per address per
   day and 100 sends per day
+- **Owner can force a run (2026-08-18)** — `force: true` + `token` matching
+  `PIPELINE_FORCE_TOKEN` skips the 24-hour window; unset means no override exists
 - **Reuse sends the stored email (2026-08-18)** — the run writes its finished
   digest to `Digest Email HTML` / `Digest Email Subject`; NEEDS those two headers
   added by hand to row 1 of the Digests tab or the write is silently skipped

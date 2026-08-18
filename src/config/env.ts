@@ -57,6 +57,10 @@ const schema = z.object({
   // anonymous runs can only ever email that one address. Empty + no DEFAULT_RECIPIENT
   // => no allowlist enforced (local dev), but the format check still applies.
   ALLOWED_RECIPIENTS: z.string().optional(),
+  // Lets the owner run the pipeline inside the 24-hour reuse window. Unset means
+  // no override exists at all, which is the safe default for a public service:
+  // there is no value to guess if the feature is switched off.
+  PIPELINE_FORCE_TOKEN: z.string().optional(),
   PORT: z.coerce.number().default(3000),
   USE_MOCK: z
     .string()
