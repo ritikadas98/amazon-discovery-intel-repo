@@ -345,6 +345,7 @@ export async function diagnoseThemes(items: ThemeToDiagnose[]): Promise<ThemeDia
     const leftover = collapse(raw.options_leftover, MAX_OPTION_CHARS);
     out.push({
       theme_id: id,
+      feature_group_id: scored.feature_group_id,
       headline,
       mechanism,
       firstMove: parseMove(raw.first_move, allowed),

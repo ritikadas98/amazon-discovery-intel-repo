@@ -192,7 +192,9 @@ export async function assessReadiness(input: AssessReadinessInput): Promise<Asse
           throw new Error(`Invalid criteria value for ${key}: ${val}`);
         }
       }
-      allThemeReadiness.push(theme);
+      // Flattening loses the group unless it is carried explicitly, and the
+      // digest overlay needs it to tell four themes called "t1" apart.
+      allThemeReadiness.push({ ...theme, feature_group_id: group.group_id });
     }
   }
 

@@ -56,12 +56,25 @@ function buildThemeBreakdown(
   allThemeReadiness: ThemeReadiness[],
   diagnoses: ThemeDiagnosis[] = [],
 ): ThemeBreakdownEntry[] {
-  const aiByThemeId = new Map(allThemeReadiness.map((t) => [t.theme_id, t] as const));
-  const dxByThemeId = new Map(diagnoses.map((d) => [d.theme_id, d] as const));
+  // Keyed on group + theme, because theme ids repeat across groups. Keyed on
+  // the id alone, one diagnosis of "t1" in Search & Discovery was copied onto
+  // themes called "t1" in Delivery, Account and Product Detail — a headline
+  // about broken search appearing over a two-signal delivery problem.
+  const key = (groupId: string, themeId: string) => `${groupId}::${themeId}`;
+  const aiByTheme = new Map(
+    allThemeReadiness.map((t) => [key(t.feature_group_id ?? '', t.theme_id), t] as const),
+  );
+  // Rows written before readiness carried its group fall back to the id alone,
+  // which is what they were built with — wrong for duplicates, unchanged for
+  // everything else.
+  const aiByIdOnly = new Map(allThemeReadiness.map((t) => [t.theme_id, t] as const));
+  const dxByTheme = new Map(
+    diagnoses.map((d) => [key(d.feature_group_id, d.theme_id), d] as const),
+  );
   const entries: ThemeBreakdownEntry[] = [];
   for (const g of scoredGroups) {
     for (const t of g.scored_themes) {
-      const ai = aiByThemeId.get(t.theme_id);
+      const ai = aiByTheme.get(key(g.feature_group_id, t.theme_id)) ?? aiByIdOnly.get(t.theme_id);
       const readiness = ai?.readiness ?? t.readiness;
       entries.push({
         ...t,
@@ -69,11 +82,11 @@ function buildThemeBreakdown(
         // Only READY themes are diagnosed, and a diagnosis can also fail
         // validation, so both fields are legitimately absent most of the time.
         // No fallback here on purpose: an invented headline is worse than none.
-        headline: dxByThemeId.get(t.theme_id)?.headline,
-        mechanism: nonEmpty(dxByThemeId.get(t.theme_id)?.mechanism),
-        first_move: dxByThemeId.get(t.theme_id)?.firstMove,
-        options: dxByThemeId.get(t.theme_id)?.options,
-        options_leftover: dxByThemeId.get(t.theme_id)?.optionsLeftover,
+        headline: dxByTheme.get(key(g.feature_group_id, t.theme_id))?.headline,
+        mechanism: nonEmpty(dxByTheme.get(key(g.feature_group_id, t.theme_id))?.mechanism),
+        first_move: dxByTheme.get(key(g.feature_group_id, t.theme_id))?.firstMove,
+        options: dxByTheme.get(key(g.feature_group_id, t.theme_id))?.options,
+        options_leftover: dxByTheme.get(key(g.feature_group_id, t.theme_id))?.optionsLeftover,
         // Never persist an empty explanation. A readiness badge with nothing beside it
         // is the thing that made this panel unreadable; the model can still return
         // nothing, so the deterministic reason stands in when it does.

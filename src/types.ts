@@ -69,6 +69,8 @@ export interface ThemeEvidence {
  */
 export interface ThemeDiagnosis {
   theme_id: string;
+  /** The group this diagnosis is for. See the note on ThemeReadiness. */
+  feature_group_id: string;
   /** The finding in one sentence — what happened to customers, not a category. */
   headline: string;
   /** 2–3 bullets on what we think is going on underneath. */
@@ -310,6 +312,15 @@ export interface ScoredGroup {
 
 export interface ThemeReadiness {
   theme_id: string;
+  /**
+   * Which group this assessment belongs to.
+   *
+   * theme_id is only unique inside a group — "t1" exists in four of them in a
+   * typical run — so an overlay keyed on the id alone copies one theme's
+   * assessment onto every namesake in the digest. Stamped from the enclosing
+   * group in `assessReadiness`, since the model is never asked for it.
+   */
+  feature_group_id?: string;
   theme_label: string;
   readiness: Readiness;
   criteria: {

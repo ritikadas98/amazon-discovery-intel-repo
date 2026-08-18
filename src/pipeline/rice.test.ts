@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Meta, ScoredTheme, Source, TaggedSignal, Theme } from '../types.js';
+import type { Meta, ScoredTheme, Source, TaggedSignal, Theme, ThemeBreakdownEntry } from '../types.js';
 import { calculateRice } from './rice.js';
+import { formatDigestRow } from './format.js';
 
 /**
  * These tests exist because of a real defect, not for coverage.
@@ -221,5 +222,55 @@ describe('MoSCoW', () => {
   it('still scores groups on their own spread', () => {
     const groups = buildRun();
     expect(groups[0].top_moscow).toBe('Must Have');
+  });
+});
+
+/**
+ * A live run diagnosed one theme — "t1" in Search & Discovery, 53 signals,
+ * about broken search — and the digest showed that headline on four themes,
+ * including a two-signal delivery problem. Theme ids are only unique inside a
+ * group, and the overlay was keyed on the id alone.
+ */
+describe('per-theme overlays', () => {
+  function run() {
+    const a = [signal({ feature_group_id: 'search_discovery', theme_id: 't1' })];
+    const b = [signal({ feature_group_id: 'delivery_tracking', theme_id: 't1' })];
+    return formatDigestRow({
+      weekId: '2026-W34',
+      topGroup: calculateRice({ search_discovery: a }, { search_discovery: [theme('t1', 'Search', a)] }, meta)[0],
+      topGroupTopTheme: 'Search',
+      scoredGroups: calculateRice(
+        { search_discovery: a, delivery_tracking: b },
+        {
+          search_discovery: [theme('t1', 'Search', a)],
+          delivery_tracking: [theme('t1', 'Delivery', b)],
+        },
+        meta,
+      ),
+      readiness: null,
+      allThemeReadiness: [],
+      diagnoses: [
+        {
+          theme_id: 't1',
+          feature_group_id: 'search_discovery',
+          headline: 'Search is broken.',
+          mechanism: ['A search problem.'],
+        },
+      ],
+      themesReady: 0,
+      themesBlocked: 0,
+      meta,
+    });
+  }
+
+  it("does not copy one group's diagnosis onto a namesake in another group", () => {
+    const themes = JSON.parse(String(run()['Theme Breakdown JSON'])) as ThemeBreakdownEntry[];
+    const search = themes.find((t) => t.feature_group_id === 'search_discovery');
+    const delivery = themes.find((t) => t.feature_group_id === 'delivery_tracking');
+
+    expect(search?.headline).toBe('Search is broken.');
+    // Same theme_id, different group — it must NOT inherit the headline.
+    expect(delivery?.theme_id).toBe('t1');
+    expect(delivery?.headline).toBeUndefined();
   });
 });
