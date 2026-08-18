@@ -99,12 +99,19 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   log(`Regressions detected: ${meta.regressions.length}`);
 
   // 5. Fire regression alert (if any) IN PARALLEL with the rest
+  //
+  // Always to the owner, never to whoever triggered the run. Anyone may now ask for
+  // the digest at their own address. This alert is not that: it is an operational
+  // warning that one app version is producing a cluster of complaints, and it fires
+  // before the digest is ready. A stranger who asked for one email would receive two,
+  // and the second would be an internal alert about a product they do not work on.
+  const regressionRecipient = env.DEFAULT_RECIPIENT || recipient;
   const regressionEmailPromise =
     meta.regressions.length > 0
       ? (async () => {
           try {
             const { subject, html } = renderRegressionEmail({ meta });
-            await sendEmail({ to: recipient, subject, html });
+            await sendEmail({ to: regressionRecipient, subject, html });
             log('Regression alert email sent');
           } catch (err) {
             console.error('[pipeline] Regression alert failed:', err);
@@ -341,7 +348,11 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   //
   // Guarded on size. An unusually large week is not worth failing the append over,
   // and the reuse path falls back to a short pointer email when this is absent.
-  const MAX_STORED_EMAIL_CHARS = 45000;
+  // A Sheets cell holds 50,000 characters. This was set to 45,000 when the only
+  // email available to measure was a 10,770-character test render. The first live
+  // one came in at 40,179, so the real margin was 4,800 rather than the 34,000 I
+  // assumed. Raised to sit just under the cell limit instead of well under it.
+  const MAX_STORED_EMAIL_CHARS = 49000;
   if (html.length <= MAX_STORED_EMAIL_CHARS) {
     digestRow['Digest Email Subject'] = subject;
     digestRow['Digest Email HTML'] = html;
