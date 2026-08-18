@@ -121,7 +121,7 @@ export function SignalsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Search signal text…"
+          placeholder="Search what people said…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-[280px]"
@@ -131,7 +131,7 @@ export function SignalsPage() {
             <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All sources</SelectItem>
+            <SelectItem value="all">Everywhere</SelectItem>
             <SelectItem value="app_store">App Store</SelectItem>
             <SelectItem value="play_store">Play Store</SelectItem>
             <SelectItem value="amazon_review">Amazon Review</SelectItem>
@@ -139,10 +139,10 @@ export function SignalsPage() {
         </Select>
         <Select value={severityBucket} onValueChange={(v) => setSeverityBucket(v as SeverityBucket)}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Severity" />
+            <SelectValue placeholder="How upset" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All severities</SelectItem>
+            <SelectItem value="all">Any mood</SelectItem>
             <SelectItem value="critical">Critical (4–5)</SelectItem>
             <SelectItem value="major">Major (3–4)</SelectItem>
             <SelectItem value="minor">Minor (1–3)</SelectItem>
@@ -153,7 +153,7 @@ export function SignalsPage() {
             <SelectValue placeholder="Sort" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="severity-desc">Severity ↓</SelectItem>
+            <SelectItem value="severity-desc">Most upset first</SelectItem>
             <SelectItem value="date-desc">Date ↓</SelectItem>
             <SelectItem value="rating-asc">Rating ↑</SelectItem>
           </SelectContent>
@@ -188,15 +188,19 @@ export function SignalsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {/* Nine columns cannot fit a phone. The row is a complaint: how
+                    upset, what they said, where it came from. Everything else is
+                    one tap away in the expanded row, so it steps aside rather
+                    than squeezing the text column into three words. */}
                 <TableHead className="w-[36px]" />
-                <TableHead className="w-[50px]">#</TableHead>
-                <TableHead className="w-[110px]">Severity</TableHead>
-                <TableHead>Text</TableHead>
-                <TableHead className="w-[110px]">Source</TableHead>
-                <TableHead className="w-[90px]">Date</TableHead>
-                <TableHead className="w-[110px]">Rating</TableHead>
-                <TableHead className="w-[160px]">Group · Theme</TableHead>
-                <TableHead className="w-[40px]" />
+                <TableHead className="hidden w-[50px] md:table-cell">#</TableHead>
+                <TableHead className="w-[92px]">How upset</TableHead>
+                <TableHead>What they said</TableHead>
+                <TableHead className="w-[76px] md:w-[110px]">Where</TableHead>
+                <TableHead className="hidden w-[90px] md:table-cell">When</TableHead>
+                <TableHead className="hidden w-[110px] md:table-cell">Stars</TableHead>
+                <TableHead className="hidden w-[160px] md:table-cell">Part of the app</TableHead>
+                <TableHead className="hidden w-[40px] md:table-cell" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,27 +225,30 @@ export function SignalsPage() {
                       <TableCell>
                         {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell className="text-muted-foreground font-mono text-xs">{pageStart + i + 1}</TableCell>
+                      <TableCell className="hidden text-muted-foreground font-mono text-xs md:table-cell">{pageStart + i + 1}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={cn('font-mono tabular-nums', sevTier.className)}>
                           {sev.toFixed(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">
+                      {/* line-clamp needs a bounded box or the cell grows to fit the
+                          longest complaint, which pushed the table to 974px on a
+                          phone. Capped by viewport below md, free above it. */}
+                      <TableCell className="max-w-[46vw] text-sm md:max-w-none">
                         <span className="line-clamp-2" title={s.Text}>{s.Text.length > 120 ? s.Text.slice(0, 120) + '…' : s.Text}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs">{SOURCE_LABEL[s.Source] ?? s.Source}</span>
+                        <span className="block text-xs leading-tight">{SOURCE_LABEL[s.Source] ?? s.Source}</span>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-mono">{s.Date}</TableCell>
-                      <TableCell>{ratingStars(toNumber(s.Rating))}</TableCell>
-                      <TableCell className="text-xs">
+                      <TableCell className="hidden text-xs text-muted-foreground font-mono md:table-cell">{s.Date}</TableCell>
+                      <TableCell className="hidden md:table-cell">{ratingStars(toNumber(s.Rating))}</TableCell>
+                      <TableCell className="hidden text-xs md:table-cell">
                         <span className="inline-flex items-center gap-1.5">
                           <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: groupHex }} aria-hidden />
                           <span className="truncate">{featureGroupName(gid)}</span>
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {versionFlagged && (
                           <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" aria-label="Version flagged" />
                         )}

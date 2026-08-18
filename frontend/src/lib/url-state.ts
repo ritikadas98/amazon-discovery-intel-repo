@@ -55,12 +55,17 @@ export function useSetParam(): (key: string, value: string | null) => void {
 }
 
 /** Page title sourced from the current pathname. */
+/**
+ * Must stay in step with PAGES in TopBar — the active-tab check compares this
+ * title against those labels, so a rename in one place and not the other
+ * silently leaves every tab looking inactive.
+ */
 export function usePageTitle(): string {
   const location = useLocation();
-  if (location.pathname.startsWith('/signals')) return 'Signals';
-  if (location.pathname.startsWith('/report')) return 'Discovery Report';
-  if (location.pathname.startsWith('/chat')) return 'Chat';
-  if (location.pathname.startsWith('/digest')) return 'Digest';
+  if (location.pathname.startsWith('/signals')) return 'What people said';
+  if (location.pathname.startsWith('/report')) return 'Full detail';
+  if (location.pathname.startsWith('/chat')) return 'Ask';
+  if (location.pathname.startsWith('/digest')) return 'This week';
   return 'Dashboard';
 }
 

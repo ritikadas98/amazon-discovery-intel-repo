@@ -111,7 +111,7 @@ export function ReportPage() {
           theme in their head. Highest priority first, same order as the table
           above it. */}
       <div className="space-y-3">
-        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+        <div className="flex flex-col gap-1 border-t pt-5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <h2 className="text-base font-semibold tracking-tight">Each problem in full</h2>
           <p className="text-[12.5px] text-muted-foreground">
             What was counted, what we think, and what we still cannot see.

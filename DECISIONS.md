@@ -15,6 +15,48 @@ overwrite history).
 
 ---
 
+## 2026-08-18 — The dashboard has to work on the phone it gets opened on
+
+**What changed.** Three things a phone user hit immediately. "All Groups" in the
+sidebar kept you on `/report`, which has no all-groups view, so the link looked
+broken. The three tabs read `Digest` / `Signals` / `Report`. And below `md` the
+sidebar is hidden with nothing standing in for it, so no feature group was
+reachable at all, while every table ran off the screen.
+
+Fixed: `All Groups` moves to `/digest` when you are on the report; the tabs read
+**This week** / **What people said** / **Full detail**; a native `<select>`
+(`MobileGroupPicker`) carries group navigation below `md`; the top bar stacks
+into two rows; and the tables drop their desk-only columns.
+
+**PM rationale.** This gets opened on a phone — from the digest email, on the way
+into a meeting, by someone who was sent a link. A dashboard that only works at
+1440px is a dashboard that only works at your desk. The tab names were the same
+problem as the column names: they described the system's parts, not the reader's
+question. Someone who has never seen this should be able to guess what is behind
+each tab.
+
+**Mechanics.** The root cause of the table overflow was `whitespace-nowrap` on
+every cell in `ui/table.tsx` — it makes each column as wide as its longest
+string, so the signals table measured 974px on a 390px screen. Changed to
+`whitespace-normal md:whitespace-nowrap`: below `md`, vertical space is cheap and
+horizontal space is not. On top of that each table hides what is desk-only —
+the digest keeps *part of the app / complaints / what it cost*, the report keeps
+*problem / complaints / priority*, the signals table keeps *how upset / what they
+said / where*. The signals text cell is capped at `46vw` so `line-clamp-2` has a
+box to clamp inside.
+
+Measured, not eyeballed: headless Chrome refuses to size its viewport below
+~500px, so all three pages were measured inside a same-origin 390px iframe.
+Before: 58 / 479 / 34 elements past the right edge. After: 0 / 0 / 0.
+
+**Considered & not done.** A card layout for the signals list below `sm` — a real
+option, but it means maintaining two renderings of the same data, and the table
+reads fine once the columns are cut. A drawer for group navigation — a new
+dependency and a custom menu for seven items, where the platform's own picker is
+already one-handed and accessible.
+
+---
+
 ## 2026-08-18 — The digest email carries the decision, and has a way out
 
 **What changed.** The weekly email led with a category label and a score, and had no link

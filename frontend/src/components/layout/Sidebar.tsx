@@ -98,6 +98,17 @@ export function Sidebar() {
   const onDigestRoute = location.pathname.startsWith('/digest');
   const targetPath = onDigestRoute ? NAV_BASE : location.pathname;
 
+  /**
+   * Where "All Groups" goes from here.
+   *
+   * The report is inherently per-group: it filters themes by feature group, so
+   * `?group=all` matched nothing and the page came back empty. Staying put was
+   * the bug — "all groups" is a digest-level idea, and the digest is the page
+   * that can answer it. Every other route handles `all` fine and keeps you
+   * where you are.
+   */
+  const allGroupsPath = location.pathname.startsWith('/report') ? NAV_BASE : targetPath;
+
   return (
     <aside className="border-r bg-sidebar text-sidebar-foreground w-56 shrink-0 hidden md:flex flex-col">
       <div className="px-4 py-4 border-b">
@@ -139,7 +150,7 @@ export function Sidebar() {
         </p>
 
         <NavItem
-          to={buildLink(targetPath, { group: ALL_TARGET.id })}
+          to={buildLink(allGroupsPath, { group: ALL_TARGET.id })}
           label={ALL_TARGET.label}
           color="#64748b"
           icon={<Layers className="h-3.5 w-3.5" />}

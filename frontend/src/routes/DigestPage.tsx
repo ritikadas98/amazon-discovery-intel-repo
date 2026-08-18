@@ -141,7 +141,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
           of things to watch, and the reader should be able to tell which is which
           before reading either. */}
       <section className="space-y-3">
-        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+        <div className="flex flex-col gap-1 border-t pt-5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <h2 className="text-base font-semibold tracking-tight">Do this one</h2>
           <p className="text-[12.5px] text-muted-foreground">
             {readyCount} of {ranked.length} problems{' '}
@@ -152,7 +152,7 @@ function AllGroupsView({ digest, signals }: { digest: ParsedDigest; signals: Sig
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-baseline justify-between gap-4 border-t pt-5">
+        <div className="flex flex-col gap-1 border-t pt-5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <h2 className="text-base font-semibold tracking-tight">Keep an eye on these</h2>
           {/* Only claim something is bigger when something actually is. When the
               recommended problem is also the top-scoring one, score and evidence

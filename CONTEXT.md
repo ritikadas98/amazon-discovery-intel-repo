@@ -493,6 +493,9 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   data
 - Pipeline runs end-to-end from `/run-pipeline` (old path)
 - Digest + regression emails send
+- **Usable on a phone (2026-08-18)** — nav tabs read *This week / What people
+  said / Full detail*; `MobileGroupPicker` replaces the hidden sidebar below
+  `md`; all three pages measure zero clipped elements at 390px
 - DECISIONS.md + CONTEXT.md present at repo root
 - **RAG chat (Track 1) built + verified locally (2026-06-02)** —
   `/chat` route + `POST /webhook/chat` (SSE), streams a Gemini reply with

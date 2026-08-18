@@ -115,14 +115,18 @@ export function RankingTable({ digest }: Props) {
               {/* Named for someone who has never seen this dashboard. "Severity"
                   and "Score" told a reader nothing about what they measure —
                   and worse, implied the two agree. They routinely do not. */}
-              <TableHead className="w-[40px] pl-6">#</TableHead>
-              <TableHead>Part of the app</TableHead>
+              {/* Eight columns cannot fit a phone. Four answer the question the
+                  table exists for: which part of the app, how many people, what
+                  it cost them, and what we decided. Rank, tone and band are
+                  desk-width detail. */}
+              <TableHead className="hidden w-[40px] pl-6 sm:table-cell">#</TableHead>
+              <TableHead className="pl-4 sm:pl-0">Part of the app</TableHead>
               <TableHead className="hidden lg:table-cell">Biggest problem</TableHead>
               <TableHead className="text-right">Complaints</TableHead>
-              <TableHead className="text-right">How upset</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">How upset</TableHead>
               <TableHead>What it cost</TableHead>
-              <TableHead>How big</TableHead>
-              <TableHead>Priority</TableHead>
+              <TableHead className="hidden sm:table-cell">How big</TableHead>
+              <TableHead className="hidden sm:table-cell">Priority</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,8 +141,8 @@ export function RankingTable({ digest }: Props) {
               return (
                 <Fragment key={r.id}>
                 <TableRow className="hover:bg-muted/40">
-                  <TableCell className="text-muted-foreground font-mono text-xs pl-6">{idx + 1}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden text-muted-foreground font-mono text-xs pl-6 sm:table-cell">{idx + 1}</TableCell>
+                  <TableCell className="pl-4 sm:pl-0">
                     <Link to={buildLink('/digest', { group: r.id })} className="inline-flex items-center gap-2 font-medium hover:underline">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: color }} aria-hidden />
                       {featureGroupName(r.id)}
@@ -151,7 +155,7 @@ export function RankingTable({ digest }: Props) {
                     {signals}
                     {signalDeltaCell(wow?.signal_delta ?? null)}
                   </TableCell>
-                  <TableCell className={cn('text-right tabular-nums', severityTier(sev).className.split(' ').filter((c) => c.startsWith('text-')).join(' '))}>
+                  <TableCell className={cn('hidden text-right tabular-nums sm:table-cell', severityTier(sev).className.split(' ').filter((c) => c.startsWith('text-')).join(' '))}>
                     {sev.toFixed(1)}
                   </TableCell>
                   <TableCell>
@@ -161,10 +165,10 @@ export function RankingTable({ digest }: Props) {
                       total={consequenceByGroup.get(r.id)?.total}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <ScoreBandBadge score={r.score} topScore={topScore} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {moscow ? (
                       <span className="inline-flex items-center gap-1.5">
                         <MoscowBadge value={moscow} />

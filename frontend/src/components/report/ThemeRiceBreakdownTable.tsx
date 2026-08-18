@@ -124,11 +124,14 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
               {/* Named for what they measure, matching the digest. The framework
                   term stays in the tooltip for anyone who knows RICE. */}
               <TableHead className="text-right" title="Reach — how many people mentioned it">Complaints</TableHead>
-              <TableHead className="text-right" title="Impact — how upset they sounded, 1 to 5. Tone, not cost.">How upset</TableHead>
-              <TableHead className="text-right" title="Confidence — how many stores it came from">Where from</TableHead>
-              <TableHead>Work needed</TableHead>
+              {/* The inputs to the score are desk work — and the effort selector
+                  below is something you set with a mouse, not a thumb. A phone
+                  gets the problem, its size, and the verdict. */}
+              <TableHead className="hidden text-right md:table-cell" title="Impact — how upset they sounded, 1 to 5. Tone, not cost.">How upset</TableHead>
+              <TableHead className="hidden text-right md:table-cell" title="Confidence — how many stores it came from">Where from</TableHead>
+              <TableHead className="hidden md:table-cell">Work needed</TableHead>
               <TableHead>Priority</TableHead>
-              <TableHead>Can we act?</TableHead>
+              <TableHead className="hidden sm:table-cell">Can we act?</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -149,9 +152,9 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
                     <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{t.theme_id}</p>
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{t.reach}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{t.impact.toFixed(1)}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{t.confidence.toFixed(1)}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden text-right font-mono tabular-nums md:table-cell">{t.impact.toFixed(1)}</TableCell>
+                  <TableCell className="hidden text-right font-mono tabular-nums md:table-cell">{t.confidence.toFixed(1)}</TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <SegmentedEffortSelector
                       value={effortValue}
                       onChange={(v) =>
@@ -167,7 +170,7 @@ export function ThemeRiceBreakdownTable({ themes, weekId, overrides }: Props) {
                   <TableCell>
                     <MoscowBadge value={priorityFor(pmRice, adjustedScores)} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <ReadinessBadge value={t.readiness} />
                   </TableCell>
                 </TableRow>
