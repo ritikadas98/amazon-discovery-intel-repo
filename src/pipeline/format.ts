@@ -10,6 +10,7 @@ import {
   type ThemeDiagnosis,
   type ThemeReadiness,
 } from '../types.js';
+import { chunkColumns, chunksNeeded, splitIntoChunks } from '../lib/cellChunks.js';
 
 /** Mirrors "Format for Sheets" — column shaping for the "Signals" tab. */
 export function formatSignalsForSheet(signals: TaggedSignal[], meta: Meta): Record<string, unknown>[] {
@@ -48,6 +49,12 @@ export interface DigestRowInput {
   themesReady: number;
   themesBlocked: number;
   meta: Meta;
+  /**
+   * The header row of the Weekly Digests tab. Used to tell whether the extra
+   * "Theme Breakdown JSON 2" columns exist before relying on them. Absent means
+   * "assume only the original column", which is the safe reading.
+   */
+  availableHeaders?: string[];
 }
 
 /** Flatten every group's themes into one array, overlaying the AI's readiness, gaps and next steps. */
@@ -107,6 +114,53 @@ function nonEmpty(list: string[] | undefined): string[] | undefined {
  * Written from the numbers we already have, in the same plain register the prompt asks
  * the model for. Shared by the digest, the report and the email so the three cannot drift.
  */
+/**
+ * The theme breakdown, spread across as many columns as it needs.
+ *
+ * `appendRows` matches on header name, so a chunk with no matching column is
+ * dropped without complaint. If that happened the remaining text would be a JSON
+ * string cut in half, and the dashboard reads this column for everything. A
+ * truncated cell is a worse failure than a smaller one.
+ *
+ * So when the columns are not there, whole problems are dropped from the end until
+ * what remains fits and still parses. Least important first, since the list arrives
+ * ordered by score. The drop is logged, never silent.
+ */
+export function themeBreakdownCells(
+  entries: ThemeBreakdownEntry[],
+  availableHeaders: string[] = [],
+): Record<string, string> {
+  const base = 'Theme Breakdown JSON';
+  const serialise = (list: ThemeBreakdownEntry[]) => JSON.stringify(list);
+
+  let list = entries;
+  let text = serialise(list);
+  const columnsOnSheet = chunkColumns(base, chunksNeeded(text)).filter(
+    (c) => c === base || availableHeaders.includes(c),
+  ).length;
+
+  // Shed from the end until it fits the columns that actually exist.
+  while (list.length > 1 && chunksNeeded(text) > Math.max(columnsOnSheet, 1)) {
+    list = list.slice(0, -1);
+    text = serialise(list);
+  }
+  if (list.length < entries.length) {
+    console.warn(
+      `[format] Theme breakdown dropped ${entries.length - list.length} of ${entries.length} themes: ` +
+        `it needed ${chunksNeeded(serialise(entries))} columns and the sheet has ${columnsOnSheet}. ` +
+        `Add "${base} 2" (and "${base} 3") to row 1 of the Weekly Digests tab.`,
+    );
+  }
+
+  const parts = splitIntoChunks(text);
+  const names = chunkColumns(base, parts.length);
+  const cells: Record<string, string> = {};
+  names.forEach((name, i) => {
+    cells[name] = parts[i];
+  });
+  return cells;
+}
+
 function fallbackGapReasons(theme: ScoredTheme, readiness: Readiness): string[] {
   const reasons: string[] = [];
   if (theme.reach < 3) {
@@ -148,6 +202,7 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     themesReady,
     themesBlocked,
     meta,
+    availableHeaders,
   } = input;
 
   return {
@@ -179,7 +234,7 @@ export function formatDigestRow(input: DigestRowInput): Record<string, unknown> 
     'Trend Direction JSON': JSON.stringify(
       scoredGroups.map((g) => ({ id: g.feature_group_id, trend: g.trend_direction })),
     ),
-    'Theme Breakdown JSON': JSON.stringify(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [], diagnoses)),
+    ...themeBreakdownCells(buildThemeBreakdown(scoredGroups, allThemeReadiness ?? readiness?.themes ?? [], diagnoses), availableHeaders),
     // Stamps which scoring formula produced the numbers in this row, so a later
     // run can refuse to publish a week-over-week delta across a formula change.
     'Formula Version': FORMULA_VERSION,

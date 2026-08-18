@@ -22,6 +22,17 @@ async function getSheetsClient(): Promise<sheets_v4.Sheets> {
  * Append rows to a sheet tab. Rows are objects whose keys are column headers;
  * the first row of the tab is treated as the header row and used to align values.
  */
+/** The header row of a tab, in order. Empty tab -> []. */
+export async function readHeaders(tabName: string): Promise<string[]> {
+  const env = getEnv();
+  const sheets = await getSheetsClient();
+  const resp = await sheets.spreadsheets.values.get({
+    spreadsheetId: env.SHEETS_DOCUMENT_ID,
+    range: `${tabName}!1:1`,
+  });
+  return (resp.data.values?.[0] as string[] | undefined) ?? [];
+}
+
 export async function appendRows(tabName: string, rows: Record<string, unknown>[]): Promise<void> {
   if (rows.length === 0) return;
   const env = getEnv();

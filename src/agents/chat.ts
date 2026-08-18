@@ -1,4 +1,5 @@
 import { streamGemini } from '../lib/gemini.js';
+import { joinChunks } from '../lib/cellChunks.js';
 import { readRows } from '../lib/sheets.js';
 import { getEnv } from '../config/env.js';
 
@@ -43,7 +44,7 @@ function matchesSource(r: Record<string, string>, source?: string): boolean {
 export function compactThemes(r: Record<string, string>) {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(r['Theme Breakdown JSON'] || '[]');
+    parsed = JSON.parse(joinChunks(r, 'Theme Breakdown JSON') || '[]');
   } catch {
     return [];
   }

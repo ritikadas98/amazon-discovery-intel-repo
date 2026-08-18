@@ -15,7 +15,7 @@ import { assignWoWDeltas, buildLastWeekLookup } from './wow.js';
 import { assessReadiness } from '../agents/readiness.js';
 import { diagnoseThemes, type ThemeToDiagnose } from '../agents/diagnose.js';
 import { formatDigestRow, formatSignalsForSheet } from './format.js';
-import { appendRows, readRows } from '../lib/sheets.js';
+import { appendRows, readRows, readHeaders } from '../lib/sheets.js';
 import { sendEmail } from '../lib/email.js';
 import { renderRegressionEmail } from '../templates/regressionEmail.js';
 import { renderDigestEmail } from '../templates/digestEmail.js';
@@ -113,11 +113,17 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   const regressionRecipients = [
     ...new Set([recipient, env.DEFAULT_RECIPIENT].filter((a): a is string => Boolean(a))),
   ];
+  // Rendered here rather than inside the send, so the same bytes can be kept on the
+  // digest row. A request inside the 24-hour window re-sends this copy, which is how
+  // a visitor gets to see that the alert exists at all: no run happens for them, so
+  // nothing would otherwise fire.
+  const regressionEmail =
+    meta.regressions.length > 0 ? renderRegressionEmail({ meta }) : null;
   const regressionEmailPromise =
-    meta.regressions.length > 0
+    regressionEmail
       ? (async () => {
           try {
-            const { subject, html } = renderRegressionEmail({ meta });
+            const { subject, html } = regressionEmail;
             await Promise.all(
               regressionRecipients.map((to) => sendEmail({ to, subject, html })),
             );
@@ -265,7 +271,12 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
 
   // 11. Append the weekly digest row
   const topGroupTopTheme = themesOfTopGroup[0]?.theme_label || topGroup.top_theme || '';
+  // What columns the sheet actually has. The theme breakdown is written across
+  // numbered columns now, and writing a chunk with no matching header would drop it
+  // and leave the rest as half a JSON string.
+  const digestHeaders = await readHeaders(env.SHEETS_DIGESTS_TAB);
   const digestRow = formatDigestRow({
+    availableHeaders: digestHeaders,
     weekId: meta.weekId,
     topGroup,
     topGroupTopTheme,
@@ -365,6 +376,10 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
   if (html.length <= MAX_STORED_EMAIL_CHARS) {
     digestRow['Digest Email Subject'] = subject;
     digestRow['Digest Email HTML'] = html;
+    if (regressionEmail && regressionEmail.html.length <= MAX_STORED_EMAIL_CHARS) {
+      digestRow['Regression Email Subject'] = regressionEmail.subject;
+      digestRow['Regression Email HTML'] = regressionEmail.html;
+    }
   } else {
     log(`Digest email too large to store (${html.length} chars); reuse will send a pointer`);
   }

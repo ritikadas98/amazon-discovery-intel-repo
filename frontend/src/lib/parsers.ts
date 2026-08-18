@@ -34,6 +34,24 @@ function safeParseObject<T>(raw: string | undefined | null): T | null {
   }
 }
 
+/**
+ * Rejoin the theme breakdown, which is written across numbered columns.
+ *
+ * A Google Sheets cell holds 50,000 characters. This column reached 49,108 on the
+ * 2026-08-18 run, so it is now split across "Theme Breakdown JSON",
+ * "Theme Breakdown JSON 2" and so on. Reading stops at the first empty column, so
+ * rows written before the split still return their single cell unchanged.
+ */
+function joinThemeBreakdown(row: DigestRow): string {
+  const cells = row as unknown as Record<string, string | undefined>;
+  let out = cells['Theme Breakdown JSON'] ?? '';
+  for (let i = 2; ; i += 1) {
+    const part = cells[`Theme Breakdown JSON ${i}`];
+    if (!part) return out;
+    out += part;
+  }
+}
+
 export function toNumber(raw: string | undefined | null, fallback = 0): number {
   if (raw === undefined || raw === null || raw === '') return fallback;
   const n = Number(raw);
@@ -91,7 +109,7 @@ export function parseDigestRow(row: DigestRow): ParsedDigest {
     moscow: safeParseArray<MoscowEntry>(row['MoSCoW JSON']),
     wow: safeParseArray<WoWDeltaEntry>(row['WoW Delta JSON']),
     trends: safeParseArray<TrendEntry>(row['Trend Direction JSON']),
-    themeBreakdown: safeParseArray<ThemeBreakdownEntry>(row['Theme Breakdown JSON']),
+    themeBreakdown: safeParseArray<ThemeBreakdownEntry>(joinThemeBreakdown(row)),
     readiness: safeParseObject<ReadinessResult>(row['Discovery Readiness JSON']),
     overallReadiness: toReadiness(row['Overall Group Readiness']),
     themesReadyCount: toNumber(row['Themes Ready Count']),

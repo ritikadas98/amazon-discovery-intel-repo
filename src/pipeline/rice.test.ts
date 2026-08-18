@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Meta, ScoredTheme, Source, TaggedSignal, Theme, ThemeBreakdownEntry } from '../types.js';
 import { calculateRice } from './rice.js';
-import { formatDigestRow } from './format.js';
+import { formatDigestRow , themeBreakdownCells } from './format.js';
 
 /**
  * These tests exist because of a real defect, not for coverage.
@@ -272,5 +272,34 @@ describe('per-theme overlays', () => {
     // Same theme_id, different group — it must NOT inherit the headline.
     expect(delivery?.theme_id).toBe('t1');
     expect(delivery?.headline).toBeUndefined();
+  });
+});
+
+describe('theme breakdown spread across cells', () => {
+  const entry = (id: string, filler: number) =>
+    ({ theme_id: id, theme_label: 'x'.repeat(filler), feature_group_id: 'g' }) as unknown as ThemeBreakdownEntry;
+
+  it('uses one column while it fits', () => {
+    const cells = themeBreakdownCells([entry('t1', 10)], ['Theme Breakdown JSON']);
+    expect(Object.keys(cells)).toEqual(['Theme Breakdown JSON']);
+  });
+
+  it('spills into the second column when the sheet has one', () => {
+    const big = [entry('t1', 30000), entry('t2', 30000)];
+    const cells = themeBreakdownCells(big, ['Theme Breakdown JSON', 'Theme Breakdown JSON 2']);
+    expect(Object.keys(cells)).toEqual(['Theme Breakdown JSON', 'Theme Breakdown JSON 2']);
+    // Rejoined it must still be the same JSON, with nothing lost at the seam.
+    const rejoined = cells['Theme Breakdown JSON'] + cells['Theme Breakdown JSON 2'];
+    expect(JSON.parse(rejoined)).toHaveLength(2);
+  });
+
+  it('drops whole themes rather than write half a JSON string', () => {
+    // The dangerous case: too much data and no extra column to put it in. A cut
+    // string would break every page that reads this cell.
+    const big = [entry('t1', 30000), entry('t2', 30000)];
+    const cells = themeBreakdownCells(big, ['Theme Breakdown JSON']);
+    expect(Object.keys(cells)).toEqual(['Theme Breakdown JSON']);
+    const parsed = JSON.parse(cells['Theme Breakdown JSON']);
+    expect(parsed).toHaveLength(1);
   });
 });

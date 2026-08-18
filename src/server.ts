@@ -77,6 +77,8 @@ app.get('/health', (_req: Request, res: Response) => {
       reuseSendsTheStoredEmail: true,
       ownerCanForceARun: true,
       openRecipients: true,
+      themeBreakdownSplitAcrossCells: true,
+      regressionAlertStoredAndResent: true,
     },
   });
 });
@@ -183,6 +185,23 @@ async function sendDigestPointer(to: string, ranAt: Date): Promise<void> {
   await sendEmail({ to, subject: "Amazon Discovery — this week's analysis", html });
 }
 
+/**
+ * Put a date on a stored alert before sending it again.
+ *
+ * The regression email is written in the present tense, because when it first fires
+ * that is true. Re-sending it hours later without saying when it fired would tell a
+ * reader a release is spiking right now on evidence from this morning. The banner
+ * goes on the copy being sent, never on the stored original.
+ */
+function datedAlert(html: string, firedAt: Date): string {
+  const when = firedAt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  const banner = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto 16px auto;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;color:#78350f;font-size:13px;line-height:1.5;">
+  This alert fired on <strong>${when}</strong>. It is the most recent one, sent again
+  because you asked for this week's analysis.
+</div>`;
+  return banner + html;
+}
+
 const runPipelineHandler = async (req: Request, res: Response) => {
   const recipient_email = (req.body?.recipient_email as string | undefined) || env.DEFAULT_RECIPIENT;
   if (!recipient_email) {
@@ -247,6 +266,19 @@ const runPipelineHandler = async (req: Request, res: Response) => {
         await sendEmail({ to: recipient_email, subject: storedSubject, html: storedHtml });
       } else {
         await sendDigestPointer(recipient_email, previous.at);
+      }
+
+      // The alert that fired on that run, if one did. No run happens inside the
+      // window, so without this a visitor never learns the product watches releases
+      // at all. Dated on the way out so nobody reads it as live.
+      const alertHtml = previous.row['Regression Email HTML'];
+      const alertSubject = previous.row['Regression Email Subject'];
+      if (alertHtml && alertSubject) {
+        await sendEmail({
+          to: recipient_email,
+          subject: alertSubject,
+          html: datedAlert(alertHtml, previous.at),
+        });
       }
       recordSend(recipient_email);
       res.json({
