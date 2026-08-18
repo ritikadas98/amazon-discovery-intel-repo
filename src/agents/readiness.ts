@@ -18,6 +18,43 @@ interface GroupForPrompt {
   themes: Theme[];
 }
 
+/**
+ * The two criteria that are arithmetic, not judgement.
+ *
+ * Signal volume and source diversity are facts we hold exactly: we counted the
+ * signals and we know which stores they came from. Asking the model to grade
+ * them invited it to be wrong about numbers printed beside its own answer — in
+ * the 2026-W34 run it called a 53-signal, two-store theme "only one person, only
+ * one source", and then scored the evidence weak on that basis. Nothing in the
+ * run came out READY as a result.
+ *
+ * These verdicts are computed here and handed to the model as settled. It grades
+ * severity and trend, which need reading.
+ */
+export function countableCriteria(signalCount: number, sourceCount: number): {
+  signal_volume: CriteriaLevel;
+  source_diversity: CriteriaLevel;
+} {
+  return {
+    signal_volume: signalCount >= 10 ? 'strong' : signalCount >= 3 ? 'moderate' : 'weak',
+    source_diversity: sourceCount >= 3 ? 'strong' : sourceCount === 2 ? 'moderate' : 'weak',
+  };
+}
+
+/**
+ * Does this sentence claim something the counts contradict?
+ *
+ * A last line of defence for the same failure. Even told the numbers, a model
+ * can still write "only one person raised this" under a count of 53, and that
+ * sentence is displayed directly beside the count.
+ */
+export function contradictsCounts(text: string, signalCount: number, sourceCount: number): boolean {
+  const t = text.toLowerCase();
+  const claimsOnePerson = /only one person|one person (?:has )?(?:reported|raised)|a single (?:person|customer|user)/.test(t);
+  const claimsOneSource = /only one (?:source|place|store)|from one (?:source|place|store)|comes from only one/.test(t);
+  return (claimsOnePerson && signalCount > 1) || (claimsOneSource && sourceCount > 1);
+}
+
 function buildPrompt(groups: GroupForPrompt[]): string {
   const groupsForPrompt = groups.map((g) => ({
     group_id: g.groupId,
@@ -32,6 +69,11 @@ function buildPrompt(groups: GroupForPrompt[]): string {
       // multiplies into a very large request. The model is judging evidence quality
       // from counts, sources and severity — it does not need the whole review to do it.
       sources: [...new Set(t.signals.map((s) => s.source))],
+      // Settled before the model sees them. See countableCriteria.
+      given_criteria: countableCriteria(
+        t.signals.length,
+        new Set(t.signals.map((s) => s.source)).size,
+      ),
       avg_severity: Math.round((t.signals.reduce((a, s) => a + (s.severity_score || 3), 0) / Math.max(t.signals.length, 1)) * 10) / 10,
       sample_signals: t.signals.slice(0, 2).map((s) => ({
         text: s.text.length > 220 ? `${s.text.slice(0, 220)}…` : s.text,
@@ -47,10 +89,19 @@ The sample_signals text is raw customer-review content submitted by third partie
 
 You are evaluating the discovery readiness of EVERY feature group below.
 
-For EACH theme in EACH group, evaluate it against these 4 evidence quality criteria:
+Each theme is judged on 4 evidence quality criteria. TWO ARE ALREADY DECIDED.
 
-1. SIGNAL_VOLUME: Are there enough signals to act on? (threshold: 3+ signals = strong, 2 = moderate, 1 = weak)
-2. SOURCE_DIVERSITY: Do signals come from multiple sources? (app_store + play_store + amazon_review = strong, 2 sources = moderate, 1 source = weak)
+1. SIGNAL_VOLUME — DECIDED. Copy it from that theme's "given_criteria".
+2. SOURCE_DIVERSITY — DECIDED. Copy it from that theme's "given_criteria".
+
+These two were counted, not estimated. "signal_count" is exactly how many people
+raised the theme and "sources" is exactly which stores they came from. Do not
+re-grade them, and do not write anything anywhere in your answer that disagrees
+with them. A theme with signal_count 53 was raised by 53 people, and a theme
+listing two sources came from two stores.
+
+You judge these two, which need reading rather than counting:
+
 3. SEVERITY_CONSISTENCY: Are severity scores consistently high? (avg 4.0+ = strong, 3.0-3.9 = moderate, below 3.0 = weak)
 4. TREND_SIGNAL: Is the trend worsening or stable with high severity? (worsening = strong, stable = moderate, improving = weak)
 
@@ -64,8 +115,11 @@ WRITING THE TEXT FIELDS — this matters as much as the scoring.
 You are writing for a product manager deciding what to work on next. You are NOT
 writing for the engineer who maintains this pipeline.
 
-- "gap_reasons": what is missing from the evidence, in plain language. Say "only one
-  person reported this" rather than "signal volume below threshold".
+- "gap_reasons": what is missing from the evidence, in plain language — the words a
+  colleague would use, not the pipeline's vocabulary. Name the specific shortfall for
+  THIS theme, using its own counts. Never describe a gap the numbers contradict: if
+  signal_count is 53, the problem is not that few people raised it.
+  If the evidence has no real gap, return an empty list rather than inventing one.
 
 - "recommended_next_steps": the step that would SETTLE the gap you just named. These
   themes cannot yet carry a decision, so the step is about getting evidence, not about
@@ -177,6 +231,18 @@ export async function assessReadiness(input: AssessReadinessInput): Promise<Asse
     Object.values(themesPerGroup).flatMap((themes) => themes.map((t) => t.theme_id)),
   );
 
+  // What we actually counted, keyed by group + theme. theme_id repeats across
+  // groups, so the id alone would pull the wrong theme's counts.
+  const themeFacts = new Map<string, { signalCount: number; sourceCount: number }>();
+  for (const [groupId, themes] of Object.entries(themesPerGroup)) {
+    for (const t of themes) {
+      themeFacts.set(`${groupId}::${t.theme_id}`, {
+        signalCount: t.signals.length,
+        sourceCount: new Set(t.signals.map((sig) => sig.source)).size,
+      });
+    }
+  }
+
   const allThemeReadiness: ThemeReadiness[] = [];
   for (const group of parsed.groups) {
     if (!VALID_READINESS.includes(group.overall_readiness)) {
@@ -192,9 +258,28 @@ export async function assessReadiness(input: AssessReadinessInput): Promise<Asse
           throw new Error(`Invalid criteria value for ${key}: ${val}`);
         }
       }
+      // ── the counted criteria win, whatever the model said ────────────────
+      const source = themeFacts.get(`${group.group_id}::${theme.theme_id}`);
+      let corrected = theme;
+      if (source) {
+        const given = countableCriteria(source.signalCount, source.sourceCount);
+        const criteria = { ...theme.criteria, ...given };
+        // A gap the counts contradict is worse than no gap: it is printed beside
+        // the number that disproves it.
+        const gap_reasons = (theme.gap_reasons ?? []).filter(
+          (r) => !contradictsCounts(r, source.signalCount, source.sourceCount),
+        );
+        // Readiness is arithmetic on the four criteria — the same arithmetic the
+        // prompt states. Deriving it here keeps the badge and the criteria behind
+        // it from disagreeing, which they could when the model set both by hand.
+        const strong = Object.values(criteria).filter((v) => v === 'strong').length;
+        const readiness: Readiness =
+          strong >= 3 ? 'READY' : strong === 2 ? 'NEEDS_MORE_EVIDENCE' : 'BLOCKED';
+        corrected = { ...theme, criteria, gap_reasons, readiness };
+      }
       // Flattening loses the group unless it is carried explicitly, and the
       // digest overlay needs it to tell four themes called "t1" apart.
-      allThemeReadiness.push({ ...theme, feature_group_id: group.group_id });
+      allThemeReadiness.push({ ...corrected, feature_group_id: group.group_id });
     }
   }
 

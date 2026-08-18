@@ -98,10 +98,13 @@ export function RunPipelineDialog() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
+              {/* Anyone may now ask for the digest at their own address. A reader
+                  of the post should be able to receive the thing being described,
+                  not just read about it. One send per address per day. */}
               <label className="text-sm font-medium" htmlFor="recipient-email">
-                Recipient email
+                Where should we send it?
                 <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                  (optional — uses server default if blank)
+                  (optional — one digest per address per day)
                 </span>
               </label>
               <Input

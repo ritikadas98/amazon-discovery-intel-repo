@@ -210,11 +210,29 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
     }
   }
 
+  // One diagnosis per group, not one per run.
+  //
+  // Diagnosing only the single top theme left six of seven group pages without a
+  // "what we think is going on" panel — the page visibly thinner than the one the
+  // design was built around. A diagnosis call sends 12 reviews and costs about
+  // fifteen paise, so covering every group adds roughly a rupee to a run that
+  // already costs three to five.
+  //
+  // READY themes are still preferred where a group has them; where none does, the
+  // group's top-scoring theme is diagnosed and rendered as provisional.
+  const candidatesByGroup = new Map<string, typeof candidates>();
+  for (const c of candidates) {
+    const key = c.scored.feature_group_id;
+    const list = candidatesByGroup.get(key);
+    if (list) list.push(c);
+    else candidatesByGroup.set(key, [c]);
+  }
   const ready = candidates.filter((c) => c.readiness === 'READY');
-  const toDiagnose =
-    ready.length > 0
-      ? ready
-      : candidates.sort((a, b) => b.scored.system_rice - a.scored.system_rice).slice(0, 1);
+  const toDiagnose = [...candidatesByGroup.values()].flatMap((group) => {
+    const readyHere = group.filter((c) => c.readiness === 'READY');
+    if (readyHere.length > 0) return readyHere;
+    return [...group].sort((a, b) => b.scored.system_rice - a.scored.system_rice).slice(0, 1);
+  });
 
   if (toDiagnose.length > 0) {
     try {

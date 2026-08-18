@@ -493,6 +493,13 @@ amazon-discovery-n8n/   (root — backend lives here, despite the name)
   data
 - Pipeline runs end-to-end from `/run-pipeline` (old path)
 - Digest + regression emails send
+- **Counted criteria outrank the model (2026-08-18)** — signal volume and source
+  diversity are computed, not graded; gap reasons that contradict the counts are
+  dropped; readiness is derived from the four criteria
+- **Analysis reused within 24h (2026-08-18)** — a second request inside the window
+  serves the stored run and emails a pointer, instead of re-running
+- **Anyone may request the digest (2026-08-18)** — capped at one per address per
+  day and 100 sends per day
 - **Usable on a phone (2026-08-18)** — nav tabs read *This week / What people
   said / Full detail*; `MobileGroupPicker` replaces the hidden sidebar below
   `md`; all three pages measure zero clipped elements at 390px

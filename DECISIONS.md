@@ -15,6 +15,112 @@ overwrite history).
 
 ---
 
+## 2026-08-18 — The numbers we counted outrank the model that read them
+
+**What changed.** The readiness agent graded four evidence criteria. Two of them —
+how many people raised a theme, and how many stores it came from — are facts we
+counted exactly. It got them wrong anyway. In the 2026-W34 run it described a
+53-signal, two-store theme as "Only one person reported this issue. The feedback
+comes from only one source", and those sentences rendered directly beside the
+number 53 on the digest.
+
+It was not an isolated slip. 41 of the run's gap reasons were those two sentences,
+27 of them contradicted by the counts printed next to them. The cause was one line
+of the prompt: it offered *Say "only one person reported this"* as an example of
+plain language, and the model returned the example as its answer.
+
+Signal volume and source diversity are now computed in `countableCriteria` and
+handed to the model as settled. It grades severity and trend, which need reading.
+After the response comes back, `contradictsCounts` drops any gap reason the counts
+disprove, and the READY/BLOCKED verdict is derived from the four criteria rather
+than set by hand.
+
+Two smaller fixes ride along. Headlines were cut with a plain character slice, so
+the W34 flagship ended mid-thought — "…integration, making it difficult ", trailing
+space included, as the largest text on the page. `collapseHeadline` now ends on a
+full stop, else a clause boundary, else a whole word with any dangling connective
+removed. And diagnosis runs once per group instead of once per run.
+
+**PM rationale.** The credibility of this product rests on the reader believing the
+numbers. A page that says 53 complaints and, beside it, "only one person reported
+this", spends that credibility in the four seconds it takes to notice. Worse, the
+wrong criteria propagated: believing every theme was thin, the model marked all 28
+BLOCKED or NEEDS_MORE_EVIDENCE and nothing came out READY — which is why the top
+theme of the week carried a "Not enough to act on" badge, and why the diagnosis
+gate had to be widened to produce anything at all. That widening was treating a
+symptom.
+
+The rule underneath: **never ask a model to judge something you have already
+counted.** It cannot be more accurate than the arithmetic, and it can be less.
+
+Per-group diagnosis costs about Rs 0.15 a call, so roughly Rs 1 on a run that
+already costs Rs 3-5. It buys a "what we think is going on" panel on all seven
+group pages instead of one.
+
+**Mechanics.** `countableCriteria(signalCount, sourceCount)` in `agents/readiness.ts`
+— 10+/3+ strong, 3+/2 moderate, else weak. Injected into the prompt as
+`given_criteria` and re-applied after parsing, so the model cannot override them.
+`contradictsCounts` is the second line of defence. `collapseHeadline` lives in
+`agents/diagnose.ts` and is pinned by a test using the real W34 string. The
+diagnosis gate in `pipeline/run.ts` groups candidates and takes each group's READY
+themes, or its top-scoring theme where none is READY.
+
+A trap worth recording: writing these regexes through a Python heredoc turned every
+word-boundary escape into a literal backspace character (0x08), invisible in `grep`
+and `sed` output and silently fatal to the match. The test caught it; reading the
+file did not. Twelve were stripped. Edit the file directly when a pattern contains
+escapes.
+
+**Considered & not done.** Retrying the model when a gap reason contradicts the
+counts — costs another call to fix something arithmetic already answers. Removing
+gap reasons entirely — they are the honest part of the panel when they are true.
+
+---
+
+## 2026-08-18 — The analysis is reused for a day, and anyone may ask for it
+
+**What changed.** `/run-pipeline` is public and unauthenticated. Two consequences
+were about to land on a LinkedIn launch. First, a second run inside the same day
+ingests almost nothing, because every review has already been seen — so it either
+fails outright or writes a hollow week, and the dashboard always renders the newest
+week. One curious visitor could blank the page for everyone after them. Second,
+each run costs Rs 3-5, and the free credits expire on 2026-08-19.
+
+The handler now reads the newest `Created At` in the Digests tab. Inside 24 hours it
+serves what is already there and emails the requester a short pointer to it. Outside
+24 hours it runs for real.
+
+Recipients are also opened up. `ALLOWED_RECIPIENTS` still restricts when set, but
+unset now means anyone may ask for the digest at their own address, instead of
+falling back to the owner's address alone.
+
+**PM rationale.** Ritika's framing, and it is the right one: refusing the button
+tells a visitor they are getting leftovers, while serving the stored answer just
+answers them. Same cost, better experience. No banner announces the reuse — the
+sidebar already prints when the pipeline last ran, so the result is dated without
+anyone being told they were refused.
+
+Opening recipients is what makes the demo land: a reader of the post can receive the
+thing being described rather than only read about it. It also creates the obvious
+abuse — making someone else's Gmail send mail to a stranger — so it ships with caps
+rather than on its own.
+
+**Mechanics.** `sendAllowance` holds one send per address per day and 100 sends per
+day overall, in memory. Cloud Run scales to zero, so the counters reset when the
+service sleeps, which is exactly when they are not needed; during a burst the
+instance stays warm and they hold. `max-instances=2` means the true ceiling is at
+worst twice those numbers, and Gmail's own ~500/day limit sits underneath. Over the
+cap returns 429 with a sentence a visitor can read.
+
+**Considered & not done.** Re-sending the full stored digest rather than a pointer —
+it needs the whole email input reconstructed from the sheet row, and a half-rebuilt
+digest that quietly differs from the real one is worse than a short honest email.
+Left as the next piece. Persisting the send counters to a sheet tab — needs a new tab
+with hand-created headers (hard rule #5) to solve a problem the warm-instance case
+already covers.
+
+---
+
 ## 2026-08-18 — The dashboard has to work on the phone it gets opened on
 
 **What changed.** Three things a phone user hit immediately. "All Groups" in the

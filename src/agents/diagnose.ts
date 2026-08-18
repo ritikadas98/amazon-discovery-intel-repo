@@ -218,6 +218,44 @@ function collapse(text: unknown, max: number): string {
 }
 
 /**
+ * Trim a headline without cutting it mid-thought.
+ *
+ * The plain slice ended the 2026-W34 headline at exactly 140 characters —
+ * "…forced AI/Alexa integration, making it difficult " — trailing space and all,
+ * as the largest text on the page. A hard character cut is fine for a tooltip and
+ * wrong for a sentence someone reads aloud in a stand-up.
+ *
+ * Preference order: end on a full stop, else end on a whole word with any
+ * dangling connective removed. Never mid-word.
+ */
+export function collapseHeadline(text: unknown, max: number): string {
+  const flat = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (flat.length <= max) return flat;
+
+  const window = flat.slice(0, max);
+
+  // A complete sentence, if one ends late enough to still say something.
+  const lastStop = Math.max(window.lastIndexOf('. '), window.lastIndexOf('! '), window.lastIndexOf('? '));
+  if (lastStop >= max * 0.5) return window.slice(0, lastStop + 1).trim();
+  if (/[.!?]$/.test(window)) return window.trim();
+
+  // Otherwise the last clause. Ending on a comma boundary reads as a finished
+  // thought; ending on a whole word does not. The real W34 headline cut to the
+  // last word gave "…integration, making it difficult", which is grammatical
+  // debris. Cut to the last comma it gives "…due to forced AI/Alexa integration".
+  const lastComma = window.lastIndexOf(', ');
+  if (lastComma >= max * 0.5) return window.slice(0, lastComma).trim();
+
+  // Last resort: the last whole word, minus anything left hanging.
+  const lastSpace = window.lastIndexOf(' ');
+  const words = (lastSpace > 0 ? window.slice(0, lastSpace) : window).trim();
+  return words
+    .replace(/[\s,;:—-]+$/, '')
+    .replace(/\s+(?:and|or|but|because|due to|making|which|that|with|for|to|of|in|on|a|an|the)$/i, '')
+    .trim();
+}
+
+/**
  * Free text cannot be range-checked the way a severity score can, so the checks
  * are: length, no instruction-shaped content, and — the one that catches real
  * errors — every digit must be a number we handed it.
@@ -334,7 +372,7 @@ export async function diagnoseThemes(items: ThemeToDiagnose[]): Promise<ThemeDia
     if (!scored) continue;
 
     const allowed = allowedFor(scored);
-    const headline = collapse(raw.headline, MAX_HEADLINE_CHARS);
+    const headline = collapseHeadline(raw.headline, MAX_HEADLINE_CHARS);
     if (!acceptable(headline, allowed)) continue;
 
     const mechanism = (Array.isArray(raw.mechanism) ? raw.mechanism : [])

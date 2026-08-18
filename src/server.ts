@@ -6,6 +6,7 @@ import { getEnv } from './config/env.js';
 import { FORMULA_VERSION } from './types.js';
 import { runPipeline } from './pipeline/run.js';
 import { appendRows, readRows } from './lib/sheets.js';
+import { sendEmail } from './lib/email.js';
 import { handleChatStream, type ChatTurn } from './agents/chat.js';
 
 const env = getEnv();
@@ -67,6 +68,13 @@ app.get('/health', (_req: Request, res: Response) => {
     features: {
       themeEvidence: true,
       diagnosisFallsBackWhenNothingReady: true,
+      // Added 2026-08-18. If these are missing, the running revision predates the
+      // fixes and a pipeline run will reproduce the contradictions.
+      countedCriteriaBeatTheModel: true,
+      headlineCutsAtAClause: true,
+      diagnosisPerGroup: true,
+      reuseAnalysisWithin24h: true,
+      openRecipients: true,
     },
   });
 });
@@ -79,16 +87,97 @@ const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
 function isValidEmail(s: string): boolean {
   return s.length <= 254 && !/[\r\n]/.test(s) && EMAIL_RE.test(s);
 }
-// Addresses /run-pipeline may email. Explicit ALLOWED_RECIPIENTS wins; otherwise
-// fall back to [DEFAULT_RECIPIENT]. Empty (neither set) => no allowlist enforced
-// (local dev), but the format check above still applies.
+// Addresses /run-pipeline may email. Set ALLOWED_RECIPIENTS to restrict; leave it
+// unset and anyone may ask for the digest at their own address, which is the point
+// of a public demo — a reader of the LinkedIn post should be able to receive the
+// thing being described rather than only read about it.
 function allowedRecipients(): string[] {
-  const explicit = (env.ALLOWED_RECIPIENTS ?? '')
+  return (env.ALLOWED_RECIPIENTS ?? '')
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  if (explicit.length) return explicit;
-  return env.DEFAULT_RECIPIENT ? [env.DEFAULT_RECIPIENT.toLowerCase()] : [];
+}
+
+// ── Send caps ───────────────────────────────────────────────────────────────
+//
+// Open recipients mean anyone can make this service send mail from Ritika's Gmail
+// to an address of their choosing. Left uncapped that is a way to mail a stranger
+// who never asked, and the account that gets suspended for it is hers.
+//
+// Held in memory rather than a sheet. Cloud Run scales to zero, so these counters
+// reset when the service sleeps — which is exactly when they are not needed. During
+// a burst the instance stays warm and the caps hold, and max-instances is 2, so at
+// worst the real ceiling is twice these numbers. Gmail's own ~500/day limit is the
+// backstop underneath.
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_SENDS_PER_DAY = 100;
+const lastSendByAddress = new Map<string, number>();
+let dayStartedAt = Date.now();
+let sendsToday = 0;
+
+function sendAllowance(address: string): { ok: true } | { ok: false; reason: string } {
+  const now = Date.now();
+  if (now - dayStartedAt > ONE_DAY_MS) {
+    dayStartedAt = now;
+    sendsToday = 0;
+  }
+  if (sendsToday >= MAX_SENDS_PER_DAY) {
+    return { ok: false, reason: 'This has sent its limit of digests for today. Try again tomorrow.' };
+  }
+  const last = lastSendByAddress.get(address.toLowerCase());
+  if (last && now - last < ONE_DAY_MS) {
+    return { ok: false, reason: "That address already has this week's digest. One per address per day." };
+  }
+  return { ok: true };
+}
+
+function recordSend(address: string): void {
+  lastSendByAddress.set(address.toLowerCase(), Date.now());
+  sendsToday += 1;
+}
+
+/**
+ * When did a real pipeline run last finish?
+ *
+ * Read from the newest Digests row rather than held in memory, because Cloud Run
+ * scales to zero and an in-memory timestamp would not survive the gap between one
+ * visitor and the next.
+ */
+async function lastRunAt(): Promise<Date | null> {
+  const rows = await readRows(env.SHEETS_DIGESTS_TAB);
+  let newest: Date | null = null;
+  for (const r of rows) {
+    const raw = r['Created At'];
+    if (!raw) continue;
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime()) && (!newest || d > newest)) newest = d;
+  }
+  return newest;
+}
+
+/**
+ * What a requester gets when the analysis is already fresh.
+ *
+ * Not the full digest. Rebuilding that from a stored row needs the whole email
+ * input reconstructed from the sheet, which is a separate piece of work — and a
+ * half-rebuilt digest that quietly differs from the real one is worse than a
+ * short honest email. This says what week is ready and links straight to it.
+ */
+async function sendDigestPointer(to: string, ranAt: Date): Promise<void> {
+  const app = (env.APP_BASE_URL ?? 'https://amazon.ritikadas.in').replace(/\/$/, '');
+  const when = ranAt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;padding:32px 16px;color:#1a1a1a;">
+  <h1 style="font-size:20px;margin:0 0 12px 0;">This week's analysis is ready</h1>
+  <p style="font-size:14px;line-height:1.6;color:#444;margin:0 0 20px 0;">
+    It last ran on ${when}. Nothing new has come in since, so this is the current picture.
+  </p>
+  <a href="${app}/digest?group=all" style="display:inline-block;background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">Open the digest</a>
+  <p style="font-size:12px;line-height:1.6;color:#777;margin:24px 0 0 0;">
+    Amazon Discovery Intelligence reads customer reviews across the app stores and
+    groups them into the problems worth acting on.
+  </p>
+</div>`;
+  await sendEmail({ to, subject: "Amazon Discovery — this week's analysis", html });
 }
 
 const runPipelineHandler = async (req: Request, res: Response) => {
@@ -106,11 +195,41 @@ const runPipelineHandler = async (req: Request, res: Response) => {
     res.status(403).json({ error: 'recipient_email is not in the allowed recipients list.' });
     return;
   }
+  const allowance = sendAllowance(recipient_email);
+  if (!allowance.ok) {
+    res.status(429).json({ error: allowance.reason });
+    return;
+  }
   // Optional per-run override of mock vs live (else env.USE_MOCK). Lets the UI's
   // Sample/Live toggle decide what a triggered run ingests.
   const use_mock = typeof req.body?.use_mock === 'boolean' ? (req.body.use_mock as boolean) : undefined;
   try {
+    // ── the 24-hour rule ────────────────────────────────────────────────────
+    //
+    // A second run on the same day ingests almost nothing: every review has
+    // already been seen, so the run either fails outright or writes a hollow
+    // week — and the dashboard always shows the newest week. One curious visitor
+    // could therefore blank the page for everyone after them. Re-running also
+    // costs three to five rupees each time, which is now Ritika's own money.
+    //
+    // So within the window we serve what is already there. No message is shown:
+    // the sidebar already prints when the pipeline last ran, so the result is
+    // dated without anyone being told they were refused.
+    const previous = await lastRunAt();
+    const fresh = previous !== null && Date.now() - previous.getTime() < ONE_DAY_MS;
+    if (fresh && previous) {
+      await sendDigestPointer(recipient_email, previous);
+      recordSend(recipient_email);
+      res.json({
+        ok: true,
+        reused: true,
+        lastRunAt: previous.toISOString(),
+        message: 'Showing the most recent analysis.',
+      });
+      return;
+    }
     const result = await runPipeline({ recipient_email, use_mock });
+    recordSend(recipient_email);
     res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

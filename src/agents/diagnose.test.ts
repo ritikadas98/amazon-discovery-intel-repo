@@ -8,7 +8,7 @@ vi.mock('../lib/gemini.js', () => ({
   parseJsonOrThrow: <T>(raw: string) => JSON.parse(raw) as T,
 }));
 
-const { diagnoseThemes } = await import('./diagnose.js');
+const { diagnoseThemes, collapseHeadline } = await import('./diagnose.js');
 
 /**
  * These tests exist because this is the first agent whose output is free prose
@@ -276,5 +276,41 @@ describe('diagnoseThemes', () => {
     // the untrusted text is never the last thing the model reads.
     expect(ruleAt).toBeLessThan(lastFence);
     expect(prompt.indexOf('<<<REVIEW_DATA>>>')).toBeLessThan(ruleAt + lastFence);
+  });
+});
+
+describe('collapseHeadline', () => {
+  // The 2026-W34 headline, which reached production cut at exactly 140 chars.
+  const real =
+    "Customers report that the app's search function is broken or significantly degraded due to forced AI/Alexa integration, making it difficult to find products they want to buy.";
+
+  it('never ends mid-thought on the real W34 headline', () => {
+    const out = collapseHeadline(real, 140);
+    expect(out.length).toBeLessThanOrEqual(140);
+    expect(out).not.toMatch(/making it difficult\s*$/);
+    expect(out).not.toMatch(/[\s,;:]$/);
+  });
+
+  it('cuts the real W34 headline to a finished clause', () => {
+    expect(collapseHeadline(real, 140)).toBe(
+      "Customers report that the app's search function is broken or significantly degraded due to forced AI/Alexa integration",
+    );
+  });
+
+  it('leaves a short headline untouched', () => {
+    expect(collapseHeadline('Four of five customers could not pay.', 140)).toBe(
+      'Four of five customers could not pay.',
+    );
+  });
+
+  it('prefers a full stop when one falls late enough', () => {
+    const two = 'Four of five customers could not pay. One of them was charged twice for the same order anyway.';
+    expect(collapseHeadline(two, 60)).toBe('Four of five customers could not pay.');
+  });
+
+  it('drops a dangling connective rather than leaving it hanging', () => {
+    expect(collapseHeadline('The checkout fails for shoppers on the newest build and', 54)).not.toMatch(
+      /\band$/,
+    );
   });
 });

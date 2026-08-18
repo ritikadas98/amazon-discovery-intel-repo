@@ -14,7 +14,7 @@ vi.mock('../lib/gemini.js', () => ({
   },
 }));
 
-const { assessReadiness } = await import('./readiness.js');
+const { assessReadiness, countableCriteria, contradictsCounts } = await import('./readiness.js');
 
 function signal(themeId: string): TaggedSignal {
   return {
@@ -125,5 +125,39 @@ describe('assessReadiness', () => {
   it('surfaces a bad response instead of returning half a result', async () => {
     callGemini.mockResolvedValue('not json at all');
     await expect(assessReadiness({ scoredGroups, themesPerGroup })).rejects.toThrow(/invalid JSON/);
+  });
+});
+
+describe('countable criteria are arithmetic, not judgement', () => {
+  it('grades the real W34 flagship theme on its actual counts', () => {
+    // 53 signals across App Store and Play Store. The model called this
+    // "only one person, only one source" and scored the evidence weak.
+    expect(countableCriteria(53, 2)).toEqual({
+      signal_volume: 'strong',
+      source_diversity: 'moderate',
+    });
+  });
+
+  it('still calls a genuinely thin theme weak', () => {
+    expect(countableCriteria(1, 1)).toEqual({
+      signal_volume: 'weak',
+      source_diversity: 'weak',
+    });
+  });
+});
+
+describe('contradictsCounts', () => {
+  it('catches the two sentences that reached production', () => {
+    expect(contradictsCounts('Only one person reported this issue.', 53, 2)).toBe(true);
+    expect(contradictsCounts('The feedback comes from only one source.', 53, 2)).toBe(true);
+  });
+
+  it('leaves the same sentences alone when they are true', () => {
+    expect(contradictsCounts('Only one person reported this issue.', 1, 1)).toBe(false);
+    expect(contradictsCounts('The feedback comes from only one source.', 9, 1)).toBe(false);
+  });
+
+  it('does not flag unrelated gaps', () => {
+    expect(contradictsCounts('The people who mentioned it were not especially unhappy.', 53, 2)).toBe(false);
   });
 });
