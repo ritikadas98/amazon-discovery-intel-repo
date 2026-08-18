@@ -100,19 +100,28 @@ export async function runPipeline(opts: RunOptions): Promise<PipelineResult> {
 
   // 5. Fire regression alert (if any) IN PARALLEL with the rest
   //
-  // Always to the owner, never to whoever triggered the run. Anyone may now ask for
-  // the digest at their own address. This alert is not that: it is an operational
-  // warning that one app version is producing a cluster of complaints, and it fires
-  // before the digest is ready. A stranger who asked for one email would receive two,
-  // and the second would be an internal alert about a product they do not work on.
-  const regressionRecipient = env.DEFAULT_RECIPIENT || recipient;
+  // To whoever asked, and to the owner as well.
+  //
+  // The alert firing is itself a thing worth seeing. A visitor who asked for the
+  // digest and receives a version-spike warning learns something the dashboard does
+  // not show them: that this watches for a bad release and says so without being
+  // asked. That is the product decision on display, so the requester keeps it.
+  //
+  // The owner is added rather than substituted. Sending only to the requester would
+  // mean Ritika stops receiving her own operational alerts whenever a stranger
+  // triggers the run, which is the one outcome neither of us wants.
+  const regressionRecipients = [
+    ...new Set([recipient, env.DEFAULT_RECIPIENT].filter((a): a is string => Boolean(a))),
+  ];
   const regressionEmailPromise =
     meta.regressions.length > 0
       ? (async () => {
           try {
             const { subject, html } = renderRegressionEmail({ meta });
-            await sendEmail({ to: regressionRecipient, subject, html });
-            log('Regression alert email sent');
+            await Promise.all(
+              regressionRecipients.map((to) => sendEmail({ to, subject, html })),
+            );
+            log(`Regression alert email sent to ${regressionRecipients.length} address(es)`);
           } catch (err) {
             console.error('[pipeline] Regression alert failed:', err);
           }
