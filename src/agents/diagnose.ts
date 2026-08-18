@@ -298,6 +298,41 @@ function allowedFor(scored: ScoredTheme): AllowedNumbers {
  * a step with no owner, or an owner with no step — reads as more certainty than
  * the model actually produced, so it is all or nothing.
  */
+/**
+ * Is a number in an instruction pretending to be evidence?
+ *
+ * `acceptable` rejects any number that is not a complaint count. That is right for a
+ * headline, which makes claims about the data. It is wrong for an instruction. "Check
+ * the delivery failure rate over the last 30 days" is not a claim about the reviews,
+ * but the 30 failed the check and took the whole first move with it. Three of the four
+ * diagnosed themes in the 2026-W34 run lost their first move this way, including the
+ * only one that was READY. The product's entire promise is that it says what to do
+ * next, and on those pages it said nothing.
+ *
+ * So an instruction may carry ordinary numbers. It may not carry a number dressed as a
+ * finding: a percentage, or a count attached to people or reviews. Those are the shapes
+ * a fabricated statistic takes.
+ */
+function inventsEvidence(text: string, allowed: AllowedNumbers): boolean {
+  let scannable = text;
+  for (const v of allowed.versions) scannable = scannable.split(v).join(' ');
+
+  const percent = /\d+(?:\.\d+)?\s*(?:%|percent)/i;
+  if (percent.test(scannable)) {
+    const shown = scannable.match(/\d+(?:\.\d+)?(?=\s*(?:%|percent))/gi) ?? [];
+    if (shown.some((n) => !allowed.counts.has(n))) return true;
+  }
+
+  const counted =
+    /\d+(?:\.\d+)?\s+(?:of\s+(?:the\s+)?)?(?:customers?|users?|people|reviews?|complaints?|signals?|orders?|shoppers?)/gi;
+  const claims = scannable.match(counted) ?? [];
+  for (const claim of claims) {
+    const n = claim.match(/\d+(?:\.\d+)?/)?.[0];
+    if (n && !allowed.counts.has(n)) return true;
+  }
+  return false;
+}
+
 function parseMove(raw: unknown, allowed: AllowedNumbers): FirstMove | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
@@ -311,7 +346,8 @@ function parseMove(raw: unknown, allowed: AllowedNumbers): FirstMove | undefined
   const rationale = collapse(r.rationale, MAX_MOVE_CHARS);
 
   const fields = [action, owner, effort, rationale];
-  if (fields.some((f) => !f || !acceptable(f, allowed))) return undefined;
+  if (fields.some((f) => !f)) return undefined;
+  if (fields.some((f) => SUSPICIOUS.test(f) || inventsEvidence(f, allowed))) return undefined;
 
   return { kind, action, owner, effort, rationale };
 }

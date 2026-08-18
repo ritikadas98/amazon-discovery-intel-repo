@@ -314,3 +314,44 @@ describe('collapseHeadline', () => {
     );
   });
 });
+
+describe('first_move survives ordinary numbers', () => {
+  function replyWithMove(action: string) {
+    reply([
+      {
+        theme_id: 't4',
+        headline: 'Customers report being charged twice for one order.',
+        mechanism: ['One card path looks worse than the rest.'],
+        first_move: {
+          kind: 'check',
+          action,
+          owner: 'Payments',
+          effort: 'about a day',
+          rationale: 'It settles whether the card path or the cart is at fault.',
+        },
+        options: [],
+      },
+    ]);
+  }
+
+  it('keeps a move that names a time window', async () => {
+    // The real 2026-W34 failure. Three of four diagnosed themes lost their first
+    // move because the instruction mentioned a number of days.
+    replyWithMove('Check the double-charge rate over the last 30 days by card type.');
+    const out = await diagnoseThemes(items);
+    expect(out[0].firstMove).toBeDefined();
+    expect(out[0].firstMove?.action).toContain('30 days');
+  });
+
+  it('still refuses an invented percentage', async () => {
+    replyWithMove('Confirm the 47% of customers who were charged twice.');
+    const out = await diagnoseThemes(items);
+    expect(out[0].firstMove).toBeUndefined();
+  });
+
+  it('still refuses an invented headcount', async () => {
+    replyWithMove('Interview the 900 customers who were charged twice.');
+    const out = await diagnoseThemes(items);
+    expect(out[0].firstMove).toBeUndefined();
+  });
+});
