@@ -101,8 +101,20 @@ gcloud run services add-iam-policy-binding "${SERVICE}" \
   --member="serviceAccount:${SCHEDULER_SA}" \
   --role="roles/run.invoker" --quiet >/dev/null
 
-# ─── 5. Create/update the monthly Cloud Scheduler job ─────────────────────────
-JOB_NAME="amazon-discovery-monthly"
+# ─── 5. Create/update the weekly Cloud Scheduler job ──────────────────────────
+# Monday 09:00 IST. The product reads by week, the digest says what to work on
+# Monday, and a monthly cadence quietly contradicted both.
+#
+# The job was called amazon-discovery-monthly. A rename creates a second job and
+# leaves the old one firing on the 1st, which is the duplicate-run case that
+# writes a hollow week over a real one. So the old job is removed first.
+OLD_JOB="amazon-discovery-monthly"
+if gcloud scheduler jobs describe "${OLD_JOB}" --location="${REGION}" >/dev/null 2>&1; then
+  echo "▶ Removing superseded monthly job ${OLD_JOB}…"
+  gcloud scheduler jobs delete "${OLD_JOB}" --location="${REGION}" --quiet
+fi
+
+JOB_NAME="amazon-discovery-weekly"
 JOB_EXISTS=$(gcloud scheduler jobs describe "${JOB_NAME}" --location="${REGION}" \
   --format='value(name)' 2>/dev/null || true)
 
@@ -110,7 +122,7 @@ if [[ -n "${JOB_EXISTS}" ]]; then
   echo "▶ Updating existing Scheduler job ${JOB_NAME}…"
   gcloud scheduler jobs update http "${JOB_NAME}" \
     --location="${REGION}" \
-    --schedule="0 9 1 * *" \
+    --schedule="0 9 * * 1" \
     --time-zone="Asia/Kolkata" \
     --uri="${SERVICE_URL}/run-pipeline" \
     --http-method=POST \
@@ -121,7 +133,7 @@ else
   echo "▶ Creating Scheduler job ${JOB_NAME}…"
   gcloud scheduler jobs create http "${JOB_NAME}" \
     --location="${REGION}" \
-    --schedule="0 9 1 * *" \
+    --schedule="0 9 * * 1" \
     --time-zone="Asia/Kolkata" \
     --uri="${SERVICE_URL}/run-pipeline" \
     --http-method=POST \

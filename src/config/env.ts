@@ -66,7 +66,7 @@ const schema = z.object({
     .string()
     .default('true')
     .transform((v) => v.toLowerCase() === 'true'),
-  CRON_SCHEDULE: z.string().default('0 9 1 * *'),
+  CRON_SCHEDULE: z.string().default('0 9 * * 1'),   // Monday 09:00, see scripts/gcp-deploy.sh
   CORS_ORIGIN: z.string().default('*'),
 });
 
